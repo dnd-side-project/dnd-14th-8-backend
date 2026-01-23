@@ -1,7 +1,7 @@
 ---
 name: Fix Template
 about: 기능 수정
-title: "[FIX] "
+title: "[Fix] "
 labels: 🔧 fix
 assignees: ''
 

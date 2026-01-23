@@ -1,7 +1,7 @@
 ---
 name: Feat Template
 about: 기능 추가
-title: "[FEAT] "
+title: "[Feat] "
 labels: ✨ feature
 assignees: ''
 

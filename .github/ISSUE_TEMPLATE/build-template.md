@@ -1,7 +1,7 @@
 ---
 name: Build Template
 about: 프로젝트 세팅
-title: "[BUILD]"
+title: "[Build]"
 labels: 🏢 build
 assignees: ''
 
