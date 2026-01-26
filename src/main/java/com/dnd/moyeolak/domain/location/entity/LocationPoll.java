@@ -6,6 +6,7 @@ import com.dnd.moyeolak.global.enums.PollStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,11 +28,11 @@ public class LocationPoll extends BaseEntity {
     @Column(comment = "확정된 장소")
     private String confirmedLocation;
 
-    @Column(comment = "확정된 장소 위도")
-    private String confirmedLat;
+    @Column(comment = "확정된 장소 위도", precision = 10, scale = 7)
+    private BigDecimal confirmedLat;
 
-    @Column(comment = "확정된 장소 경도")
-    private String confirmedLng;
+    @Column(comment = "확정된 장소 경도", precision =  10, scale = 7)
+    private BigDecimal confirmedLng;
 
     @Column(comment = "투표 상태", nullable = false)
     @Enumerated(EnumType.STRING)

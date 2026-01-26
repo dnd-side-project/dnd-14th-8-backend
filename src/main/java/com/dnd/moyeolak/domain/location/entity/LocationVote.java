@@ -4,6 +4,8 @@ import com.dnd.moyeolak.domain.participant.entity.Participant;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
+
 @Getter
 @Entity
 @Builder(access = AccessLevel.PRIVATE)
@@ -26,9 +28,9 @@ public class LocationVote {
     @Column(comment = "출발지 주소", nullable = false)
     private String departureLocation;
 
-    @Column(comment = "출발지 위도", nullable = false)
-    private String departureLat;
+    @Column(comment = "출발지 위도", nullable = false, precision = 10, scale = 7)
+    private BigDecimal departureLat;
 
-    @Column(comment = "출발지 경도", nullable = false)
-    private String departureLng;
+    @Column(comment = "출발지 경도", nullable = false, precision = 10, scale = 7)
+    private BigDecimal departureLng;
 }

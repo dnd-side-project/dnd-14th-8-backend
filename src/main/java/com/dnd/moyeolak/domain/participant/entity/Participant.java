@@ -22,7 +22,7 @@ public class Participant extends BaseEntity {
     private Long participantId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "meeting_id")
+    @JoinColumn(name = "meeting_id", nullable = false)
     private Meeting meeting;
 
     @Column(comment = "고유키", nullable = false, unique = true)

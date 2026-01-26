@@ -22,7 +22,7 @@ public class SchedulePoll extends BaseEntity {
     private Long schedulePollId;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "meeting_id")
+    @JoinColumn(name = "meeting_id", nullable = false)
     private Meeting meeting;
 
     @Column(length = 1000, comment = "날짜 범위", nullable = false)
