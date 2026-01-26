@@ -4,12 +4,16 @@ import com.dnd.moyeolak.domain.meeting.entity.Meeting;
 import com.dnd.moyeolak.global.entity.BaseEntity;
 import com.dnd.moyeolak.global.enums.PollStatus;
 import jakarta.persistence.*;
-import lombok.Getter;
+import lombok.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
 @Entity
+@Builder(access = AccessLevel.PRIVATE)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
 public class LocationPoll extends BaseEntity {
 
     @Id
@@ -21,18 +25,18 @@ public class LocationPoll extends BaseEntity {
     private Meeting meeting;
 
     @Column(comment = "확정된 장소")
-    private String confirmed_location;
+    private String confirmedLocation;
 
     @Column(comment = "확정된 장소 위도")
-    private String confirmed_lat;
+    private String confirmedLat;
 
     @Column(comment = "확정된 장소 경도")
-    private String confirmed_lng;
+    private String confirmedLng;
 
     @Column(comment = "투표 상태", nullable = false)
     @Enumerated(EnumType.STRING)
     private PollStatus pollStatus;
 
     @OneToMany(mappedBy = "locationPoll", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<LocationVote> listLocationVote;
+    private List<LocationVote> locationVotes = new ArrayList<>();
 }

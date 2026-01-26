@@ -5,7 +5,7 @@ import com.dnd.moyeolak.domain.participant.entity.Participant;
 import com.dnd.moyeolak.domain.schedule.entity.SchedulePoll;
 import com.dnd.moyeolak.global.entity.BaseEntity;
 import jakarta.persistence.*;
-import lombok.Getter;
+import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +13,9 @@ import java.util.UUID;
 
 @Getter
 @Entity
+@Builder(access = AccessLevel.PRIVATE)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
 public class Meeting extends BaseEntity {
 
     @Id
@@ -32,7 +35,7 @@ public class Meeting extends BaseEntity {
     private LocationPoll locationPoll;
 
     @OneToMany(mappedBy = "meeting", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Participant> listParticipant;
+    private List<Participant> participants = new ArrayList<>();
 
     // save() 호출 시 자동 실행되어 UUID 생성
     @PrePersist

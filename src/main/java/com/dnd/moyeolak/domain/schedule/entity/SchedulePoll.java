@@ -4,18 +4,22 @@ import com.dnd.moyeolak.domain.meeting.entity.Meeting;
 import com.dnd.moyeolak.global.entity.BaseEntity;
 import com.dnd.moyeolak.global.enums.PollStatus;
 import jakarta.persistence.*;
-import lombok.Getter;
+import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
 @Entity
+@Builder(access = AccessLevel.PRIVATE)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
 public class SchedulePoll extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long schedulePollId;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "meeting_id")
@@ -41,5 +45,5 @@ public class SchedulePoll extends BaseEntity {
     private PollStatus pollStatus;
 
     @OneToMany(mappedBy = "schedulePoll", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ScheduleVote> listScheduleVote;
+    private List<ScheduleVote> scheduleVotes = new ArrayList<>();
 }

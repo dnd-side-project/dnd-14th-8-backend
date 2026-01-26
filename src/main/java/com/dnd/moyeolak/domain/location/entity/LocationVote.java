@@ -2,10 +2,13 @@ package com.dnd.moyeolak.domain.location.entity;
 
 import com.dnd.moyeolak.domain.participant.entity.Participant;
 import jakarta.persistence.*;
-import lombok.Getter;
+import lombok.*;
 
 @Getter
 @Entity
+@Builder(access = AccessLevel.PRIVATE)
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PROTECTED)
 public class LocationVote {
 
     @Id
