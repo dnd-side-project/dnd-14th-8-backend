@@ -3,6 +3,11 @@ AGENTS.md
 CLAUDE.local.md
 .claude/
 .gradle
+
+### Environment ###
+.env
+.env.local
+.env.*.local
 build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/
