@@ -1,0 +1,35 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  # Spring Boot 애플리케이션 로그
+  - job_name: spring-boot-app
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+    relabel_configs:
+      # app 컨테이너만 수집
+      - source_labels: ['__meta_docker_container_name']
+        regex: '.*app.*'
+        action: keep
+      # 컨테이너 이름을 라벨로 추가
+      - source_labels: ['__meta_docker_container_name']
+        target_label: 'container'
+        regex: '/?(.*)'
+        replacement: '$1'
+      # 서비스 이름 라벨 추가
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_service']
+        target_label: 'service'
+    pipeline_stages:
+      # 로그 레벨 추출
+      - regex:
+          expression: '.*(?P<level>INFO|WARN|ERROR|DEBUG|TRACE).*'
+      - labels:
+          level:
