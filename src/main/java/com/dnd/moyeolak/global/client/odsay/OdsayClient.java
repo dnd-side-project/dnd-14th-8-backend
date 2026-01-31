@@ -10,6 +10,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.util.concurrent.Semaphore;
+
 @Slf4j
 @Component
 public class OdsayClient {
@@ -18,6 +20,11 @@ public class OdsayClient {
     private final OdsayApiConfig odsayApiConfig;
 
     private static final String ODSAY_PATH_API_URL = "https://api.odsay.com/v1/api/searchPubTransPathT";
+    private static final int MAX_CONCURRENT_REQUESTS = 5;
+    private static final int MAX_RETRIES = 3;
+    private static final long INITIAL_BACKOFF_MS = 500;
+
+    private final Semaphore rateLimiter = new Semaphore(MAX_CONCURRENT_REQUESTS);
 
     public OdsayClient(
         @Qualifier("odsayRestTemplate") RestTemplate odsayRestTemplate,
@@ -46,24 +53,44 @@ public class OdsayClient {
 
         log.debug("ODsay API 요청 URL: {}", url);
 
-        try {
-            // 먼저 raw JSON으로 받아서 구조 확인
-            String rawResponse = odsayRestTemplate.getForObject(url, String.class);
-//            log.info("ODsay API raw 응답: {}", rawResponse);
+        for (int attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+            try {
+                rateLimiter.acquire();
+                try {
+                    String rawResponse = odsayRestTemplate.getForObject(url, String.class);
+                    log.info("ODsay API raw 응답 (길이: {})", rawResponse != null ? rawResponse.length() : 0);
 
-            ObjectMapper mapper = new ObjectMapper();
-            OdsayPathResponse response = mapper.readValue(rawResponse, OdsayPathResponse.class);
+                    ObjectMapper mapper = new ObjectMapper();
+                    OdsayPathResponse response = mapper.readValue(rawResponse, OdsayPathResponse.class);
 
-            if (response == null || response.result() == null || response.result().path().isEmpty()) {
-                log.warn("ODsay API 응답이 비어있습니다.");
+                    if (response != null && response.result() != null && !response.result().path().isEmpty()) {
+                        return response.result().path().get(0).info();
+                    }
+
+                    if (rawResponse != null && rawResponse.contains("429")) {
+                        log.warn("ODsay API 429 rate limit, 재시도 {}/{}", attempt + 1, MAX_RETRIES);
+                        long backoff = INITIAL_BACKOFF_MS * (1L << attempt);
+                        Thread.sleep(backoff);
+                        continue;
+                    }
+
+                    log.warn("ODsay API 응답이 비어있습니다.");
+                    return new OdsayPathInfo(999, 0, 0, 0, 0, 0, 0);
+                } finally {
+                    rateLimiter.release();
+                    Thread.sleep(200);
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                log.error("ODsay API 호출 중 인터럽트 발생");
+                return new OdsayPathInfo(999, 0, 0, 0, 0, 0, 0);
+            } catch (Exception e) {
+                log.error("ODsay API 호출 실패: {} - {}", e.getClass().getSimpleName(), e.getMessage());
                 return new OdsayPathInfo(999, 0, 0, 0, 0, 0, 0);
             }
-
-            return response.result().path().get(0).info();
-
-        } catch (Exception e) {
-            log.error("ODsay API 호출 실패: {} - {}", e.getClass().getSimpleName(), e.getMessage(), e);
-            return new OdsayPathInfo(999, 0, 0, 0, 0, 0, 0);
         }
+
+        log.error("ODsay API 최대 재시도 횟수 초과");
+        return new OdsayPathInfo(999, 0, 0, 0, 0, 0, 0);
     }
 }

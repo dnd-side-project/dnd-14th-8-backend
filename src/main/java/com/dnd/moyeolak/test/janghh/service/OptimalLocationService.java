@@ -13,6 +13,9 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @Slf4j
 @Service
@@ -62,44 +65,68 @@ public class OptimalLocationService {
         List<ParticipantInfo> participants,
         List<SubwayStation> stations
     ) {
-        List<EvaluatedPlace> evaluated = new ArrayList<>();
+        ExecutorService executor = Executors.newFixedThreadPool(stations.size());
 
-        for (SubwayStation station : stations) {
-            List<Integer> durations = new ArrayList<>();
+        try {
+            List<CompletableFuture<EvaluatedPlace>> futures = stations.stream()
+                .map(station -> evaluateStation(station, participants, executor))
+                .toList();
+
+            List<EvaluatedPlace> evaluated = futures.stream()
+                .map(CompletableFuture::join)
+                .sorted(Comparator.comparingInt(EvaluatedPlace::minSum))
+                .toList();
+
+            List<EvaluatedPlace> rankedPlaces = new ArrayList<>();
+            for (int i = 0; i < evaluated.size(); i++) {
+                EvaluatedPlace place = evaluated.get(i);
+                rankedPlaces.add(new EvaluatedPlace(
+                    i + 1,
+                    place.name(),
+                    place.category(),
+                    place.address(),
+                    place.latitude(),
+                    place.longitude(),
+                    place.distanceFromCenter(),
+                    place.minSum(),
+                    place.minMax(),
+                    place.avgDuration(),
+                    place.routes()
+                ));
+            }
+
+            return rankedPlaces;
+        } finally {
+            executor.shutdown();
+        }
+    }
+
+    private CompletableFuture<EvaluatedPlace> evaluateStation(
+        SubwayStation station,
+        List<ParticipantInfo> participants,
+        ExecutorService executor
+    ) {
+        return CompletableFuture.supplyAsync(() -> {
             List<RouteDetail> routes = new ArrayList<>();
 
             for (ParticipantInfo participant : participants) {
+                routes.add(searchRoute(participant, station));
                 try {
-                    OdsayPathInfo pathInfo = odsayClient.searchRoute(
-                        participant.latitude(),
-                        participant.longitude(),
-                        station.latitude(),
-                        station.longitude()
-                    );
-
-                    durations.add(pathInfo.safeTotal());
-
-                    routes.add(new RouteDetail(
-                        participant.name(),
-                        pathInfo.safeTotal(),
-                        pathInfo.safeTotalDistance(),
-                        pathInfo.safePayment(),
-                        pathInfo.safeBusTransit() + pathInfo.safeSubwayTransit()
-                    ));
-
-                    Thread.sleep(100);
-
-                } catch (Exception e) {
-                    log.error("경로 탐색 실패: {} -> {}", participant.name(), station.name(), e);
-                    durations.add(999);
+                    Thread.sleep(200);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
                 }
             }
+
+            List<Integer> durations = routes.stream()
+                .map(RouteDetail::duration)
+                .toList();
 
             int minSum = durations.stream().mapToInt(Integer::intValue).sum();
             int minMax = durations.stream().mapToInt(Integer::intValue).max().orElse(0);
             double avgDuration = durations.stream().mapToInt(Integer::intValue).average().orElse(0);
 
-            evaluated.add(new EvaluatedPlace(
+            return new EvaluatedPlace(
                 0,
                 station.name(),
                 "지하철역",
@@ -111,29 +138,29 @@ public class OptimalLocationService {
                 minMax,
                 avgDuration,
                 routes
-            ));
+            );
+        }, executor);
+    }
+
+    private RouteDetail searchRoute(ParticipantInfo participant, SubwayStation station) {
+        try {
+            OdsayPathInfo pathInfo = odsayClient.searchRoute(
+                participant.latitude(),
+                participant.longitude(),
+                station.latitude(),
+                station.longitude()
+            );
+
+            return new RouteDetail(
+                participant.name(),
+                pathInfo.safeTotal(),
+                pathInfo.safeTotalDistance(),
+                pathInfo.safePayment(),
+                pathInfo.safeBusTransit() + pathInfo.safeSubwayTransit()
+            );
+        } catch (Exception e) {
+            log.error("경로 탐색 실패: {} -> {}", participant.name(), station.name(), e);
+            return new RouteDetail(participant.name(), 999, 0, 0, 0);
         }
-
-        evaluated.sort(Comparator.comparingInt(EvaluatedPlace::minSum));
-
-        List<EvaluatedPlace> rankedPlaces = new ArrayList<>();
-        for (int i = 0; i < evaluated.size(); i++) {
-            EvaluatedPlace place = evaluated.get(i);
-            rankedPlaces.add(new EvaluatedPlace(
-                i + 1,
-                place.name(),
-                place.category(),
-                place.address(),
-                place.latitude(),
-                place.longitude(),
-                place.distanceFromCenter(),
-                place.minSum(),
-                place.minMax(),
-                place.avgDuration(),
-                place.routes()
-            ));
-        }
-
-        return rankedPlaces;
     }
 }

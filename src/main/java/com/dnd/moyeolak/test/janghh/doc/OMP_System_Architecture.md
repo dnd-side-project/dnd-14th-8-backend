@@ -99,14 +99,16 @@ sequenceDiagram
     KakaoAPI-->>Kakao: KakaoLocalResponse (documents[])
     Kakao-->>Svc: List<SubwayStation> (최대 5개, 거리순)
 
-    %% Step 3: 각 역별 이동시간 계산
-    loop 후보 지하철역 (최대 5개)
-        loop 참가자별
+    %% Step 3: 각 역별 이동시간 계산 (병렬 처리)
+    Note over Svc: CompletableFuture + ThreadPool로<br/>후보역별 병렬 평가 시작
+    par 후보 지하철역 (최대 5개) 병렬 처리
+        loop 참가자별 (역 내 순차)
             Svc->>Odsay: searchRoute(출발lat, 출발lng, 역lat, 역lng)
+            Note over Odsay: Semaphore(5) 동시 요청 제한<br/>429 발생 시 지수 백오프 재시도 (최대 3회)
             Odsay->>OdsayAPI: GET /v1/api/searchPubTransPathT<br/>?SX={lng}&SY={lat}&EX={lng}&EY={lat}&apiKey=...
             OdsayAPI-->>Odsay: OdsayPathResponse (path[0].info)
             Odsay-->>Svc: OdsayPathInfo (totalTime, payment, distance, ...)
-            Note over Svc: 100ms 대기 (Rate Limit 방지)
+            Note over Svc: 200ms 대기 (Rate Limit 방지)
         end
         Note over Svc: MinSum, MinMax, AvgDuration 계산
     end
