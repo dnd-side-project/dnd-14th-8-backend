@@ -57,8 +57,9 @@ public class SchedulePoll extends BaseEntity {
     private List<ScheduleVote> scheduleVotes = new ArrayList<>();
 
     public static SchedulePoll defaultOf(Meeting meeting) {
-        List<LocalDate> defaultDates = LocalDate.now()
-                .datesUntil(LocalDate.now().plusDays(14))
+        LocalDate nowDate = LocalDate.now();
+        List<LocalDate> defaultDates = nowDate
+                .datesUntil(nowDate.plusDays(14))
                 .collect(Collectors.toCollection(ArrayList::new));
 
         return SchedulePoll.builder()
