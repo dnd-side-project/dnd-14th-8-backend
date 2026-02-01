@@ -29,6 +29,7 @@ public class SchedulePoll extends BaseEntity {
     @JoinColumn(name = "meeting_id", nullable = false)
     private Meeting meeting;
 
+    @Builder.Default
     @Convert(converter = LocalDateListConverter.class)
     @Column(length = 1000, comment = "날짜 범위", nullable = false)
     private List<LocalDate> dateOption = new ArrayList<>();
