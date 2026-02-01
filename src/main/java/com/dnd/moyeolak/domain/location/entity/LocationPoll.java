@@ -34,10 +34,17 @@ public class LocationPoll extends BaseEntity {
     @Column(comment = "확정된 장소 경도", precision =  10, scale = 7)
     private BigDecimal confirmedLng;
 
+    @Builder.Default
     @Column(comment = "투표 상태", nullable = false)
     @Enumerated(EnumType.STRING)
-    private PollStatus pollStatus;
+    private PollStatus pollStatus = PollStatus.INACTIVE;;
 
     @OneToMany(mappedBy = "locationPoll", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LocationVote> locationVotes = new ArrayList<>();
+
+    public static LocationPoll defaultOf(Meeting meeting) {
+        return LocationPoll.builder()
+                .meeting(meeting)
+                .build();
+    }
 }

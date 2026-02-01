@@ -37,4 +37,11 @@ public class Participant extends BaseEntity {
     @OneToMany(mappedBy = "participant", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LocationVote> locationVotes = new ArrayList<>();
 
+    public static Participant of(Meeting meeting, String localStorageKey, String name) {
+        return Participant.builder()
+                .meeting(meeting)
+                .localStorageKey(localStorageKey)
+                .name(name)
+                .build();
+    }
 }
