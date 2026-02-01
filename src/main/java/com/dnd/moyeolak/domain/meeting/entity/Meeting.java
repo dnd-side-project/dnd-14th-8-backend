@@ -7,9 +7,10 @@ import com.dnd.moyeolak.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
+
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Getter
 @Entity
@@ -19,11 +20,8 @@ import java.util.UUID;
 public class Meeting extends BaseEntity {
 
     @Id
-    @Column(length = 36, comment = "회의 ID")
+    @Column(length = 21, comment = "회의 ID")
     private String meetingId;
-
-    @Column(length = 500, comment = "링크")
-    private String link;
 
     @Column(comment = "참여자 수")
     private int participantCount;
@@ -34,14 +32,30 @@ public class Meeting extends BaseEntity {
     @OneToOne(mappedBy = "meeting", cascade = CascadeType.ALL)
     private LocationPoll locationPoll;
 
+    @Builder.Default
     @OneToMany(mappedBy = "meeting", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Participant> participants = new ArrayList<>();
 
-    // save() 호출 시 자동 실행되어 UUID 생성
+    // save() 호출 시 자동 실행되어 NanoId 생성
     @PrePersist
     public void generateMeetingId() {
         if (meetingId == null) {
-            meetingId = UUID.randomUUID().toString();
+            meetingId = NanoIdUtils.randomNanoId();
         }
+    }
+
+    public void addPolls(SchedulePoll schedulePoll, LocationPoll locationPoll) {
+        this.schedulePoll = schedulePoll;
+        this.locationPoll = locationPoll;
+    }
+
+    public void addParticipant(Participant participant) {
+        participants.add(participant);
+    }
+
+    public static Meeting of(int participantCount) {
+        return Meeting.builder()
+                .participantCount(participantCount)
+                .build();
     }
 }

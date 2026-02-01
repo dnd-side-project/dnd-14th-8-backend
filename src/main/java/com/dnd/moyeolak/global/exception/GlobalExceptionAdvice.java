@@ -5,6 +5,7 @@ import com.dnd.moyeolak.global.response.ErrorCode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -42,6 +43,15 @@ public class GlobalExceptionAdvice {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponse.error(ErrorCode.INVALID_PARAMETER, errors));
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleDataIntegrityViolation(
+            DataIntegrityViolationException ex) {
+        log.warn("데이터 무결성 위반: {}", ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)  // 409
+                .body(ApiResponse.error(ErrorCode.DUPLICATE_RESOURCE));
     }
 
     @ExceptionHandler(Exception.class)
