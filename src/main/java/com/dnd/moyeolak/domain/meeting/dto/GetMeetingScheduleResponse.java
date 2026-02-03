@@ -32,8 +32,9 @@ public record GetMeetingScheduleResponse(
                 })
                 .toList();
 
-        int votedParticipantCount = (int) meeting.getParticipants().stream()
-                .filter(p -> !p.getLocationVotes().isEmpty())
+        int votedParticipantCount = (int) meeting.getSchedulePoll().getScheduleVotes().stream()
+                .map(ScheduleVote::getParticipant)
+                .distinct()
                 .count();
 
         List<LocalDate> dateOptions = meeting.getSchedulePoll().getDateOptions();
