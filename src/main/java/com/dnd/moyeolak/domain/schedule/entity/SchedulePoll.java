@@ -32,7 +32,7 @@ public class SchedulePoll extends BaseEntity {
     @Builder.Default
     @Convert(converter = LocalDateListConverter.class)
     @Column(length = 1000, comment = "날짜 범위", nullable = false)
-    private List<LocalDate> dateOption = new ArrayList<>();
+    private List<LocalDate> dateOptions = new ArrayList<>();
 
     @Builder.Default
     @Column(comment = "시작 시간", nullable = false)
@@ -53,6 +53,7 @@ public class SchedulePoll extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private PollStatus pollStatus = PollStatus.INACTIVE;
 
+    @Builder.Default
     @OneToMany(mappedBy = "schedulePoll", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ScheduleVote> scheduleVotes = new ArrayList<>();
 
@@ -64,24 +65,24 @@ public class SchedulePoll extends BaseEntity {
 
         return SchedulePoll.builder()
                 .meeting(meeting)
-                .dateOption(defaultDates)
+                .dateOptions(defaultDates)
                 .build();
     }
 
     public void addDate(LocalDate date) {
-        if (!this.dateOption.contains(date)) {
-            this.dateOption.add(date);
-            this.dateOption.sort(Comparator.naturalOrder());
+        if (!this.dateOptions.contains(date)) {
+            this.dateOptions.add(date);
+            this.dateOptions.sort(Comparator.naturalOrder());
         }
     }
 
     public void removeDate(LocalDate date) {
-        this.dateOption.remove(date);
+        this.dateOptions.remove(date);
     }
 
     public void updateDateOption(List<LocalDate> newDates) {
-        this.dateOption.clear();
-        this.dateOption.addAll(newDates);
-        this.dateOption.sort(Comparator.naturalOrder());
+        this.dateOptions.clear();
+        this.dateOptions.addAll(newDates);
+        this.dateOptions.sort(Comparator.naturalOrder());
     }
 }

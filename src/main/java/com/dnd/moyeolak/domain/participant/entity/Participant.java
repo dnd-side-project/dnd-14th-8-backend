@@ -31,9 +31,11 @@ public class Participant extends BaseEntity {
     @Column(comment = "이름", nullable = false)
     private String name;
 
+    @Builder.Default
     @OneToMany(mappedBy = "participant", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ScheduleVote> scheduleVotes = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "participant", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LocationVote> locationVotes = new ArrayList<>();
 
