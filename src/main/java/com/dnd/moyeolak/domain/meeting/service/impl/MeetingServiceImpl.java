@@ -14,6 +14,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -43,6 +45,11 @@ public class MeetingServiceImpl implements MeetingService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEETING_NOT_FOUND));
 
         return GetMeetingScheduleResponse.from(meeting);
+    }
+
+    @Override
+    public List<String> findAllMeetings() {
+        return meetingRepository.findAllMeetingsId();
     }
 
     @Override

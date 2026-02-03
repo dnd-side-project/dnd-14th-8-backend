@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface MeetingRepository extends JpaRepository<Meeting, String> {
@@ -32,4 +33,9 @@ public interface MeetingRepository extends JpaRepository<Meeting, String> {
         WHERE m.meetingId = :meetingId
     """)
     Optional<Meeting> findByIdWithAllAssociations(@Param("meetingId") String meetingId);
+
+    @Query("""
+        SELECT m.meetingId FROM Meeting m
+    """)
+    List<String> findAllMeetingsId();
 }
