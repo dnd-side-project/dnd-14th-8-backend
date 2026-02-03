@@ -1,0 +1,160 @@
+package com.dnd.moyeolak.domain.meeting.service;
+
+import com.dnd.moyeolak.domain.meeting.dto.GetMeetingScheduleResponse;
+import com.dnd.moyeolak.domain.meeting.entity.Meeting;
+import com.dnd.moyeolak.domain.meeting.repository.MeetingRepository;
+import com.dnd.moyeolak.domain.meeting.service.impl.MeetingServiceImpl;
+import com.dnd.moyeolak.domain.participant.entity.Participant;
+import com.dnd.moyeolak.domain.schedule.entity.SchedulePoll;
+import com.dnd.moyeolak.domain.schedule.entity.ScheduleVote;
+import com.dnd.moyeolak.global.enums.PollStatus;
+import com.dnd.moyeolak.global.exception.BusinessException;
+import com.dnd.moyeolak.global.response.ErrorCode;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+class MeetingServiceUnitTest {
+
+    @Mock
+    private MeetingRepository meetingRepository;
+
+    @InjectMocks
+    private MeetingServiceImpl meetingService;
+
+    @Test
+    @DisplayName("모임 일정 조회 시 참가자 수가 반환된다")
+    void getMeetingSchedules_returnsParticipantCount() {
+        // given
+        String meetingId = "test-meeting-id";
+        Meeting meeting = createMeetingWithScheduleData();
+        when(meetingRepository.findByIdWithParticipants(meetingId)).thenReturn(Optional.of(meeting));
+        when(meetingRepository.findByIdWithScheduleVotes(meetingId)).thenReturn(Optional.of(meeting));
+
+        // when
+        GetMeetingScheduleResponse response = meetingService.getMeetingSchedules(meetingId);
+
+        // then
+        assertThat(response.participantCount()).isEqualTo(10);
+    }
+
+    @Test
+    @DisplayName("모임 일정 조회 시 참가자 목록이 반환된다")
+    void getMeetingSchedules_returnsParticipants() {
+        // given
+        String meetingId = "test-meeting-id";
+        Meeting meeting = createMeetingWithScheduleData();
+        when(meetingRepository.findByIdWithParticipants(meetingId)).thenReturn(Optional.of(meeting));
+        when(meetingRepository.findByIdWithScheduleVotes(meetingId)).thenReturn(Optional.of(meeting));
+
+        // when
+        GetMeetingScheduleResponse response = meetingService.getMeetingSchedules(meetingId);
+
+        // then
+        assertThat(response.participants()).hasSize(4);
+        assertThat(response.participants().get(0).name()).isEqualTo("홍길동");
+        assertThat(response.participants().get(1).name()).isEqualTo("김철수");
+    }
+
+    @Test
+    @DisplayName("모임 일정 조회 시 일정 설정 정보가 반환된다")
+    void getMeetingSchedules_returnsSchedulePollInfo() {
+        // given
+        String meetingId = "test-meeting-id";
+        Meeting meeting = createMeetingWithScheduleData();
+        when(meetingRepository.findByIdWithParticipants(meetingId)).thenReturn(Optional.of(meeting));
+        when(meetingRepository.findByIdWithScheduleVotes(meetingId)).thenReturn(Optional.of(meeting));
+
+        // when
+        GetMeetingScheduleResponse response = meetingService.getMeetingSchedules(meetingId);
+
+        // then
+        assertThat(response.dateOptions()).isNotEmpty();
+        assertThat(response.startTime()).isEqualTo(7);
+        assertThat(response.endTime()).isEqualTo(24);
+    }
+
+    @Test
+    @DisplayName("모임 일정 조회 시 일정 투표 데이터가 반환된다")
+    void getMeetingSchedules_returnsScheduleVotes() {
+        // given
+        String meetingId = "test-meeting-id";
+        Meeting meeting = createMeetingWithScheduleData();
+        when(meetingRepository.findByIdWithParticipants(meetingId)).thenReturn(Optional.of(meeting));
+        when(meetingRepository.findByIdWithScheduleVotes(meetingId)).thenReturn(Optional.of(meeting));
+
+        // when
+        GetMeetingScheduleResponse response = meetingService.getMeetingSchedules(meetingId);
+
+        // then
+        List<LocalDateTime> list = new ArrayList<>();
+        response.participants().forEach(p -> list.addAll(p.votedDates()));
+        assertThat(list).hasSize(0); // 초기에는 투표가 없으므로 0이어야 함
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 모임 조회 시 예외가 발생한다")
+    void getMeetingSchedules_throwsExceptionWhenNotFound() {
+        // given
+        String meetingId = "non-existent-id";
+        when(meetingRepository.findByIdWithParticipants(meetingId)).thenReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> meetingService.getMeetingSchedules(meetingId))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining(ErrorCode.MEETING_NOT_FOUND.getMessage());
+    }
+
+    @Test
+    @DisplayName("모임 일정 조회 시 투표한 참가자 수 0명과 전체 참가자 수 4명이 반환된다")
+    void getMeetingSchedules_returnsVotedParticipantCount() {
+        // given
+        String meetingId = "test-meeting-id";
+        Meeting meeting = createMeetingWithScheduleData();
+        when(meetingRepository.findByIdWithParticipants(meetingId)).thenReturn(Optional.of(meeting));
+        when(meetingRepository.findByIdWithScheduleVotes(meetingId)).thenReturn(Optional.of(meeting));
+
+        // when
+        GetMeetingScheduleResponse response = meetingService.getMeetingSchedules(meetingId);
+
+        // then
+        assertThat(response.votedParticipantCount()).isEqualTo(0);
+        assertThat(response.participantCount()).isEqualTo(10);
+    }
+
+    private Meeting createMeetingWithScheduleData() {
+        // Meeting 생성
+        Meeting meeting = Meeting.of(10);
+
+        // 참가자 추가
+        Participant participant1 = Participant.of(meeting, "key1", "홍길동");
+        Participant participant2 = Participant.of(meeting, "key2", "김철수");
+        Participant participant3 = Participant.of(meeting, "key3", "백두팔");
+        Participant participant4 = Participant.of(meeting, "key4", "이영희");
+        meeting.addParticipant(participant1);
+        meeting.addParticipant(participant2);
+        meeting.addParticipant(participant3);
+        meeting.addParticipant(participant4);
+
+        // SchedulePoll 생성 및 설정
+        SchedulePoll schedulePoll = SchedulePoll.defaultOf(meeting);
+
+        meeting.addPolls(schedulePoll, null);
+
+        return meeting;
+    }
+}
