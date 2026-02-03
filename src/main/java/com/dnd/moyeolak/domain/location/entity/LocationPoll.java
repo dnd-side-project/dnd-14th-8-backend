@@ -39,6 +39,7 @@ public class LocationPoll extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private PollStatus pollStatus = PollStatus.INACTIVE;
 
+    @Builder.Default
     @OneToMany(mappedBy = "locationPoll", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LocationVote> locationVotes = new ArrayList<>();
 
