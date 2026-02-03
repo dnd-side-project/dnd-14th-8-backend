@@ -8,4 +8,6 @@ public interface MeetingService {
     String createMeeting(CreateMeetingRequest request);
 
     GetMeetingScheduleResponse getMeetingSchedules(String meetingId);
+
+    void deleteMeeting(String meetingId);
 }

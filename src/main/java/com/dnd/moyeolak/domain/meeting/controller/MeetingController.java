@@ -31,4 +31,11 @@ public class MeetingController {
         String meetingId = meetingService.createMeeting(request);
         return ResponseEntity.ok(ApiResponse.success(meetingId));
     }
+
+    @DeleteMapping
+    @Operation(summary = "모임 삭제", description = "특정 모임을 삭제합니다.")
+    public ResponseEntity<ApiResponse<Void>> deleteMeeting(@RequestParam("meetingId") String meetingId) {
+        meetingService.deleteMeeting(meetingId);
+        return ResponseEntity.ok(ApiResponse.success());
+    }
 }

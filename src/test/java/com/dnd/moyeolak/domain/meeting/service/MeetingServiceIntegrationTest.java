@@ -1,10 +1,16 @@
 package com.dnd.moyeolak.domain.meeting.service;
 
+import com.dnd.moyeolak.domain.location.entity.LocationPoll;
 import com.dnd.moyeolak.domain.meeting.dto.CreateMeetingRequest;
 import com.dnd.moyeolak.domain.meeting.dto.GetMeetingScheduleResponse;
 import com.dnd.moyeolak.domain.meeting.entity.Meeting;
 import com.dnd.moyeolak.domain.meeting.repository.MeetingRepository;
+import com.dnd.moyeolak.domain.participant.entity.Participant;
+import com.dnd.moyeolak.domain.schedule.entity.SchedulePoll;
+import com.dnd.moyeolak.domain.schedule.entity.ScheduleVote;
+import com.dnd.moyeolak.domain.location.entity.LocationVote;
 import com.dnd.moyeolak.global.exception.BusinessException;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -12,6 +18,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -26,6 +35,9 @@ class MeetingServiceIntegrationTest {
 
     @Autowired
     private MeetingRepository meetingRepository;
+
+    @Autowired
+    private EntityManager em;
 
     @Test
     @DisplayName("모임 생성 시 meetingId가 반환된다")
@@ -213,6 +225,162 @@ class MeetingServiceIntegrationTest {
             // when & then
             assertThatThrownBy(() -> meetingService.getMeetingSchedules(nonExistentMeetingId))
                     .isInstanceOf(BusinessException.class);
+        }
+    }
+
+    @Nested
+    @DisplayName("모임 삭제")
+    class DeleteMeeting {
+
+        @Test
+        @DisplayName("모임 삭제 시 모임이 DB에서 삭제된다")
+        void deleteMeeting_removesMeetingFromDb() {
+            // given
+            String meetingId = createTestMeeting();
+
+            // when
+            meetingService.deleteMeeting(meetingId);
+            em.flush();
+            em.clear();
+
+            // then
+            assertThat(em.find(Meeting.class, meetingId)).isNull();
+        }
+
+        @Test
+        @DisplayName("모임 삭제 시 연관된 일정 투표가 함께 삭제된다")
+        void deleteMeeting_deletesSchedulePoll() {
+            // given
+            String meetingId = createTestMeeting();
+            Meeting meeting = meetingRepository.findByIdWithAllAssociations(meetingId).orElseThrow();
+            Long schedulePollId = meeting.getSchedulePoll().getSchedulePollId();
+
+            // when
+            meetingService.deleteMeeting(meetingId);
+            em.flush();
+            em.clear();
+
+            // then
+            assertThat(em.find(SchedulePoll.class, schedulePollId)).isNull();
+        }
+
+        @Test
+        @DisplayName("모임 삭제 시 연관된 장소 투표가 함께 삭제된다")
+        void deleteMeeting_deletesLocationPoll() {
+            // given
+            String meetingId = createTestMeeting();
+            Meeting meeting = meetingRepository.findByIdWithAllAssociations(meetingId).orElseThrow();
+            Long locationPollId = meeting.getLocationPoll().getLocationPollId();
+
+            // when
+            meetingService.deleteMeeting(meetingId);
+            em.flush();
+            em.clear();
+
+            // then
+            assertThat(em.find(LocationPoll.class, locationPollId)).isNull();
+        }
+
+        @Test
+        @DisplayName("모임 삭제 시 연관된 참가자가 함께 삭제된다")
+        void deleteMeeting_deletesParticipants() {
+            // given
+            String meetingId = createTestMeeting();
+            Meeting meeting = meetingRepository.findByIdWithAllAssociations(meetingId).orElseThrow();
+            Long participantId = meeting.getParticipants().getFirst().getParticipantId();
+
+            // when
+            meetingService.deleteMeeting(meetingId);
+            em.flush();
+            em.clear();
+
+            // then
+            assertThat(em.find(Participant.class, participantId)).isNull();
+        }
+
+        @Test
+        @DisplayName("모임 삭제 시 연관된 일정 투표 데이터가 함께 삭제된다")
+        void deleteMeeting_deletesScheduleVotes() {
+            // given
+            String meetingId = createTestMeeting();
+            Meeting meeting = meetingRepository.findByIdWithAllAssociations(meetingId).orElseThrow();
+            Long schedulePollId = meeting.getSchedulePoll().getSchedulePollId();
+            Long participantId = meeting.getParticipants().getFirst().getParticipantId();
+
+            em.createNativeQuery("INSERT INTO schedule_vote (participant_id, schedule_poll_id, voted_date) VALUES (?, ?, ?)")
+                    .setParameter(1, participantId)
+                    .setParameter(2, schedulePollId)
+                    .setParameter(3, LocalDateTime.now())
+                    .executeUpdate();
+            em.flush();
+            em.clear();
+
+            // when
+            meetingService.deleteMeeting(meetingId);
+            em.flush();
+            em.clear();
+
+            // then
+            Long count = em.createQuery(
+                    "SELECT COUNT(sv) FROM ScheduleVote sv WHERE sv.schedulePoll.schedulePollId = :id", Long.class)
+                    .setParameter("id", schedulePollId)
+                    .getSingleResult();
+            assertThat(count).isZero();
+        }
+
+        @Test
+        @DisplayName("모임 삭제 시 연관된 장소 투표 데이터가 함께 삭제된다")
+        void deleteMeeting_deletesLocationVotes() {
+            // given
+            String meetingId = createTestMeeting();
+            Meeting meeting = meetingRepository.findByIdWithAllAssociations(meetingId).orElseThrow();
+            Long locationPollId = meeting.getLocationPoll().getLocationPollId();
+            Long participantId = meeting.getParticipants().getFirst().getParticipantId();
+
+            em.createNativeQuery("INSERT INTO location_vote (location_poll_id, participant_id, departure_location, departure_lat, departure_lng) VALUES (?, ?, ?, ?, ?)")
+                    .setParameter(1, locationPollId)
+                    .setParameter(2, participantId)
+                    .setParameter(3, "강남역")
+                    .setParameter(4, new BigDecimal("37.4979502"))
+                    .setParameter(5, new BigDecimal("127.0276368"))
+                    .executeUpdate();
+            em.flush();
+            em.clear();
+
+            // when
+            meetingService.deleteMeeting(meetingId);
+            em.flush();
+            em.clear();
+
+            // then
+            Long count = em.createQuery(
+                    "SELECT COUNT(lv) FROM LocationVote lv WHERE lv.locationPoll.locationPollId = :id", Long.class)
+                    .setParameter("id", locationPollId)
+                    .getSingleResult();
+            assertThat(count).isZero();
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 모임 삭제 시 예외가 발생한다")
+        void deleteMeeting_throwsException_whenMeetingNotFound() {
+            // given
+            String nonExistentMeetingId = "non-existent-id";
+
+            // when & then
+            assertThatThrownBy(() -> meetingService.deleteMeeting(nonExistentMeetingId))
+                    .isInstanceOf(BusinessException.class);
+        }
+
+        private String createTestMeeting() {
+            CreateMeetingRequest request = new CreateMeetingRequest(
+                    5,
+                    "local-storage-key-123",
+                    "홍길동"
+            );
+            String meetingId = meetingService.createMeeting(request);
+            em.flush();
+            em.clear();
+            return meetingId;
         }
     }
 }

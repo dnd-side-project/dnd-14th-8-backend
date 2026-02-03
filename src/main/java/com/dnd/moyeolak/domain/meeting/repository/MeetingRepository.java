@@ -23,4 +23,13 @@ public interface MeetingRepository extends JpaRepository<Meeting, String> {
         WHERE m.meetingId = :meetingId
     """)
     Optional<Meeting> findByIdWithScheduleVotes(@Param("meetingId") String meetingId);
+
+    @Query("""
+        SELECT m FROM Meeting m
+        LEFT JOIN FETCH m.schedulePoll
+        LEFT JOIN FETCH m.locationPoll
+        LEFT JOIN FETCH m.participants
+        WHERE m.meetingId = :meetingId
+    """)
+    Optional<Meeting> findByIdWithAllAssociations(@Param("meetingId") String meetingId);
 }

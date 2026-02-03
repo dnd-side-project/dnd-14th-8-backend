@@ -44,4 +44,13 @@ public class MeetingServiceImpl implements MeetingService {
 
         return GetMeetingScheduleResponse.from(meeting);
     }
+
+    @Override
+    @Transactional
+    public void deleteMeeting(String meetingId) {
+        Meeting meeting = meetingRepository.findByIdWithAllAssociations(meetingId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEETING_NOT_FOUND));
+
+        meetingRepository.delete(meeting);
+    }
 }
