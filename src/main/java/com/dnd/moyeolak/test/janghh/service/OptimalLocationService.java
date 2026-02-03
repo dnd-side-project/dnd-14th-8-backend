@@ -44,7 +44,7 @@ public class OptimalLocationService {
         );
 
         if (stations.isEmpty()) {
-            throw new IllegalStateException("주변에 지하철역이 없습니다.");
+            throw new IllegalStateException("주변에 지하철역이 없습니다. ");
         }
 
         log.info("지하철역 검색 완료: {}개", stations.size());
