@@ -13,6 +13,13 @@ public enum ErrorCode {
     INVALID_FORMAT("E102", "입력 형식이 올바르지 않습니다.", HttpStatus.BAD_REQUEST),
     INVALID_PARAMETER("E103", "유효성 검증 실패", HttpStatus.BAD_REQUEST),
 
+    // 클라이언트 오류
+    UNAUTHORIZED("E401", "인증이 필요합니다.", HttpStatus.UNAUTHORIZED),
+    FORBIDDEN("E403", "접근 권한이 없습니다.", HttpStatus.FORBIDDEN),
+    NOT_FOUND("E404", "리소스를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    DUPLICATE_RESOURCE("E409", "이미 존재하는 리소스입니다.", HttpStatus.CONFLICT),
+    MEETING_NOT_FOUND("E410", "모임이 존재하지 않습니다.", HttpStatus.NOT_FOUND),
+
     // 서버 오류
     SERVER_ERROR("E500", "서버 내부 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
     ;

@@ -7,13 +7,21 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
         format_sql: true
     show-sql: true
     open-in-view: false
+
+kakao:
+  api:
+    key: ${KAKAO_API_KEY}
+
+odsay:
+  api:
+    key: ${ODSAY_API_KEY}
 
 logging:
   level:

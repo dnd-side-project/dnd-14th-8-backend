@@ -1,0 +1,4 @@
+reviews:
+  enabled: false
+  auto_review:
+    enabled: false
