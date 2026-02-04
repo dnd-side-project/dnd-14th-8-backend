@@ -6,6 +6,7 @@ import com.dnd.moyeolak.domain.schedule.entity.ScheduleVote;
 import com.dnd.moyeolak.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.BatchSize;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,10 +33,12 @@ public class Participant extends BaseEntity {
     private String name;
 
     @Builder.Default
+    @BatchSize(size = 15)
     @OneToMany(mappedBy = "participant", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ScheduleVote> scheduleVotes = new ArrayList<>();
 
     @Builder.Default
+    @BatchSize(size = 15)
     @OneToMany(mappedBy = "participant", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LocationVote> locationVotes = new ArrayList<>();
 

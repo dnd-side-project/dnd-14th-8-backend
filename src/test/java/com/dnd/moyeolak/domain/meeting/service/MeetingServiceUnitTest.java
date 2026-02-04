@@ -1,5 +1,6 @@
 package com.dnd.moyeolak.domain.meeting.service;
 
+import com.dnd.moyeolak.domain.location.entity.LocationPoll;
 import com.dnd.moyeolak.domain.meeting.dto.GetMeetingScheduleResponse;
 import com.dnd.moyeolak.domain.meeting.entity.Meeting;
 import com.dnd.moyeolak.domain.meeting.repository.MeetingRepository;
@@ -25,6 +26,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -36,12 +38,15 @@ class MeetingServiceUnitTest {
     @InjectMocks
     private MeetingServiceImpl meetingService;
 
+    /**
+     * 모임 일정 조회 관련 테스트
+     */
     @Test
     @DisplayName("모임 일정 조회 시 참가자 수가 반환된다")
     void getMeetingSchedules_returnsParticipantCount() {
         // given
         String meetingId = "test-meeting-id";
-        Meeting meeting = createMeetingWithScheduleData();
+        Meeting meeting = createMeetingWithAllAssociations();
         when(meetingRepository.findByIdWithParticipants(meetingId)).thenReturn(Optional.of(meeting));
         when(meetingRepository.findByIdWithScheduleVotes(meetingId)).thenReturn(Optional.of(meeting));
 
@@ -57,7 +62,7 @@ class MeetingServiceUnitTest {
     void getMeetingSchedules_returnsParticipants() {
         // given
         String meetingId = "test-meeting-id";
-        Meeting meeting = createMeetingWithScheduleData();
+        Meeting meeting = createMeetingWithAllAssociations();
         when(meetingRepository.findByIdWithParticipants(meetingId)).thenReturn(Optional.of(meeting));
         when(meetingRepository.findByIdWithScheduleVotes(meetingId)).thenReturn(Optional.of(meeting));
 
@@ -75,7 +80,7 @@ class MeetingServiceUnitTest {
     void getMeetingSchedules_returnsSchedulePollInfo() {
         // given
         String meetingId = "test-meeting-id";
-        Meeting meeting = createMeetingWithScheduleData();
+        Meeting meeting = createMeetingWithAllAssociations();
         when(meetingRepository.findByIdWithParticipants(meetingId)).thenReturn(Optional.of(meeting));
         when(meetingRepository.findByIdWithScheduleVotes(meetingId)).thenReturn(Optional.of(meeting));
 
@@ -93,7 +98,7 @@ class MeetingServiceUnitTest {
     void getMeetingSchedules_returnsScheduleVotes() {
         // given
         String meetingId = "test-meeting-id";
-        Meeting meeting = createMeetingWithScheduleData();
+        Meeting meeting = createMeetingWithAllAssociations();
         when(meetingRepository.findByIdWithParticipants(meetingId)).thenReturn(Optional.of(meeting));
         when(meetingRepository.findByIdWithScheduleVotes(meetingId)).thenReturn(Optional.of(meeting));
 
@@ -120,11 +125,11 @@ class MeetingServiceUnitTest {
     }
 
     @Test
-    @DisplayName("모임 일정 조회 시 투표한 참가자 수 0명과 전체 참가자 수 4명이 반환된다")
+    @DisplayName("모임 일정 조회 시 투표한 참가자 수 0명과 전체 참가자 수 10명이 반환된다")
     void getMeetingSchedules_returnsVotedParticipantCount() {
         // given
         String meetingId = "test-meeting-id";
-        Meeting meeting = createMeetingWithScheduleData();
+        Meeting meeting = createMeetingWithAllAssociations();
         when(meetingRepository.findByIdWithParticipants(meetingId)).thenReturn(Optional.of(meeting));
         when(meetingRepository.findByIdWithScheduleVotes(meetingId)).thenReturn(Optional.of(meeting));
 
@@ -136,7 +141,38 @@ class MeetingServiceUnitTest {
         assertThat(response.participantCount()).isEqualTo(10);
     }
 
-    private Meeting createMeetingWithScheduleData() {
+    /**
+     * 모임 삭제 관련 테스트
+     */
+    @Test
+    @DisplayName("모임 삭제 시 모임이 존재하면 정상 삭제된다")
+    void deleteMeeting_deletesSuccessfullyWhenFound() {
+        // given
+        String meetingId = "test-meeting-id";
+        Meeting meeting = createMeetingWithAllAssociations();
+        when(meetingRepository.findByIdWithAllAssociations(meetingId)).thenReturn(Optional.of(meeting));
+
+        // when
+        meetingService.deleteMeeting(meetingId);
+
+        // then
+        verify(meetingRepository).delete(meeting);
+    }
+
+    @Test
+    @DisplayName("모임 삭제 시 모임이 존재하지 않으면 예외가 발생한다")
+    void deleteMeeting_throwsExceptionWhenNotFound() {
+        // given
+        String meetingId = "non-existent-id";
+        when(meetingRepository.findByIdWithAllAssociations(meetingId)).thenReturn(Optional.empty());
+
+        // when && then
+        assertThatThrownBy(() -> meetingService.deleteMeeting(meetingId))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining(ErrorCode.MEETING_NOT_FOUND.getMessage());
+    }
+
+    private Meeting createMeetingWithAllAssociations() {
         // Meeting 생성
         Meeting meeting = Meeting.of(10);
 
@@ -150,10 +186,11 @@ class MeetingServiceUnitTest {
         meeting.addParticipant(participant3);
         meeting.addParticipant(participant4);
 
-        // SchedulePoll 생성 및 설정
+        // SchedulePoll, LocationPoll 생성 및 설정
         SchedulePoll schedulePoll = SchedulePoll.defaultOf(meeting);
+        LocationPoll locationPoll = LocationPoll.defaultOf(meeting);
 
-        meeting.addPolls(schedulePoll, null);
+        meeting.addPolls(schedulePoll, locationPoll);
 
         return meeting;
     }
