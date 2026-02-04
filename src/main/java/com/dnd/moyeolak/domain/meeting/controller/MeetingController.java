@@ -32,8 +32,8 @@ public class MeetingController {
 
     @GetMapping("/{id}/schedules")
     @Operation(summary = "모임 일정 조회", description = "특정 모임의 일정을 조회합니다.")
-    public ResponseEntity<ApiResponse<GetMeetingScheduleResponse>> getMeetingSchedules(@PathVariable("id") String meetingId) {
-        GetMeetingScheduleResponse meetingSchedules = meetingService.getMeetingSchedules(meetingId);
+    public ResponseEntity<ApiResponse<GetMeetingScheduleResponse>> getMeetingSchedules(@PathVariable String id) {
+        GetMeetingScheduleResponse meetingSchedules = meetingService.getMeetingSchedules(id);
         return ResponseEntity.ok(ApiResponse.success(meetingSchedules));
     }
 
@@ -42,12 +42,5 @@ public class MeetingController {
     public ResponseEntity<ApiResponse<String>> createMeeting(@RequestBody CreateMeetingRequest request) {
         String meetingId = meetingService.createMeeting(request);
         return ResponseEntity.ok(ApiResponse.success(meetingId));
-    }
-
-    @DeleteMapping
-    @Operation(summary = "모임 삭제", description = "특정 모임을 삭제합니다.")
-    public ResponseEntity<ApiResponse<Void>> deleteMeeting(@RequestParam("meetingId") String meetingId) {
-        meetingService.deleteMeeting(meetingId);
-        return ResponseEntity.ok(ApiResponse.success());
     }
 }
