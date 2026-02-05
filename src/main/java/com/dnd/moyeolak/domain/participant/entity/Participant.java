@@ -26,7 +26,7 @@ public class Participant extends BaseEntity {
     @JoinColumn(name = "meeting_id", nullable = false)
     private Meeting meeting;
 
-    @Column(comment = "고유키", nullable = false, unique = true)
+    @Column(comment = "고유키")
     private String localStorageKey;
 
     @Column(comment = "이름", nullable = false)
