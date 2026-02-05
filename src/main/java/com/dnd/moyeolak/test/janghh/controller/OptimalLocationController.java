@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @Slf4j
-@Tag(name = "Optimal Location", description = "참가자 위치를 바탕으로 최적 만남 장소를 추천하는 API")
+@Tag(name = "Optimal Location", description = "참가자 위치를 바탕으로 최적 만남 장소를 추천하는 테스트 API")
 @RestController
 @RequestMapping("/api/test/janghh/optimal-location")
 @RequiredArgsConstructor
@@ -29,7 +29,7 @@ public class OptimalLocationController {
     @PostMapping
     @Operation(
         summary = "최적 만남 장소 추천",
-        description = "참여자의 위도/경도 좌표를 받아 모임 중심점을 계산하고, 카카오/ODsay 탐색 결과를 기반으로 최적 장소 3곳을 추천합니다."
+        description = "참여자의 위도/경도 좌표를 받아 모임 중심점을 계산하고, 카카오/ODsay 탐색 결과를 기반으로 최적 장소 3곳을 추천하는 테스트 용도 API입니다."
     )
     @io.swagger.v3.oas.annotations.responses.ApiResponse(
         responseCode = "200",
