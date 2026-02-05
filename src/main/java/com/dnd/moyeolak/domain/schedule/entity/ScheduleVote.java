@@ -27,4 +27,12 @@ public class ScheduleVote {
 
     @Column(columnDefinition = "DATETIME(0)", comment = "투표한 날짜", nullable = false)
     private LocalDateTime votedDate;
+
+    public static ScheduleVote of(Participant participant, SchedulePoll schedulePoll, LocalDateTime votedDate) {
+        return ScheduleVote.builder()
+                .participant(participant)
+                .schedulePoll(schedulePoll)
+                .votedDate(votedDate)
+                .build();
+    }
 }

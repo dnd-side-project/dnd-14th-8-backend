@@ -19,6 +19,9 @@ public enum ErrorCode {
     NOT_FOUND("E404", "리소스를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     DUPLICATE_RESOURCE("E409", "이미 존재하는 리소스입니다.", HttpStatus.CONFLICT),
     MEETING_NOT_FOUND("E410", "모임이 존재하지 않습니다.", HttpStatus.NOT_FOUND),
+    SCHEDULE_POLL_NOT_FOUND("E411", "일정 투표판이 존재하지 않습니다.", HttpStatus.NOT_FOUND),
+    LOCATION_POLL_NOT_FOUND("E412", "위치 투표판이 존재하지 않습니다.", HttpStatus.NOT_FOUND),
+    DUPLICATE_LOCAL_STORAGE_KEY("E413", "이미 참여한 사용자입니다.", HttpStatus.CONFLICT),
 
     // 서버 오류
     SERVER_ERROR("E500", "서버 내부 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),

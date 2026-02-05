@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @Tag(name = "Meeting", description = "모임 관련 API")
 @RestController
 @RequestMapping("/api/meetings")
@@ -18,10 +20,20 @@ public class MeetingController {
 
     private final MeetingService meetingService;
 
+    @GetMapping("/all")
+    @Operation(summary = "[TEST] 모임 전체 조회", description = """
+            모든 모임의 ID를 조회합니다.
+            현재 DB에 저장되어 있는 모임 ID를 가져오기 위한 테스트 용도로만 사용됩니다.
+            """)
+    public ResponseEntity<ApiResponse<List<String>>> getAllMeetings() {
+        List<String> allMeetings = meetingService.findAllMeetings();
+        return ResponseEntity.ok(ApiResponse.success(allMeetings));
+    }
+
     @GetMapping("/{id}/schedules")
     @Operation(summary = "모임 일정 조회", description = "특정 모임의 일정을 조회합니다.")
-    public ResponseEntity<ApiResponse<GetMeetingScheduleResponse>> getMeetingSchedules(@PathVariable("id") String meetingId) {
-        GetMeetingScheduleResponse meetingSchedules = meetingService.getMeetingSchedules(meetingId);
+    public ResponseEntity<ApiResponse<GetMeetingScheduleResponse>> getMeetingSchedules(@PathVariable String id) {
+        GetMeetingScheduleResponse meetingSchedules = meetingService.getMeetingSchedules(id);
         return ResponseEntity.ok(ApiResponse.success(meetingSchedules));
     }
 
