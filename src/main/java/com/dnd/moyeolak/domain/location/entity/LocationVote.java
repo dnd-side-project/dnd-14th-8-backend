@@ -22,8 +22,11 @@ public class LocationVote {
     private LocationPoll locationPoll;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "participant_id", nullable = false)
+    @JoinColumn(name = "participant_id")
     private Participant participant;
+
+    @Column(comment = "출발지 등록자 이름. 참가자 없이 수동 입력된 출발지일 경우 사용")
+    private String departureName;
 
     @Column(comment = "출발지 주소", nullable = false)
     private String departureLocation;
