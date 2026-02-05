@@ -23,10 +23,15 @@ public record CreateParticipantWithScheduleRequest(
         String localStorageKey,
 
         @ArraySchema(
-                schema = @Schema(description = "가능한 시간 (30분 단위)"),
+                schema = @Schema(
+                        description = "가능한 시간 (30분 단위, ISO-8601, Asia/Seoul 기준)",
+                        type = "string",
+                        format = "date-time",
+                        example = "2025-02-10T09:00:00"
+                ),
                 arraySchema = @Schema(
-                        description = "참여 가능한 시간대 목록",
-                        example = "[\"2025-02-10T09:00:00\", \"2025-02-10T09:30:00\", \"2025-02-10T10:00:00\", \"2025-02-10T14:00:00\"]"
+                        description = "참여 가능한 시간대 목록 (선호 순서대로 최대 20개)",
+                        example = "[\"2025-02-10T09:00:00\", \"2025-02-10T09:30:00\", \"2025-02-10T10:00:00\", \"2025-02-11T14:30:00\"]"
                 )
         )
         @NotEmpty(message = "가능한 시간 정보는 필수입니다")
