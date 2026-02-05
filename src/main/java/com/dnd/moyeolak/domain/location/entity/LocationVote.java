@@ -33,4 +33,15 @@ public class LocationVote {
 
     @Column(comment = "출발지 경도", nullable = false, precision = 10, scale = 7)
     private BigDecimal departureLng;
+
+    public static LocationVote of(LocationPoll locationPoll, Participant participant,
+                                  String departureLocation, BigDecimal departureLat, BigDecimal departureLng) {
+        return LocationVote.builder()
+                .locationPoll(locationPoll)
+                .participant(participant)
+                .departureLocation(departureLocation)
+                .departureLat(departureLat)
+                .departureLng(departureLng)
+                .build();
+    }
 }
