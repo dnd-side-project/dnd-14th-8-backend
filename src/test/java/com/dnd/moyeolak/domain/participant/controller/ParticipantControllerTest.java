@@ -3,7 +3,7 @@ package com.dnd.moyeolak.domain.participant.controller;
 import com.dnd.moyeolak.domain.participant.dto.CreateParticipantResponse;
 import com.dnd.moyeolak.domain.participant.dto.CreateParticipantWithLocationRequest;
 import com.dnd.moyeolak.domain.participant.dto.CreateParticipantWithScheduleRequest;
-import com.dnd.moyeolak.domain.participant.service.ParticipantService;
+import com.dnd.moyeolak.domain.participant.facade.ParticipantFacade;
 import com.dnd.moyeolak.global.exception.BusinessException;
 import com.dnd.moyeolak.global.exception.GlobalExceptionAdvice;
 import com.dnd.moyeolak.global.response.ErrorCode;
@@ -42,14 +42,14 @@ class ParticipantControllerTest {
     private static final String MEETING_ID = "meeting-id";
 
     @Mock
-    private ParticipantService participantService;
+    private ParticipantFacade participantFacade;
 
     private MockMvc mockMvc;
     private ObjectMapper objectMapper;
 
     @BeforeEach
     void setUp() {
-        ParticipantController controller = new ParticipantController(participantService);
+        ParticipantController controller = new ParticipantController(participantFacade);
         this.mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setControllerAdvice(new GlobalExceptionAdvice())
                 .build();
@@ -60,8 +60,8 @@ class ParticipantControllerTest {
     }
 
     @Test
-    @DisplayName("일정 기반 참여자 생성 API 는 201 상태와 응답 본문을 반환한다")
-    void createWithSchedule_returnsCreatedResponse() throws Exception {
+    @DisplayName("일정 투표와 함께 참여 API 는 201 상태와 응답 본문을 반환한다")
+    void joinWithSchedule_returnsCreatedResponse() throws Exception {
         CreateParticipantWithScheduleRequest request = new CreateParticipantWithScheduleRequest(
                 "홍길동",
                 "local-key",
@@ -77,10 +77,11 @@ class ParticipantControllerTest {
                 false,
                 LocalDateTime.now()
         );
-        when(participantService.createWithSchedule(eq(MEETING_ID), any(CreateParticipantWithScheduleRequest.class)))
+        when(participantFacade.createWithSchedule(eq(MEETING_ID), any(CreateParticipantWithScheduleRequest.class)))
                 .thenReturn(response);
 
-        mockMvc.perform(post("/api/meetings/{meetingId}/participants/schedule", MEETING_ID)
+        mockMvc.perform(post("/api/participants/join-with-schedule")
+                        .param("meetingId", MEETING_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -91,13 +92,13 @@ class ParticipantControllerTest {
 
         ArgumentCaptor<CreateParticipantWithScheduleRequest> captor =
                 ArgumentCaptor.forClass(CreateParticipantWithScheduleRequest.class);
-        verify(participantService).createWithSchedule(eq(MEETING_ID), captor.capture());
+        verify(participantFacade).createWithSchedule(eq(MEETING_ID), captor.capture());
         assertThat(captor.getValue()).isEqualTo(request);
     }
 
     @Test
-    @DisplayName("위치 기반 참여자 생성 API 는 201 상태와 응답 본문을 반환한다")
-    void createWithLocation_returnsCreatedResponse() throws Exception {
+    @DisplayName("위치 투표와 함께 참여 API 는 201 상태와 응답 본문을 반환한다")
+    void joinWithLocation_returnsCreatedResponse() throws Exception {
         CreateParticipantWithLocationRequest request = new CreateParticipantWithLocationRequest(
                 "이영희",
                 "local-key",
@@ -114,10 +115,11 @@ class ParticipantControllerTest {
                 true,
                 LocalDateTime.now()
         );
-        when(participantService.createWithLocation(eq(MEETING_ID), any(CreateParticipantWithLocationRequest.class)))
+        when(participantFacade.createWithLocation(eq(MEETING_ID), any(CreateParticipantWithLocationRequest.class)))
                 .thenReturn(response);
 
-        mockMvc.perform(post("/api/meetings/{meetingId}/participants/location", MEETING_ID)
+        mockMvc.perform(post("/api/participants/join-with-location")
+                        .param("meetingId", MEETING_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -128,13 +130,13 @@ class ParticipantControllerTest {
 
         ArgumentCaptor<CreateParticipantWithLocationRequest> captor =
                 ArgumentCaptor.forClass(CreateParticipantWithLocationRequest.class);
-        verify(participantService).createWithLocation(eq(MEETING_ID), captor.capture());
+        verify(participantFacade).createWithLocation(eq(MEETING_ID), captor.capture());
         assertThat(captor.getValue()).isEqualTo(request);
     }
 
     @Test
-    @DisplayName("일정 기반 참여자 생성 API 는 요청 검증 실패 시 400을 반환한다")
-    void createWithSchedule_returnsBadRequestOnValidationError() throws Exception {
+    @DisplayName("일정 투표와 함께 참여 API 는 요청 검증 실패 시 400을 반환한다")
+    void joinWithSchedule_returnsBadRequestOnValidationError() throws Exception {
         String invalidPayload = """
                 {
                   "name": "",
@@ -143,7 +145,8 @@ class ParticipantControllerTest {
                 }
                 """;
 
-        mockMvc.perform(post("/api/meetings/{meetingId}/participants/schedule", MEETING_ID)
+        mockMvc.perform(post("/api/participants/join-with-schedule")
+                        .param("meetingId", MEETING_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(invalidPayload))
                 .andExpect(status().isBadRequest())
@@ -152,12 +155,12 @@ class ParticipantControllerTest {
                 .andExpect(jsonPath("$.data.localStorageKey").exists())
                 .andExpect(jsonPath("$.data.availableSchedules").exists());
 
-        verifyNoInteractions(participantService);
+        verifyNoInteractions(participantFacade);
     }
 
     @Test
-    @DisplayName("위치 기반 참여자 생성 API 는 비즈니스 예외 발생 시 에러 응답을 반환한다")
-    void createWithLocation_returnsErrorResponseWhenServiceThrowsBusinessException() throws Exception {
+    @DisplayName("위치 투표와 함께 참여 API 는 비즈니스 예외 발생 시 에러 응답을 반환한다")
+    void joinWithLocation_returnsErrorResponseWhenFacadeThrowsBusinessException() throws Exception {
         CreateParticipantWithLocationRequest request = new CreateParticipantWithLocationRequest(
                 "이영희",
                 "local-key",
@@ -167,16 +170,17 @@ class ParticipantControllerTest {
                         "서울시 중구 명동"
                 )
         );
-        when(participantService.createWithLocation(eq(MEETING_ID), any(CreateParticipantWithLocationRequest.class)))
+        when(participantFacade.createWithLocation(eq(MEETING_ID), any(CreateParticipantWithLocationRequest.class)))
                 .thenThrow(new BusinessException(ErrorCode.LOCATION_POLL_NOT_FOUND));
 
-        mockMvc.perform(post("/api/meetings/{meetingId}/participants/location", MEETING_ID)
+        mockMvc.perform(post("/api/participants/join-with-location")
+                        .param("meetingId", MEETING_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().is(ErrorCode.LOCATION_POLL_NOT_FOUND.getHttpStatus().value()))
                 .andExpect(jsonPath("$.code").value(ErrorCode.LOCATION_POLL_NOT_FOUND.getCode()))
                 .andExpect(jsonPath("$.message").value(ErrorCode.LOCATION_POLL_NOT_FOUND.getMessage()));
 
-        verify(participantService).createWithLocation(eq(MEETING_ID), any(CreateParticipantWithLocationRequest.class));
+        verify(participantFacade).createWithLocation(eq(MEETING_ID), any(CreateParticipantWithLocationRequest.class));
     }
 }

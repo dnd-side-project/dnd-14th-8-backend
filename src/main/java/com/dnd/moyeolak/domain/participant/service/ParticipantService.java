@@ -1,12 +1,11 @@
 package com.dnd.moyeolak.domain.participant.service;
 
-import com.dnd.moyeolak.domain.participant.dto.CreateParticipantResponse;
-import com.dnd.moyeolak.domain.participant.dto.CreateParticipantWithLocationRequest;
-import com.dnd.moyeolak.domain.participant.dto.CreateParticipantWithScheduleRequest;
+import com.dnd.moyeolak.domain.meeting.entity.Meeting;
+import com.dnd.moyeolak.domain.participant.entity.Participant;
 
 public interface ParticipantService {
 
-    CreateParticipantResponse createWithSchedule(String meetingId, CreateParticipantWithScheduleRequest request);
+    Participant create(Meeting meeting, String name, String localStorageKey);
 
-    CreateParticipantResponse createWithLocation(String meetingId, CreateParticipantWithLocationRequest request);
+    void validateLocalStorageKeyUnique(Meeting meeting, String localStorageKey);
 }

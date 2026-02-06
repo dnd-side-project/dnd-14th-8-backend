@@ -37,6 +37,12 @@ public class MeetingServiceImpl implements MeetingService {
     }
 
     @Override
+    public Meeting get(String meetingId) {
+        return meetingRepository.findById(meetingId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEETING_NOT_FOUND));
+    }
+
+    @Override
     public GetMeetingScheduleResponse getMeetingSchedules(String meetingId) {
         Meeting meeting = meetingRepository.findByIdWithAllAssociations(meetingId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEETING_NOT_FOUND));
