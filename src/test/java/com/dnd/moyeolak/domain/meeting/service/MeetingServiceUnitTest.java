@@ -47,8 +47,7 @@ class MeetingServiceUnitTest {
         // given
         String meetingId = "test-meeting-id";
         Meeting meeting = createMeetingWithAllAssociations();
-        when(meetingRepository.findByIdWithParticipants(meetingId)).thenReturn(Optional.of(meeting));
-        when(meetingRepository.findByIdWithScheduleVotes(meetingId)).thenReturn(Optional.of(meeting));
+        when(meetingRepository.findByIdWithAllAssociations(meetingId)).thenReturn(Optional.of(meeting));
 
         // when
         GetMeetingScheduleResponse response = meetingService.getMeetingSchedules(meetingId);
@@ -63,8 +62,7 @@ class MeetingServiceUnitTest {
         // given
         String meetingId = "test-meeting-id";
         Meeting meeting = createMeetingWithAllAssociations();
-        when(meetingRepository.findByIdWithParticipants(meetingId)).thenReturn(Optional.of(meeting));
-        when(meetingRepository.findByIdWithScheduleVotes(meetingId)).thenReturn(Optional.of(meeting));
+        when(meetingRepository.findByIdWithAllAssociations(meetingId)).thenReturn(Optional.of(meeting));
 
         // when
         GetMeetingScheduleResponse response = meetingService.getMeetingSchedules(meetingId);
@@ -81,8 +79,7 @@ class MeetingServiceUnitTest {
         // given
         String meetingId = "test-meeting-id";
         Meeting meeting = createMeetingWithAllAssociations();
-        when(meetingRepository.findByIdWithParticipants(meetingId)).thenReturn(Optional.of(meeting));
-        when(meetingRepository.findByIdWithScheduleVotes(meetingId)).thenReturn(Optional.of(meeting));
+        when(meetingRepository.findByIdWithAllAssociations(meetingId)).thenReturn(Optional.of(meeting));
 
         // when
         GetMeetingScheduleResponse response = meetingService.getMeetingSchedules(meetingId);
@@ -99,8 +96,7 @@ class MeetingServiceUnitTest {
         // given
         String meetingId = "test-meeting-id";
         Meeting meeting = createMeetingWithAllAssociations();
-        when(meetingRepository.findByIdWithParticipants(meetingId)).thenReturn(Optional.of(meeting));
-        when(meetingRepository.findByIdWithScheduleVotes(meetingId)).thenReturn(Optional.of(meeting));
+        when(meetingRepository.findByIdWithAllAssociations(meetingId)).thenReturn(Optional.of(meeting));
 
         // when
         GetMeetingScheduleResponse response = meetingService.getMeetingSchedules(meetingId);
@@ -116,7 +112,7 @@ class MeetingServiceUnitTest {
     void getMeetingSchedules_throwsExceptionWhenNotFound() {
         // given
         String meetingId = "non-existent-id";
-        when(meetingRepository.findByIdWithParticipants(meetingId)).thenReturn(Optional.empty());
+        when(meetingRepository.findByIdWithAllAssociations(meetingId)).thenReturn(Optional.empty());
 
         // when & then
         assertThatThrownBy(() -> meetingService.getMeetingSchedules(meetingId))
@@ -130,8 +126,7 @@ class MeetingServiceUnitTest {
         // given
         String meetingId = "test-meeting-id";
         Meeting meeting = createMeetingWithAllAssociations();
-        when(meetingRepository.findByIdWithParticipants(meetingId)).thenReturn(Optional.of(meeting));
-        when(meetingRepository.findByIdWithScheduleVotes(meetingId)).thenReturn(Optional.of(meeting));
+        when(meetingRepository.findByIdWithAllAssociations(meetingId)).thenReturn(Optional.of(meeting));
 
         // when
         GetMeetingScheduleResponse response = meetingService.getMeetingSchedules(meetingId);
