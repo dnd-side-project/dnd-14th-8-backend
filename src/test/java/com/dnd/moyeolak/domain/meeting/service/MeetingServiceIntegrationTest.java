@@ -307,10 +307,13 @@ class MeetingServiceIntegrationTest {
             Long schedulePollId = meeting.getSchedulePoll().getSchedulePollId();
             Long participantId = meeting.getParticipants().getFirst().getParticipantId();
 
-            em.createNativeQuery("INSERT INTO schedule_vote (participant_id, schedule_poll_id, voted_date) VALUES (?, ?, ?)")
+            LocalDateTime now = LocalDateTime.now();
+            em.createNativeQuery("INSERT INTO schedule_vote (participant_id, schedule_poll_id, voted_date, created_at, updated_at) VALUES (?, ?, ?, ?, ?)")
                     .setParameter(1, participantId)
                     .setParameter(2, schedulePollId)
-                    .setParameter(3, LocalDateTime.now())
+                    .setParameter(3, now)
+                    .setParameter(4, now)
+                    .setParameter(5, now)
                     .executeUpdate();
             em.flush();
             em.clear();
@@ -337,12 +340,15 @@ class MeetingServiceIntegrationTest {
             Long locationPollId = meeting.getLocationPoll().getLocationPollId();
             Long participantId = meeting.getParticipants().getFirst().getParticipantId();
 
-            em.createNativeQuery("INSERT INTO location_vote (location_poll_id, participant_id, departure_location, departure_lat, departure_lng) VALUES (?, ?, ?, ?, ?)")
+            LocalDateTime now = LocalDateTime.now();
+            em.createNativeQuery("INSERT INTO location_vote (location_poll_id, participant_id, departure_location, departure_lat, departure_lng, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)")
                     .setParameter(1, locationPollId)
                     .setParameter(2, participantId)
                     .setParameter(3, "강남역")
                     .setParameter(4, new BigDecimal("37.4979502"))
                     .setParameter(5, new BigDecimal("127.0276368"))
+                    .setParameter(6, now)
+                    .setParameter(7, now)
                     .executeUpdate();
             em.flush();
             em.clear();
