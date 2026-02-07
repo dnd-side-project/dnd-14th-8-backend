@@ -3,7 +3,7 @@ package com.dnd.moyeolak.domain.participant.controller;
 import com.dnd.moyeolak.domain.participant.dto.CreateParticipantResponse;
 import com.dnd.moyeolak.domain.participant.dto.CreateParticipantWithLocationRequest;
 import com.dnd.moyeolak.domain.participant.dto.CreateParticipantWithScheduleRequest;
-import com.dnd.moyeolak.domain.participant.facade.ParticipantFacade;
+import com.dnd.moyeolak.domain.participant.service.ParticipantService;
 import com.dnd.moyeolak.global.response.ApiResponse;
 import com.dnd.moyeolak.global.response.SuccessCode;
 import io.swagger.v3.oas.annotations.Operation;
@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class ParticipantController {
 
-    private final ParticipantFacade participantFacade;
+    private final ParticipantService participantService;
 
     @PostMapping("/join-with-schedule")
     @Operation(
@@ -130,7 +130,7 @@ public class ParticipantController {
             @RequestParam String meetingId,
             @Valid @RequestBody CreateParticipantWithScheduleRequest request) {
 
-        CreateParticipantResponse response = participantFacade.createWithSchedule(meetingId, request);
+        CreateParticipantResponse response = participantService.createWithSchedule(meetingId, request);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -245,7 +245,7 @@ public class ParticipantController {
             @RequestParam String meetingId,
             @Valid @RequestBody CreateParticipantWithLocationRequest request) {
 
-        CreateParticipantResponse response = participantFacade.createWithLocation(meetingId, request);
+        CreateParticipantResponse response = participantService.createWithLocation(meetingId, request);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)

@@ -3,7 +3,7 @@ package com.dnd.moyeolak.domain.participant.controller;
 import com.dnd.moyeolak.domain.participant.dto.CreateParticipantResponse;
 import com.dnd.moyeolak.domain.participant.dto.CreateParticipantWithLocationRequest;
 import com.dnd.moyeolak.domain.participant.dto.CreateParticipantWithScheduleRequest;
-import com.dnd.moyeolak.domain.participant.facade.ParticipantFacade;
+import com.dnd.moyeolak.domain.participant.service.ParticipantService;
 import com.dnd.moyeolak.global.exception.BusinessException;
 import com.dnd.moyeolak.global.exception.GlobalExceptionAdvice;
 import com.dnd.moyeolak.global.response.ErrorCode;
@@ -42,14 +42,14 @@ class ParticipantControllerTest {
     private static final String MEETING_ID = "meeting-id";
 
     @Mock
-    private ParticipantFacade participantFacade;
+    private ParticipantService participantService;
 
     private MockMvc mockMvc;
     private ObjectMapper objectMapper;
 
     @BeforeEach
     void setUp() {
-        ParticipantController controller = new ParticipantController(participantFacade);
+        ParticipantController controller = new ParticipantController(participantService);
         this.mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setControllerAdvice(new GlobalExceptionAdvice())
                 .build();
@@ -77,7 +77,7 @@ class ParticipantControllerTest {
                 false,
                 LocalDateTime.now()
         );
-        when(participantFacade.createWithSchedule(eq(MEETING_ID), any(CreateParticipantWithScheduleRequest.class)))
+        when(participantService.createWithSchedule(eq(MEETING_ID), any(CreateParticipantWithScheduleRequest.class)))
                 .thenReturn(response);
 
         mockMvc.perform(post("/api/participants/join-with-schedule")
@@ -92,7 +92,7 @@ class ParticipantControllerTest {
 
         ArgumentCaptor<CreateParticipantWithScheduleRequest> captor =
                 ArgumentCaptor.forClass(CreateParticipantWithScheduleRequest.class);
-        verify(participantFacade).createWithSchedule(eq(MEETING_ID), captor.capture());
+        verify(participantService).createWithSchedule(eq(MEETING_ID), captor.capture());
         assertThat(captor.getValue()).isEqualTo(request);
     }
 
@@ -115,7 +115,7 @@ class ParticipantControllerTest {
                 true,
                 LocalDateTime.now()
         );
-        when(participantFacade.createWithLocation(eq(MEETING_ID), any(CreateParticipantWithLocationRequest.class)))
+        when(participantService.createWithLocation(eq(MEETING_ID), any(CreateParticipantWithLocationRequest.class)))
                 .thenReturn(response);
 
         mockMvc.perform(post("/api/participants/join-with-location")
@@ -130,7 +130,7 @@ class ParticipantControllerTest {
 
         ArgumentCaptor<CreateParticipantWithLocationRequest> captor =
                 ArgumentCaptor.forClass(CreateParticipantWithLocationRequest.class);
-        verify(participantFacade).createWithLocation(eq(MEETING_ID), captor.capture());
+        verify(participantService).createWithLocation(eq(MEETING_ID), captor.capture());
         assertThat(captor.getValue()).isEqualTo(request);
     }
 
@@ -155,7 +155,7 @@ class ParticipantControllerTest {
                 .andExpect(jsonPath("$.data.localStorageKey").exists())
                 .andExpect(jsonPath("$.data.availableSchedules").exists());
 
-        verifyNoInteractions(participantFacade);
+        verifyNoInteractions(participantService);
     }
 
     @Test
@@ -170,7 +170,7 @@ class ParticipantControllerTest {
                         "서울시 중구 명동"
                 )
         );
-        when(participantFacade.createWithLocation(eq(MEETING_ID), any(CreateParticipantWithLocationRequest.class)))
+        when(participantService.createWithLocation(eq(MEETING_ID), any(CreateParticipantWithLocationRequest.class)))
                 .thenThrow(new BusinessException(ErrorCode.LOCATION_POLL_NOT_FOUND));
 
         mockMvc.perform(post("/api/participants/join-with-location")
@@ -181,6 +181,6 @@ class ParticipantControllerTest {
                 .andExpect(jsonPath("$.code").value(ErrorCode.LOCATION_POLL_NOT_FOUND.getCode()))
                 .andExpect(jsonPath("$.message").value(ErrorCode.LOCATION_POLL_NOT_FOUND.getMessage()));
 
-        verify(participantFacade).createWithLocation(eq(MEETING_ID), any(CreateParticipantWithLocationRequest.class));
+        verify(participantService).createWithLocation(eq(MEETING_ID), any(CreateParticipantWithLocationRequest.class));
     }
 }
