@@ -1,6 +1,5 @@
 package com.dnd.moyeolak.domain.location.service.impl;
 
-import ch.qos.logback.core.util.StringUtil;
 import com.dnd.moyeolak.domain.location.dto.CreateLocationVoteRequest;
 import com.dnd.moyeolak.domain.location.entity.LocationVote;
 import com.dnd.moyeolak.domain.location.repository.LocationPollRepository;
@@ -12,6 +11,7 @@ import com.dnd.moyeolak.domain.participant.service.ParticipantService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 @Service
 @RequiredArgsConstructor
@@ -27,7 +27,7 @@ public class LocationServiceImpl implements LocationService {
     public void createLocationVote(CreateLocationVoteRequest request) {
         // 현재 추가 플로우가 실 참여자가 추가하는 것인지 수동으로 추가하는 로직인지 확인 후 분기
         LocationVote locationVote = LocationVote.fromByCreateLocationVoteRequest(request);
-        if (StringUtil.isNullOrEmpty(request.localStorageKey())) {
+        if (StringUtils.hasText(request.localStorageKey())) {
             // 수동 추가 로직 (LocationVote 만 추가하면 됨)
             locationVoteRepository.save(locationVote);
         } else {
@@ -35,7 +35,6 @@ public class LocationServiceImpl implements LocationService {
             Participant participant = Participant.of(
                     Meeting.ofId(request.meetingId()), request.localStorageKey(), request.participantName(), locationVote
             );
-            locationVote.assignParticipant(participant);
             participantService.save(participant);
         }
     }

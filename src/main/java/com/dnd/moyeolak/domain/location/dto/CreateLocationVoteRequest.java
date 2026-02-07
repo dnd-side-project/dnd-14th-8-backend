@@ -1,12 +1,14 @@
 package com.dnd.moyeolak.domain.location.dto;
 
+import jakarta.validation.constraints.NotBlank;
+
 public record CreateLocationVoteRequest(
-    String meetingId,
-    String locationPollId,
+    @NotBlank String meetingId,
+    @NotBlank String locationPollId,
     String localStorageKey,
-    String participantName,
-    String departureLocation,
-    String departureLat,
-    String departureLng
+    @NotBlank String participantName,
+    @NotBlank String departureLocation,
+    @NotBlank String departureLat,
+    @NotBlank String departureLng
 ) {
 }
