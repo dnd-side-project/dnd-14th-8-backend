@@ -1,10 +1,15 @@
 package com.dnd.moyeolak.domain.location.entity;
 
 import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 
+@Getter
 @Entity
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ConfirmedLocation {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
