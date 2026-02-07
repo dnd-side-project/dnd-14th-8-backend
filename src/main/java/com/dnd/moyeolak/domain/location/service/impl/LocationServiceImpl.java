@@ -1,17 +1,22 @@
 package com.dnd.moyeolak.domain.location.service.impl;
 
 import com.dnd.moyeolak.domain.location.dto.CreateLocationVoteRequest;
+import com.dnd.moyeolak.domain.location.dto.LocationVoteResponse;
 import com.dnd.moyeolak.domain.location.entity.LocationVote;
-import com.dnd.moyeolak.domain.location.repository.LocationPollRepository;
 import com.dnd.moyeolak.domain.location.repository.LocationVoteRepository;
 import com.dnd.moyeolak.domain.location.service.LocationService;
+import com.dnd.moyeolak.domain.meeting.dto.UpdateLocationVoteRequest;
 import com.dnd.moyeolak.domain.meeting.entity.Meeting;
 import com.dnd.moyeolak.domain.participant.entity.Participant;
 import com.dnd.moyeolak.domain.participant.service.ParticipantService;
+import com.dnd.moyeolak.global.exception.BusinessException;
+import com.dnd.moyeolak.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -19,8 +24,21 @@ import org.springframework.util.StringUtils;
 public class LocationServiceImpl implements LocationService {
 
     private final ParticipantService participantService;
-    private final LocationPollRepository locationPollRepository;
     private final LocationVoteRepository locationVoteRepository;
+
+    @Override
+    public List<LocationVoteResponse> listLocationVote(Long locationPollId) {
+        return locationVoteRepository.findByLocationPoll_LocationPollId(locationPollId)
+                .stream().map(LocationVoteResponse::from).toList();
+    }
+
+    @Override
+    @Transactional
+    public void updateLocationVote(Long locationVoteId, UpdateLocationVoteRequest request) {
+        LocationVote locationVote = locationVoteRepository.findById(locationVoteId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.LOCATION_VOTE_NOT_FOUND));
+        locationVote.update(request);
+    }
 
     @Override
     @Transactional
@@ -36,4 +54,11 @@ public class LocationServiceImpl implements LocationService {
         }
     }
 
+    @Override
+    @Transactional
+    public void deleteLocationVote(Long locationVoteId) {
+        LocationVote locationVote = locationVoteRepository.findById(locationVoteId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.LOCATION_VOTE_NOT_FOUND));
+        locationVoteRepository.delete(locationVote);
+    }
 }
