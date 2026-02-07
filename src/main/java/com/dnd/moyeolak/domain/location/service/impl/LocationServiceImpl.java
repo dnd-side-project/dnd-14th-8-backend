@@ -57,6 +57,8 @@ public class LocationServiceImpl implements LocationService {
     @Override
     @Transactional
     public void deleteLocationVote(Long locationVoteId) {
-        locationVoteRepository.deleteById(locationVoteId);
+        LocationVote locationVote = locationVoteRepository.findById(locationVoteId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.LOCATION_VOTE_NOT_FOUND));
+        locationVoteRepository.delete(locationVote);
     }
 }
