@@ -49,4 +49,16 @@ public class Participant extends BaseEntity {
                 .name(name)
                 .build();
     }
+
+    public static Participant of(Meeting meeting, String localStorageKey, String name, ScheduleVote scheduleVote) {
+        Participant participant = Participant.of(meeting, localStorageKey, name);
+        participant.getScheduleVotes().add(scheduleVote);
+        return participant;
+    }
+
+    public static Participant of(Meeting meeting, String localStorageKey, String name, LocationVote locationVote) {
+        Participant participant = Participant.of(meeting, localStorageKey, name);
+        participant.getLocationVotes().add(locationVote);
+        return participant;
+    }
 }

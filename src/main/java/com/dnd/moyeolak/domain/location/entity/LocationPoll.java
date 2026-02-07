@@ -25,15 +25,6 @@ public class LocationPoll extends BaseEntity {
     @JoinColumn(name = "meeting_id", nullable = false)
     private Meeting meeting;
 
-    @Column(comment = "확정된 장소")
-    private String confirmedLocation;
-
-    @Column(comment = "확정된 장소 위도", precision = 10, scale = 7)
-    private BigDecimal confirmedLat;
-
-    @Column(comment = "확정된 장소 경도", precision =  10, scale = 7)
-    private BigDecimal confirmedLng;
-
     @Builder.Default
     @Column(comment = "투표 상태", nullable = false)
     @Enumerated(EnumType.STRING)
@@ -43,9 +34,20 @@ public class LocationPoll extends BaseEntity {
     @OneToMany(mappedBy = "locationPoll", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LocationVote> locationVotes = new ArrayList<>();
 
+    @Builder.Default
+    @OneToMany(mappedBy = "locationPoll", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ConfirmedLocation> confirmedLocations = new ArrayList<>();
+
     public static LocationPoll defaultOf(Meeting meeting) {
         return LocationPoll.builder()
                 .meeting(meeting)
                 .build();
     }
+
+    public static LocationPoll ofId(Long locationPollId) {
+        return LocationPoll.builder()
+                .locationPollId(locationPollId)
+                .build();
+    }
+
 }

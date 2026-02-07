@@ -29,17 +29,17 @@ INSERT INTO schedule_poll (meeting_id, date_options, start_time, end_time, confi
 ('test-meeting-010', '["2025-02-05","2025-02-06","2025-02-07","2025-02-08","2025-02-09","2025-02-10","2025-02-11","2025-02-12","2025-02-13","2025-02-14","2025-02-15","2025-02-16","2025-02-17","2025-02-18"]', 7, 24, NULL, NULL, 'INACTIVE', NOW(), NOW());
 
 -- LocationPoll 10개 (각 모임당 1개)
-INSERT INTO location_poll (meeting_id, confirmed_location, confirmed_lat, confirmed_lng, poll_status, created_at, updated_at) VALUES
-('test-meeting-001', NULL, NULL, NULL, 'INACTIVE', NOW(), NOW()),
-('test-meeting-002', NULL, NULL, NULL, 'INACTIVE', NOW(), NOW()),
-('test-meeting-003', NULL, NULL, NULL, 'INACTIVE', NOW(), NOW()),
-('test-meeting-004', NULL, NULL, NULL, 'INACTIVE', NOW(), NOW()),
-('test-meeting-005', NULL, NULL, NULL, 'INACTIVE', NOW(), NOW()),
-('test-meeting-006', NULL, NULL, NULL, 'INACTIVE', NOW(), NOW()),
-('test-meeting-007', NULL, NULL, NULL, 'INACTIVE', NOW(), NOW()),
-('test-meeting-008', NULL, NULL, NULL, 'INACTIVE', NOW(), NOW()),
-('test-meeting-009', NULL, NULL, NULL, 'INACTIVE', NOW(), NOW()),
-('test-meeting-010', NULL, NULL, NULL, 'INACTIVE', NOW(), NOW());
+INSERT INTO location_poll (meeting_id, poll_status, created_at, updated_at) VALUES
+('test-meeting-001', 'INACTIVE', NOW(), NOW()),
+('test-meeting-002', 'INACTIVE', NOW(), NOW()),
+('test-meeting-003', 'INACTIVE', NOW(), NOW()),
+('test-meeting-004', 'INACTIVE', NOW(), NOW()),
+('test-meeting-005', 'INACTIVE', NOW(), NOW()),
+('test-meeting-006', 'INACTIVE', NOW(), NOW()),
+('test-meeting-007', 'INACTIVE', NOW(), NOW()),
+('test-meeting-008', 'INACTIVE', NOW(), NOW()),
+('test-meeting-009', 'INACTIVE', NOW(), NOW()),
+('test-meeting-010', 'INACTIVE', NOW(), NOW());
 
 -- Participant 10명 (각 모임당 방장 1명)
 INSERT INTO participant (meeting_id, local_storage_key, name, created_at, updated_at) VALUES

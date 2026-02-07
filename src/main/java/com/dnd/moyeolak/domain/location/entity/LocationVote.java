@@ -1,6 +1,8 @@
 package com.dnd.moyeolak.domain.location.entity;
 
+import com.dnd.moyeolak.domain.location.dto.CreateLocationVoteRequest;
 import com.dnd.moyeolak.domain.participant.entity.Participant;
+import com.dnd.moyeolak.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -11,7 +13,7 @@ import java.math.BigDecimal;
 @Builder(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
-public class LocationVote {
+public class LocationVote extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -37,6 +39,10 @@ public class LocationVote {
     @Column(comment = "출발지 경도", nullable = false, precision = 10, scale = 7)
     private BigDecimal departureLng;
 
+    public void assignParticipant(Participant participant) {
+        this.participant = participant;
+    }
+
     public static LocationVote of(LocationPoll locationPoll, Participant participant,
                                   String departureLocation, BigDecimal departureLat, BigDecimal departureLng) {
         return LocationVote.builder()
@@ -45,6 +51,30 @@ public class LocationVote {
                 .departureLocation(departureLocation)
                 .departureLat(departureLat)
                 .departureLng(departureLng)
+                .build();
+    }
+
+    /**
+     * Participant 없이 수동으로 출발지 입력하는 경우
+     */
+    public static LocationVote of(LocationPoll locationPoll, String departureName,
+                                  String departureLocation, BigDecimal departureLat, BigDecimal departureLng) {
+        return LocationVote.builder()
+                .locationPoll(locationPoll)
+                .departureName(departureName)
+                .departureLocation(departureLocation)
+                .departureLat(departureLat)
+                .departureLng(departureLng)
+                .build();
+    }
+
+    public static LocationVote fromByCreateLocationVoteRequest(CreateLocationVoteRequest request) {
+        return LocationVote.builder()
+                .locationPoll(LocationPoll.ofId(Long.parseLong(request.locationPollId())))
+                .departureName(request.participantName())
+                .departureLocation(request.departureLocation())
+                .departureLat(new BigDecimal(request.departureLat()))
+                .departureLng(new BigDecimal(request.departureLng()))
                 .build();
     }
 }

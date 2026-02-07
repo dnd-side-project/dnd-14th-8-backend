@@ -1,6 +1,7 @@
 package com.dnd.moyeolak.domain.schedule.entity;
 
 import com.dnd.moyeolak.domain.participant.entity.Participant;
+import com.dnd.moyeolak.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -11,7 +12,7 @@ import java.time.LocalDateTime;
 @Builder(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
-public class ScheduleVote {
+public class ScheduleVote extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
