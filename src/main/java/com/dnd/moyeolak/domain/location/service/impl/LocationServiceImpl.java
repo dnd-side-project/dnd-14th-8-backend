@@ -25,17 +25,14 @@ public class LocationServiceImpl implements LocationService {
     @Override
     @Transactional
     public void createLocationVote(CreateLocationVoteRequest request) {
-        // 현재 추가 플로우가 실 참여자가 추가하는 것인지 수동으로 추가하는 로직인지 확인 후 분기
         LocationVote locationVote = LocationVote.fromByCreateLocationVoteRequest(request);
         if (StringUtils.hasText(request.localStorageKey())) {
-            // 수동 추가 로직 (LocationVote 만 추가하면 됨)
-            locationVoteRepository.save(locationVote);
-        } else {
-            // 실 참여자 추가 로직 (Participant 및 LocationVote 추가 필요)
             Participant participant = Participant.of(
                     Meeting.ofId(request.meetingId()), request.localStorageKey(), request.participantName(), locationVote
             );
             participantService.save(participant);
+        } else {
+            locationVoteRepository.save(locationVote);
         }
     }
 
