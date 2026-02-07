@@ -10,10 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "LocationVote", description = "위치 투표 관련 API")
 @RestController
@@ -30,5 +27,14 @@ public class LocationController {
     ) {
         locationService.createLocationVote(createLocationVoteRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success());
+    }
+
+    @DeleteMapping("/vote/{locationVoteId}")
+    @Operation(summary = "출발지 삭제", description = "장소 조율 시 출발지를 삭제하는 API입니다.")
+    public ResponseEntity<ApiResponse<Void>> deleteLocationVote(
+            @PathVariable Long locationVoteId
+    ) {
+        locationService.deleteLocationVote(locationVoteId);
+        return ResponseEntity.ok(ApiResponse.success());
     }
 }

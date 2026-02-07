@@ -36,4 +36,9 @@ public class LocationServiceImpl implements LocationService {
         }
     }
 
+    @Override
+    @Transactional
+    public void deleteLocationVote(Long locationVoteId) {
+        locationVoteRepository.deleteById(locationVoteId);
+    }
 }
