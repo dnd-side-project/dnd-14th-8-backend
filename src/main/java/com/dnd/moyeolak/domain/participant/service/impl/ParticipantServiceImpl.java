@@ -19,6 +19,12 @@ public class ParticipantServiceImpl implements ParticipantService {
 
     @Override
     @Transactional
+    public void save(Participant participant) {
+        participantRepository.save(participant);
+    }
+
+    @Override
+    @Transactional
     public Participant create(Meeting meeting, String name, String localStorageKey) {
         Participant participant = Participant.of(meeting, localStorageKey, name);
         meeting.addParticipant(participant);

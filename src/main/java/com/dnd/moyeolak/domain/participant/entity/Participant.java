@@ -26,7 +26,7 @@ public class Participant extends BaseEntity {
     @JoinColumn(name = "meeting_id", nullable = false)
     private Meeting meeting;
 
-    @Column(comment = "고유키", nullable = false, unique = true)
+    @Column(comment = "고유키")
     private String localStorageKey;
 
     @Column(comment = "이름", nullable = false)
@@ -48,5 +48,22 @@ public class Participant extends BaseEntity {
                 .localStorageKey(localStorageKey)
                 .name(name)
                 .build();
+    }
+
+    public static Participant of(Meeting meeting, String localStorageKey, String name, ScheduleVote scheduleVote) {
+        Participant participant = Participant.of(meeting, localStorageKey, name);
+        participant.getScheduleVotes().add(scheduleVote);
+        return participant;
+    }
+
+    public static Participant of(Meeting meeting, String localStorageKey, String name, LocationVote locationVote) {
+        Participant participant = Participant.of(meeting, localStorageKey, name);
+        participant.addLocationVote(locationVote);
+        return participant;
+    }
+
+    private void addLocationVote(LocationVote locationVote) {
+        this.locationVotes.add(locationVote);
+        locationVote.assignParticipant(this);
     }
 }

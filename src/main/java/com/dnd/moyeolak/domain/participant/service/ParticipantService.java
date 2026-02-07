@@ -5,6 +5,8 @@ import com.dnd.moyeolak.domain.participant.entity.Participant;
 
 public interface ParticipantService {
 
+    void save(Participant participant);
+
     Participant create(Meeting meeting, String name, String localStorageKey);
 
     void validateLocalStorageKeyUnique(Meeting meeting, String localStorageKey);

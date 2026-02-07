@@ -58,4 +58,10 @@ public class Meeting extends BaseEntity {
                 .participantCount(participantCount)
                 .build();
     }
+
+    public static Meeting ofId(String meetingId) {
+        return Meeting.builder()
+                .meetingId(meetingId)
+                .build();
+    }
 }
