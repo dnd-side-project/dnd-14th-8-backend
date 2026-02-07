@@ -41,15 +41,14 @@ INSERT INTO location_poll (meeting_id, poll_status, created_at, updated_at) VALU
 ('test-meeting-009', 'INACTIVE', NOW(), NOW()),
 ('test-meeting-010', 'INACTIVE', NOW(), NOW());
 
--- Participant 10명 (각 모임당 방장 1명)
-INSERT INTO participant (meeting_id, local_storage_key, name, created_at, updated_at) VALUES
-('test-meeting-001', 'host-key-001', '김민준', NOW(), NOW()),
-('test-meeting-002', 'host-key-002', '이서연', NOW(), NOW()),
-('test-meeting-003', 'host-key-003', '박도윤', NOW(), NOW()),
-('test-meeting-004', 'host-key-004', '최하은', NOW(), NOW()),
-('test-meeting-005', 'host-key-005', '정시우', NOW(), NOW()),
-('test-meeting-006', 'host-key-006', '강지아', NOW(), NOW()),
-('test-meeting-007', 'host-key-007', '조예준', NOW(), NOW()),
-('test-meeting-008', 'host-key-008', '윤수아', NOW(), NOW()),
-('test-meeting-009', 'host-key-009', '임건우', NOW(), NOW()),
-('test-meeting-010', 'host-key-010', '한지유', NOW(), NOW());
+INSERT INTO participant (meeting_id, local_storage_key, name, is_host, created_at, updated_at) VALUES
+('test-meeting-001', 'host-key-001', '김민준', TRUE, NOW(), NOW()),
+('test-meeting-002', 'host-key-002', '이서연', TRUE, NOW(), NOW()),
+('test-meeting-003', 'host-key-003', '박도윤', TRUE, NOW(), NOW()),
+('test-meeting-004', 'host-key-004', '최하은', TRUE, NOW(), NOW()),
+('test-meeting-005', 'host-key-005', '정시우', TRUE, NOW(), NOW()),
+('test-meeting-006', 'host-key-006', '강지아', TRUE, NOW(), NOW()),
+('test-meeting-007', 'host-key-007', '조예준', TRUE, NOW(), NOW()),
+('test-meeting-008', 'host-key-008', '윤수아', TRUE, NOW(), NOW()),
+('test-meeting-009', 'host-key-009', '임건우', TRUE, NOW(), NOW()),
+('test-meeting-010', 'host-key-010', '한지유', TRUE, NOW(), NOW());

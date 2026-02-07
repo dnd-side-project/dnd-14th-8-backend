@@ -7,6 +7,7 @@ import com.dnd.moyeolak.domain.meeting.service.MeetingService;
 import com.dnd.moyeolak.domain.participant.dto.CreateParticipantResponse;
 import com.dnd.moyeolak.domain.participant.dto.CreateParticipantWithLocationRequest;
 import com.dnd.moyeolak.domain.participant.dto.CreateParticipantWithScheduleRequest;
+import com.dnd.moyeolak.domain.participant.dto.GetParticipantResponse;
 import com.dnd.moyeolak.domain.participant.entity.Participant;
 import com.dnd.moyeolak.domain.participant.repository.ParticipantRepository;
 import com.dnd.moyeolak.domain.participant.service.ParticipantService;
@@ -75,6 +76,13 @@ public class ParticipantServiceImpl implements ParticipantService {
         meeting.addParticipant(participant);
 
         return CreateParticipantResponse.fromLocation(participant);
+    }
+
+    @Override
+    public GetParticipantResponse getParticipant(Long participantId) {
+        Participant participant = participantRepository.findById(participantId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PARTICIPANT_NOT_FOUND));
+        return GetParticipantResponse.from(participant);
     }
 
     @Override

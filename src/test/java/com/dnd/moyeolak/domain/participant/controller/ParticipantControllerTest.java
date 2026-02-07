@@ -3,6 +3,7 @@ package com.dnd.moyeolak.domain.participant.controller;
 import com.dnd.moyeolak.domain.participant.dto.CreateParticipantResponse;
 import com.dnd.moyeolak.domain.participant.dto.CreateParticipantWithLocationRequest;
 import com.dnd.moyeolak.domain.participant.dto.CreateParticipantWithScheduleRequest;
+import com.dnd.moyeolak.domain.participant.dto.GetParticipantResponse;
 import com.dnd.moyeolak.domain.participant.service.ParticipantService;
 import com.dnd.moyeolak.global.exception.BusinessException;
 import com.dnd.moyeolak.global.exception.GlobalExceptionAdvice;
@@ -33,6 +34,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -182,5 +185,43 @@ class ParticipantControllerTest {
                 .andExpect(jsonPath("$.message").value(ErrorCode.LOCATION_POLL_NOT_FOUND.getMessage()));
 
         verify(participantService).createWithLocation(eq(MEETING_ID), any(CreateParticipantWithLocationRequest.class));
+    }
+
+    @Test
+    @DisplayName("참여자 단건 조회 API는 200 상태와 응답 본문을 반환한다")
+    void getParticipant_returnsOkResponse() throws Exception {
+        // Given
+        Long participantId = 1L;
+        GetParticipantResponse response = new GetParticipantResponse(participantId, "김철수", false);
+        when(participantService.getParticipant(participantId)).thenReturn(response);
+
+        // When & Then
+        mockMvc.perform(get("/api/participants/{participantId}", participantId))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(SuccessCode.OK.getCode()))
+                .andExpect(jsonPath("$.data.participantId").value(participantId))
+                .andExpect(jsonPath("$.data.name").value("김철수"))
+                .andExpect(jsonPath("$.data.isHost").value(false));
+
+        verify(participantService).getParticipant(participantId);
+    }
+
+    @Test
+    @DisplayName("존재하지 않는 참여자 단건 조회 API는 404를 반환한다")
+    void getParticipant_returnsNotFound() throws Exception {
+        // Given
+        Long participantId = 99L;
+        when(participantService.getParticipant(participantId))
+                .thenThrow(new BusinessException(ErrorCode.PARTICIPANT_NOT_FOUND));
+
+        // When & Then
+        mockMvc.perform(get("/api/participants/{participantId}", participantId))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value(ErrorCode.PARTICIPANT_NOT_FOUND.getCode()))
+                .andExpect(jsonPath("$.message").value(ErrorCode.PARTICIPANT_NOT_FOUND.getMessage()));
+
+        verify(participantService).getParticipant(participantId);
     }
 }
