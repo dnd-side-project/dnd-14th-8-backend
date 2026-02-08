@@ -1,6 +1,7 @@
 package com.dnd.moyeolak.domain.location.entity;
 
 import com.dnd.moyeolak.domain.location.dto.CreateLocationVoteRequest;
+import com.dnd.moyeolak.domain.meeting.dto.UpdateLocationVoteRequest;
 import com.dnd.moyeolak.domain.participant.entity.Participant;
 import com.dnd.moyeolak.global.entity.BaseEntity;
 import jakarta.persistence.*;
@@ -41,6 +42,13 @@ public class LocationVote extends BaseEntity {
 
     public void assignParticipant(Participant participant) {
         this.participant = participant;
+    }
+
+    public void update(UpdateLocationVoteRequest request) {
+        this.departureName = request.participantName();
+        this.departureLocation = request.departureLocation();
+        this.departureLat = new BigDecimal(request.departureLat());
+        this.departureLng = new BigDecimal(request.departureLng());
     }
 
     public static LocationVote of(LocationPoll locationPoll, Participant participant,

@@ -1,19 +1,19 @@
 package com.dnd.moyeolak.domain.location.controller;
 
 import com.dnd.moyeolak.domain.location.dto.CreateLocationVoteRequest;
+import com.dnd.moyeolak.domain.location.dto.LocationVoteResponse;
 import com.dnd.moyeolak.domain.location.service.LocationService;
+import com.dnd.moyeolak.domain.meeting.dto.UpdateLocationVoteRequest;
 import com.dnd.moyeolak.global.response.ApiResponse;
-import com.dnd.moyeolak.global.response.SuccessCode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Tag(name = "LocationVote", description = "위치 투표 관련 API")
 @RestController
@@ -23,12 +23,34 @@ public class LocationController {
 
     private final LocationService locationService;
 
+    @GetMapping("/poll/{locationPollId}/votes")
+    @Operation(summary = "출발지 투표 조회", description = "장소 조율 시 출발지 투표를 조회하는 API입니다.")
+    public ResponseEntity<ApiResponse<?>> listLocationVote(@PathVariable Long locationPollId) {
+        List<LocationVoteResponse> listLocationVote = locationService.listLocationVote(locationPollId);
+        return ResponseEntity.ok(ApiResponse.success(listLocationVote));
+    }
+
+    @PutMapping("/vote/{locationVoteId}")
+    @Operation(summary = "출발지 수정", description = "장소 조율 시 출발지를 수정하는 API입니다.")
+    public ResponseEntity<ApiResponse<Void>> updateLocationVote(
+            @PathVariable Long locationVoteId,
+            @Valid @RequestBody UpdateLocationVoteRequest request
+    ) {
+        locationService.updateLocationVote(locationVoteId, request);
+        return ResponseEntity.ok(ApiResponse.success());
+    }
+
     @PostMapping("/vote")
     @Operation(summary = "출발지 추가", description = "장소 조율을 위해 출발지를 추가하는 API입니다.")
-    public ResponseEntity<ApiResponse<Void>> createLocationVote(
-            @Valid @RequestBody CreateLocationVoteRequest createLocationVoteRequest
-    ) {
-        locationService.createLocationVote(createLocationVoteRequest);
+    public ResponseEntity<ApiResponse<Void>> createLocationVote(@Valid @RequestBody CreateLocationVoteRequest request) {
+        locationService.createLocationVote(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success());
+    }
+
+    @DeleteMapping("/vote/{locationVoteId}")
+    @Operation(summary = "출발지 삭제", description = "장소 조율 시 출발지를 삭제하는 API입니다.")
+    public ResponseEntity<ApiResponse<Void>> deleteLocationVote(@PathVariable Long locationVoteId) {
+        locationService.deleteLocationVote(locationVoteId);
+        return ResponseEntity.ok(ApiResponse.success());
     }
 }

@@ -3,6 +3,7 @@ package com.dnd.moyeolak.domain.location.service;
 import com.dnd.moyeolak.domain.location.dto.CreateLocationVoteRequest;
 import com.dnd.moyeolak.domain.location.entity.LocationVote;
 import com.dnd.moyeolak.domain.meeting.dto.CreateMeetingRequest;
+import com.dnd.moyeolak.domain.meeting.dto.UpdateLocationVoteRequest;
 import com.dnd.moyeolak.domain.meeting.entity.Meeting;
 import com.dnd.moyeolak.domain.meeting.repository.MeetingRepository;
 import com.dnd.moyeolak.domain.meeting.service.MeetingService;
@@ -67,11 +68,11 @@ class LocationVoteIntegrationTest {
                 .getResultList();
 
         assertThat(votes).hasSize(1);
-        assertThat(votes.get(0).getDepartureName()).isEqualTo("홍길동");
-        assertThat(votes.get(0).getDepartureLocation()).isEqualTo("서울시 강남구");
-        assertThat(votes.get(0).getDepartureLat()).isEqualByComparingTo(new BigDecimal("37.4979502"));
-        assertThat(votes.get(0).getDepartureLng()).isEqualByComparingTo(new BigDecimal("127.0276368"));
-        assertThat(votes.get(0).getParticipant()).isNull();
+        assertThat(votes.getFirst().getDepartureName()).isEqualTo("홍길동");
+        assertThat(votes.getFirst().getDepartureLocation()).isEqualTo("서울시 강남구");
+        assertThat(votes.getFirst().getDepartureLat()).isEqualByComparingTo(new BigDecimal("37.4979502"));
+        assertThat(votes.getFirst().getDepartureLng()).isEqualByComparingTo(new BigDecimal("127.0276368"));
+        assertThat(votes.getFirst().getParticipant()).isNull();
     }
 
     @Test
@@ -106,14 +107,14 @@ class LocationVoteIntegrationTest {
                 .getResultList();
 
         assertThat(participants).hasSize(1);
-        assertThat(participants.get(0).getLocalStorageKey()).isEqualTo("local-storage-key-new");
+        assertThat(participants.getFirst().getLocalStorageKey()).isEqualTo("local-storage-key-new");
 
         // then - 해당 Participant의 LocationVote 존재 검증
-        List<LocationVote> locationVotes = participants.get(0).getLocationVotes();
+        List<LocationVote> locationVotes = participants.getFirst().getLocationVotes();
         assertThat(locationVotes).hasSize(1);
-        assertThat(locationVotes.get(0).getDepartureLocation()).isEqualTo("서울시 홍대입구");
-        assertThat(locationVotes.get(0).getDepartureLat()).isEqualByComparingTo(new BigDecimal("37.5571010"));
-        assertThat(locationVotes.get(0).getDepartureLng()).isEqualByComparingTo(new BigDecimal("126.9236450"));
+        assertThat(locationVotes.getFirst().getDepartureLocation()).isEqualTo("서울시 홍대입구");
+        assertThat(locationVotes.getFirst().getDepartureLat()).isEqualByComparingTo(new BigDecimal("37.5571010"));
+        assertThat(locationVotes.getFirst().getDepartureLng()).isEqualByComparingTo(new BigDecimal("126.9236450"));
     }
 
     @Test
@@ -146,9 +147,9 @@ class LocationVoteIntegrationTest {
                 .getResultList();
 
         assertThat(votes).hasSize(1);
-        assertThat(votes.get(0).getDepartureLocation()).isEqualTo("서울시 왕십리");
-        assertThat(votes.get(0).getDepartureLat()).isEqualByComparingTo(new BigDecimal("37.5614080"));
-        assertThat(votes.get(0).getDepartureLng()).isEqualByComparingTo(new BigDecimal("127.0379670"));
+        assertThat(votes.getFirst().getDepartureLocation()).isEqualTo("서울시 왕십리");
+        assertThat(votes.getFirst().getDepartureLat()).isEqualByComparingTo(new BigDecimal("37.5614080"));
+        assertThat(votes.getFirst().getDepartureLng()).isEqualByComparingTo(new BigDecimal("127.0379670"));
     }
 
     @Test
@@ -192,6 +193,93 @@ class LocationVoteIntegrationTest {
                 .getResultList();
 
         assertThat(votes).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("출발지 삭제 시 LocationVote가 DB에서 삭제된다")
+    void deleteLocationVote_removesLocationVoteFromDb() {
+        // given - 모임 생성 후 참여자와 LocationVote 추가
+        String meetingId = createTestMeeting();
+        Meeting meeting = meetingRepository.findByIdWithAllAssociations(meetingId).orElseThrow();
+        Long locationPollId = meeting.getLocationPoll().getLocationPollId();
+
+        CreateLocationVoteRequest request = new CreateLocationVoteRequest(
+                meetingId,
+                locationPollId.toString(),
+                "local-storage-key-delete",
+                "홍길동",
+                "서울시 강남구",
+                "37.4979502",
+                "127.0276368"
+        );
+
+        locationService.createLocationVote(request);
+        em.flush();
+        em.clear();
+
+        // 저장된 LocationVote ID 조회
+        List<LocationVote> votes = em.createQuery(
+                "SELECT lv FROM LocationVote lv WHERE lv.locationPoll.locationPollId = :id", LocationVote.class)
+                .setParameter("id", locationPollId)
+                .getResultList();
+        assertThat(votes).hasSize(1);
+        Long locationVoteId = votes.getFirst().getLocationVoteId();
+
+        // when
+        locationService.deleteLocationVote(locationVoteId);
+        em.flush();
+        em.clear();
+
+        // then
+        LocationVote deleted = em.find(LocationVote.class, locationVoteId);
+        assertThat(deleted).isNull();
+    }
+
+    @Test
+    @DisplayName("출발지 수정 시 변경감지로 DB에 반영된다")
+    void updateLocationVote_updatesPersistsToDb() {
+        // given - 모임 생성 후 출발지 추가
+        String meetingId = createTestMeeting();
+        Meeting meeting = meetingRepository.findByIdWithAllAssociations(meetingId).orElseThrow();
+        Long locationPollId = meeting.getLocationPoll().getLocationPollId();
+
+        CreateLocationVoteRequest createRequest = new CreateLocationVoteRequest(
+                meetingId,
+                locationPollId.toString(),
+                "local-storage-key-update",
+                "홍길동",
+                "서울시 강남구",
+                "37.4979502",
+                "127.0276368"
+        );
+
+        locationService.createLocationVote(createRequest);
+        em.flush();
+        em.clear();
+
+        Long locationVoteId = em.createQuery(
+                "SELECT lv FROM LocationVote lv WHERE lv.locationPoll.locationPollId = :id", LocationVote.class)
+                .setParameter("id", locationPollId)
+                .getSingleResult()
+                .getLocationVoteId();
+
+        // when
+        UpdateLocationVoteRequest updateRequest = new UpdateLocationVoteRequest(
+                "김철수",
+                "서울시 홍대입구",
+                "37.5571010",
+                "126.9236450"
+        );
+        locationService.updateLocationVote(locationVoteId, updateRequest);
+        em.flush();
+        em.clear();
+
+        // then
+        LocationVote updated = em.find(LocationVote.class, locationVoteId);
+        assertThat(updated.getDepartureName()).isEqualTo("김철수");
+        assertThat(updated.getDepartureLocation()).isEqualTo("서울시 홍대입구");
+        assertThat(updated.getDepartureLat()).isEqualByComparingTo(new BigDecimal("37.5571010"));
+        assertThat(updated.getDepartureLng()).isEqualByComparingTo(new BigDecimal("126.9236450"));
     }
 
     private String createTestMeeting() {
