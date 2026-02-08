@@ -4,6 +4,7 @@ import com.dnd.moyeolak.domain.participant.dto.CreateParticipantResponse;
 import com.dnd.moyeolak.domain.participant.dto.CreateParticipantWithLocationRequest;
 import com.dnd.moyeolak.domain.participant.dto.CreateParticipantWithScheduleRequest;
 import com.dnd.moyeolak.domain.participant.dto.GetParticipantResponse;
+import com.dnd.moyeolak.domain.participant.dto.ListParticipantResponse;
 import com.dnd.moyeolak.domain.participant.entity.Participant;
 
 public interface ParticipantService {
@@ -13,6 +14,8 @@ public interface ParticipantService {
     CreateParticipantResponse createWithLocation(String meetingId, CreateParticipantWithLocationRequest request);
 
     GetParticipantResponse getParticipant(Long participantId);
+
+    ListParticipantResponse listParticipants(String meetingId);
 
     void save(Participant participant);
 }
