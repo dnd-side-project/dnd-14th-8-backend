@@ -5,6 +5,8 @@ import com.dnd.moyeolak.domain.schedule.entity.ScheduleVote;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public record GetMeetingScheduleResponse(
@@ -13,9 +15,11 @@ public record GetMeetingScheduleResponse(
         int votedParticipantCount,
         List<ParticipantResponse> participants,
         List<LocalDate> dateOptions,
-        int startTime,
-        int endTime
+        String startTime,
+        String endTime
 ) {
+    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm");
+
     public record ParticipantResponse(
             String name,
             List<LocalDateTime> votedDates
@@ -45,8 +49,16 @@ public record GetMeetingScheduleResponse(
                 votedParticipantCount,
                 participantResponses,
                 dateOptions,
-                meeting.getSchedulePoll().getStartTime(),
-                meeting.getSchedulePoll().getEndTime()
+                formatMinutes(meeting.getSchedulePoll().getStartTime()),
+                formatMinutes(meeting.getSchedulePoll().getEndTime())
         );
+    }
+
+    private static String formatMinutes(int minutes) {
+        if (minutes == 24 * 60) {
+            return "24:00";
+        }
+        LocalTime time = LocalTime.of(minutes / 60, minutes % 60);
+        return time.format(TIME_FORMATTER);
     }
 }

@@ -35,12 +35,14 @@ public class SchedulePoll extends BaseEntity {
     private List<LocalDate> dateOptions = new ArrayList<>();
 
     @Builder.Default
-    @Column(comment = "시작 시간", nullable = false)
-    private int startTime = 7;
+    @Column(name = "start_time", comment = "시작 시간(분 단위)", nullable = false)
+    @Getter(AccessLevel.NONE)
+    private int startTime = 7 * 60;
 
     @Builder.Default
-    @Column(comment = "종료 시간", nullable = false)
-    private int endTime = 24;
+    @Column(name = "end_time", comment = "종료 시간(분 단위)", nullable = false)
+    @Getter(AccessLevel.NONE)
+    private int endTime = 24 * 60;
 
     @Column(columnDefinition = "DATETIME(0)", comment = "확정 시작 시간")
     private LocalDateTime confirmedStartTime;
@@ -90,5 +92,21 @@ public class SchedulePoll extends BaseEntity {
         updateDateOption(dateOptions);
         this.startTime = startTime;
         this.endTime = endTime;
+    }
+
+    public int getStartTime() {
+        return normalizeMinuteOfDay(startTime);
+    }
+
+    public int getEndTime() {
+        return normalizeMinuteOfDay(endTime);
+    }
+
+    private int normalizeMinuteOfDay(int rawValue) {
+        // 기존 데이터(0~24)는 시간을 의미하므로 분 단위로 환산해 저장된 값과 호환
+        if (rawValue <= 24) {
+            return rawValue * 60;
+        }
+        return rawValue;
     }
 }

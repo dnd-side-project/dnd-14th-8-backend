@@ -30,8 +30,8 @@ public class SchedulePollController {
 
                     **제약 조건**
                     - `dateOptions`: 최소 1개 이상의 날짜 필수 (빈 배열 불가)
-                    - `startTime`: 0~23 범위, `endTime`보다 작아야 함
-                    - `endTime`: 1~24 범위, `startTime`보다 커야 함 (24 = 자정)
+                    - `startTime`: HH:mm 형식, 30분 단위만 허용, `endTime`보다 작아야 함
+                    - `endTime`: HH:mm 또는 24:00, 30분 단위만 허용, `startTime`보다 커야 함 (24:00 = 자정)
                     - 기존 참가자의 일정 투표(ScheduleVote)는 유지됩니다
                     """
     )

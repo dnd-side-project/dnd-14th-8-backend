@@ -193,8 +193,8 @@ class MeetingServiceIntegrationTest {
 
             // then
             assertThat(response.dateOptions()).isNotEmpty();
-            assertThat(response.startTime()).isEqualTo(7);
-            assertThat(response.endTime()).isEqualTo(24);
+            assertThat(response.startTime()).isEqualTo("07:00");
+            assertThat(response.endTime()).isEqualTo("24:00");
         }
 
         @Test
