@@ -32,6 +32,9 @@ public class Participant extends BaseEntity {
     @Column(comment = "이름", nullable = false)
     private String name;
 
+    @Column(name = "is_host", nullable = false)
+    private boolean host;
+
     @Builder.Default
     @BatchSize(size = 15)
     @OneToMany(mappedBy = "participant", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -42,12 +45,21 @@ public class Participant extends BaseEntity {
     @OneToMany(mappedBy = "participant", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LocationVote> locationVotes = new ArrayList<>();
 
-    public static Participant of(Meeting meeting, String localStorageKey, String name) {
+    private static Participant createParticipant(Meeting meeting, String localStorageKey, String name, boolean host) {
         return Participant.builder()
                 .meeting(meeting)
                 .localStorageKey(localStorageKey)
                 .name(name)
+                .host(host)
                 .build();
+    }
+
+    public static Participant of(Meeting meeting, String localStorageKey, String name) {
+        return createParticipant(meeting, localStorageKey, name, false);
+    }
+
+    public static Participant hostOf(Meeting meeting, String localStorageKey, String name) {
+        return createParticipant(meeting, localStorageKey, name, true);
     }
 
     public static Participant of(Meeting meeting, String localStorageKey, String name, ScheduleVote scheduleVote) {

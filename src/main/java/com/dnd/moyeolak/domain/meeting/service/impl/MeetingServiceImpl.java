@@ -28,7 +28,7 @@ public class MeetingServiceImpl implements MeetingService {
     public String createMeeting(CreateMeetingRequest request) {
         Meeting meeting = Meeting.of(request.participantCount());
 
-        meeting.addParticipant(Participant.of(meeting, request.localStorageKey(), request.participantName()));
+        meeting.addParticipant(Participant.hostOf(meeting, request.localStorageKey(), request.participantName()));
 
         meeting.addPolls(SchedulePoll.defaultOf(meeting), LocationPoll.defaultOf(meeting));
 
