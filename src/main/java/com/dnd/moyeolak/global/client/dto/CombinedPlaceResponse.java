@@ -15,13 +15,8 @@ public record CombinedPlaceResponse(
             String formattedAddress,
             Double latitude,
             Double longitude,
-            String googleMapsUri,
             List<String> types,
-            List<TextSearchResponse.Photo> photos,
             TextSearchResponse.RegularOpeningHours regularOpeningHours,
-            List<TextSearchResponse.Review> reviews,
-            TextSearchResponse.GenerativeSummary generativeSummary,
-            TextSearchResponse.EditorialSummary editorialSummary,
 
             // Kakao 데이터
             String kakaoPlaceId,
@@ -38,13 +33,8 @@ public record CombinedPlaceResponse(
                     googlePlace.formattedAddress(),
                     googlePlace.location() != null ? googlePlace.location().latitude() : null,
                     googlePlace.location() != null ? googlePlace.location().longitude() : null,
-                    googlePlace.googleMapsUri(),
                     googlePlace.types(),
-                    googlePlace.photos(),
                     googlePlace.regularOpeningHours(),
-                    googlePlace.reviews(),
-                    googlePlace.generativeSummary(),
-                    googlePlace.editorialSummary(),
 
                     // Kakao
                     kakaoPlace.id(),

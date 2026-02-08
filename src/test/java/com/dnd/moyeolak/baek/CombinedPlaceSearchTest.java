@@ -5,6 +5,7 @@ import com.dnd.moyeolak.global.client.google.GooglePlacesClient;
 import com.dnd.moyeolak.global.client.google.dto.NearbySearchRequest;
 import com.dnd.moyeolak.global.client.google.dto.TextSearchResponse;
 import com.dnd.moyeolak.global.client.kakao.KakaoLocalClient;
+import com.dnd.moyeolak.global.client.kakao.KakaoLocalClient2;
 import com.dnd.moyeolak.global.client.kakao.dto.CategorySearchResponse;
 import com.dnd.moyeolak.global.client.kakao.dto.KeywordSearchRequest;
 import org.junit.jupiter.api.Test;
@@ -26,7 +27,7 @@ public class CombinedPlaceSearchTest {
     private GooglePlacesClient googlePlacesClient;
 
     @Autowired
-    private KakaoLocalClient kakaoLocalClient;
+    private KakaoLocalClient2 kakaoLocalClient;
 
     // 강남역 좌표
     private static final Double GANGNAM_LAT = 37.497942;

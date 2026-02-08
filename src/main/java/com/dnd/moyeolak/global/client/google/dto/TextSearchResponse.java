@@ -10,17 +10,8 @@ public record TextSearchResponse(
             String formattedAddress,
             DisplayName displayName,
             Location location,
-            String googleMapsUri,
             List<String> types,
-            List<Photo> photos,
-            RegularOpeningHours regularOpeningHours,
-            List<Review> reviews,
-            GenerativeSummary generativeSummary,
-            ReviewSummary reviewSummary,
-            EditorialSummary editorialSummary,
-            Boolean parkingOptions,
-            Boolean reservable,
-            Boolean goodForGroups
+            RegularOpeningHours regularOpeningHours
     ) {}
 
     public record DisplayName(
@@ -31,23 +22,6 @@ public record TextSearchResponse(
     public record Location(
             Double latitude,
             Double longitude
-    ) {}
-
-    public record Photo(
-            String name,
-            Integer widthPx,
-            Integer heightPx,
-            List<AuthorAttribution> authorAttributions
-    ) {
-        public String toImageUrl(String apiKey, int maxWidthPx) {
-            return "https://places.googleapis.com/v1/" + name + "/media?maxWidthPx=" + maxWidthPx + "&key=" + apiKey;
-        }
-    }
-
-    public record AuthorAttribution(
-            String displayName,
-            String uri,
-            String photoUri
     ) {}
 
     public record RegularOpeningHours(
@@ -73,50 +47,4 @@ public record TextSearchResponse(
             Integer minute
     ) {}
 
-    public record Review(
-            String name,
-            String relativePublishTimeDescription,
-            Integer rating,
-            Text text,
-            Text originalText,
-            AuthorAttribution authorAttribution,
-            String publishTime
-    ) {}
-
-    public record Text(
-            String text,
-            String languageCode
-    ) {}
-
-    /** 장소에 대한 AI 생성 요약 */
-    public record GenerativeSummary(
-            Overview overview,
-            String overviewFlagContentUri,
-            DisclosureText disclosureText
-    ) {}
-
-    public record Overview(
-            String text,
-            String languageCode
-    ) {}
-
-    public record DisclosureText (
-            String text,
-            String languageCode
-    ) {}
-
-    /** 사용자 리뷰를 사용한 장소의 AI 생성 요약 */
-    public record ReviewSummary(
-        Text text,
-        String flagContentUri,
-        DisclosureText disclosureText,
-        String reviewsUri
-    ) {}
-
-
-    /** 편집 요약(소개글) */
-    public record EditorialSummary(
-            String text,
-            String languageCode
-    ) {}
 }

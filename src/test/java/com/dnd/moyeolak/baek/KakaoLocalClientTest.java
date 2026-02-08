@@ -1,6 +1,7 @@
 package com.dnd.moyeolak.baek;
 
 import com.dnd.moyeolak.global.client.kakao.KakaoLocalClient;
+import com.dnd.moyeolak.global.client.kakao.KakaoLocalClient2;
 import com.dnd.moyeolak.global.client.kakao.dto.CategorySearchRequest;
 import com.dnd.moyeolak.global.client.kakao.dto.CategorySearchResponse;
 import com.dnd.moyeolak.global.client.kakao.dto.KeywordSearchRequest;
@@ -16,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class KakaoLocalClientTest {
 
     @Autowired
-    private KakaoLocalClient kakaoLocalClient;
+    private KakaoLocalClient2 kakaoLocalClient;
 
     @Test
     void 키워드로_장소_검색_테스트() {
