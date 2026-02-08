@@ -85,4 +85,10 @@ public class SchedulePoll extends BaseEntity {
         this.dateOptions.addAll(newDates);
         this.dateOptions.sort(Comparator.naturalOrder());
     }
+
+    public void updateOptions(List<LocalDate> dateOptions, int startTime, int endTime) {
+        updateDateOption(dateOptions);
+        this.startTime = startTime;
+        this.endTime = endTime;
+    }
 }
