@@ -13,6 +13,13 @@ import java.util.List;
 
 @Getter
 @Entity
+@Table(
+        name = "participant",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_participant_meeting_local_storage_key",
+                columnNames = {"meeting_id", "local_storage_key"}
+        )
+)
 @Builder(access = AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PROTECTED)
@@ -26,7 +33,7 @@ public class Participant extends BaseEntity {
     @JoinColumn(name = "meeting_id", nullable = false)
     private Meeting meeting;
 
-    @Column(comment = "고유키")
+    @Column(name = "local_storage_key", comment = "고유키")
     private String localStorageKey;
 
     @Column(comment = "이름", nullable = false)
