@@ -71,21 +71,19 @@ public class SchedulePoll extends BaseEntity {
                 .build();
     }
 
-    public void addDate(LocalDate date) {
-        if (!this.dateOptions.contains(date)) {
-            this.dateOptions.add(date);
-            this.dateOptions.sort(Comparator.naturalOrder());
+    public List<LocalDateTime> generateAllTimeSlots() {
+        List<LocalDateTime> allTimeSlots = new ArrayList<>();
+        for (LocalDate date : dateOptions) {
+            LocalDateTime current = date.atTime(startTime, 0);
+            LocalDateTime end = endTime == 24
+                    ? date.plusDays(1).atStartOfDay()
+                    : date.atTime(endTime, 0);
+            while (current.isBefore(end)) {
+                allTimeSlots.add(current);
+                current = current.plusMinutes(30);
+            }
         }
-    }
-
-    public void removeDate(LocalDate date) {
-        this.dateOptions.remove(date);
-    }
-
-    public void updateDateOption(List<LocalDate> newDates) {
-        this.dateOptions.clear();
-        this.dateOptions.addAll(newDates);
-        this.dateOptions.sort(Comparator.naturalOrder());
+        return allTimeSlots;
     }
 
     public void updateOptions(List<LocalDate> dateOptions, int startTime, int endTime) {

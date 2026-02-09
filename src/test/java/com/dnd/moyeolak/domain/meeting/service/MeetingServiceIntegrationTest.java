@@ -308,10 +308,11 @@ class MeetingServiceIntegrationTest {
             Long participantId = meeting.getParticipants().getFirst().getParticipantId();
 
             LocalDateTime now = LocalDateTime.now();
+            String votedDateJson = "[\"" + now + "\"]";
             em.createNativeQuery("INSERT INTO schedule_vote (participant_id, schedule_poll_id, voted_date, created_at, updated_at) VALUES (?, ?, ?, ?, ?)")
                     .setParameter(1, participantId)
                     .setParameter(2, schedulePollId)
-                    .setParameter(3, now)
+                    .setParameter(3, votedDateJson)
                     .setParameter(4, now)
                     .setParameter(5, now)
                     .executeUpdate();

@@ -24,6 +24,7 @@ public enum ErrorCode {
     DUPLICATE_LOCAL_STORAGE_KEY("E413", "이미 참여한 사용자입니다.", HttpStatus.CONFLICT),
     PARTICIPANT_NOT_FOUND("E414", "참여자가 존재하지 않습니다.", HttpStatus.NOT_FOUND),
     LOCATION_VOTE_NOT_FOUND("E415", "위치 응답이 존재하지 않습니다.", HttpStatus.NOT_FOUND),
+    SCHEDULE_VOTE_NOT_FOUND("E416", "시간 응답이 존재하지 않습니다.", HttpStatus.NOT_FOUND),
 
     // 서버 오류
     SERVER_ERROR("E500", "서버 내부 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),

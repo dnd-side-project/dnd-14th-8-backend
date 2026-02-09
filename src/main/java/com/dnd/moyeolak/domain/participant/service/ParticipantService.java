@@ -13,6 +13,8 @@ public interface ParticipantService {
 
     CreateParticipantResponse createWithLocation(String meetingId, CreateParticipantWithLocationRequest request);
 
+    Participant getById(Long participantId);
+
     GetParticipantResponse getParticipant(Long participantId);
 
     ListParticipantResponse listParticipants(String meetingId);

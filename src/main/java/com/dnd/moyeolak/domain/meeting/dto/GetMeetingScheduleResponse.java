@@ -30,8 +30,9 @@ public record GetMeetingScheduleResponse(
                 .map(participant -> {
                     List<LocalDateTime> votedDates = meeting.getSchedulePoll().getScheduleVotes().stream()
                             .filter(vote -> vote.getParticipant().equals(participant))
+                            .findFirst()
                             .map(ScheduleVote::getVotedDate)
-                            .toList();
+                            .orElse(List.of());
                     return new ParticipantResponse(participant.getName(), votedDates);
                 })
                 .toList();
