@@ -31,7 +31,7 @@ public class ScheduleVote extends BaseEntity {
 
     @Builder.Default
     @Convert(converter = LocalDateTimeListConverter.class)
-    @Column(length = 1000, comment = "투표한 날짜", nullable = false)
+    @Column(columnDefinition = "TEXT", comment = "투표한 날짜", nullable = false)
     private List<LocalDateTime> votedDate = new ArrayList<>();
 
     public static ScheduleVote of(Participant participant, SchedulePoll schedulePoll, LocalDateTime votedDate) {
