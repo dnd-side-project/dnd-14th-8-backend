@@ -46,7 +46,6 @@ public class SecondaryDatasourceConfig {
                 .packages("com.dnd.moyeolak.global.station.entity")
                 .persistenceUnit("secondary")
                 .properties(Map.of(
-                        "hibernate.dialect", "org.hibernate.spatial.dialect.postgis.PostgisPG10Dialect",
                         "hibernate.hbm2ddl.auto", "none",
                         "hibernate.show_sql", "true",
                         "hibernate.format_sql", "true"

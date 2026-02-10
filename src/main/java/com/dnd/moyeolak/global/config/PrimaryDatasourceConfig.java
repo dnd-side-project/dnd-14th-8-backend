@@ -52,7 +52,6 @@ public class PrimaryDatasourceConfig {
                 .packages("com.dnd.moyeolak.domain", "com.dnd.moyeolak.global.entity")
                 .persistenceUnit("primary")
                 .properties(Map.of(
-                        "hibernate.dialect", "org.hibernate.dialect.MySQLDialect",
                         "hibernate.hbm2ddl.auto", "create",
                         "hibernate.show_sql", "true",
                         "hibernate.format_sql", "true"
