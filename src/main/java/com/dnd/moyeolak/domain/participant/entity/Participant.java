@@ -75,7 +75,7 @@ public class Participant extends BaseEntity {
 
     public static Participant of(Meeting meeting, String localStorageKey, String name, ScheduleVote scheduleVote) {
         Participant participant = Participant.of(meeting, localStorageKey, name);
-        participant.getScheduleVotes().add(scheduleVote);
+        participant.addScheduleVote(scheduleVote);
         return participant;
     }
 
@@ -83,6 +83,11 @@ public class Participant extends BaseEntity {
         Participant participant = Participant.of(meeting, localStorageKey, name);
         participant.addLocationVote(locationVote);
         return participant;
+    }
+
+    private void addScheduleVote(ScheduleVote scheduleVote) {
+        this.scheduleVotes.add(scheduleVote);
+        scheduleVote.assignParticipant(this);
     }
 
     private void addLocationVote(LocationVote locationVote) {

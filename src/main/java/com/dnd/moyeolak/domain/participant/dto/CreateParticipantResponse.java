@@ -22,16 +22,6 @@ public record CreateParticipantResponse(
         @Schema(description = "생성 일시", example = "2025-02-05T10:30:00")
         LocalDateTime createdAt
 ) {
-    public static CreateParticipantResponse fromSchedule(Participant participant, int voteCount) {
-        return new CreateParticipantResponse(
-                participant.getParticipantId(),
-                participant.getName(),
-                voteCount,
-                false,
-                participant.getCreatedAt()
-        );
-    }
-
     public static CreateParticipantResponse fromLocation(Participant participant) {
         return new CreateParticipantResponse(
                 participant.getParticipantId(),
