@@ -2,7 +2,6 @@ package com.dnd.moyeolak.domain.participant.controller;
 
 import com.dnd.moyeolak.domain.participant.dto.CreateParticipantResponse;
 import com.dnd.moyeolak.domain.participant.dto.CreateParticipantWithLocationRequest;
-import com.dnd.moyeolak.domain.participant.dto.CreateParticipantWithScheduleRequest;
 import com.dnd.moyeolak.domain.participant.dto.GetParticipantResponse;
 import com.dnd.moyeolak.domain.participant.dto.ListParticipantResponse;
 import com.dnd.moyeolak.domain.participant.service.ParticipantService;
@@ -64,43 +63,6 @@ class ParticipantControllerTest {
     }
 
     @Test
-    @DisplayName("일정 투표와 함께 참여 API 는 201 상태와 응답 본문을 반환한다")
-    void joinWithSchedule_returnsCreatedResponse() throws Exception {
-        CreateParticipantWithScheduleRequest request = new CreateParticipantWithScheduleRequest(
-                "홍길동",
-                "local-key",
-                List.of(
-                        LocalDateTime.of(2025, 2, 10, 9, 0),
-                        LocalDateTime.of(2025, 2, 10, 10, 0)
-                )
-        );
-        CreateParticipantResponse response = new CreateParticipantResponse(
-                1L,
-                request.name(),
-                request.availableSchedules().size(),
-                false,
-                LocalDateTime.now()
-        );
-        when(participantService.createWithSchedule(eq(MEETING_ID), any(CreateParticipantWithScheduleRequest.class)))
-                .thenReturn(response);
-
-        mockMvc.perform(post("/api/participants/join-with-schedule")
-                        .param("meetingId", MEETING_ID)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.code").value(SuccessCode.RESOURCE_CREATED.getCode()))
-                .andExpect(jsonPath("$.data.participantId").value(response.participantId()))
-                .andExpect(jsonPath("$.data.scheduleVoteCount").value(response.scheduleVoteCount()))
-                .andExpect(jsonPath("$.data.hasLocation").value(false));
-
-        ArgumentCaptor<CreateParticipantWithScheduleRequest> captor =
-                ArgumentCaptor.forClass(CreateParticipantWithScheduleRequest.class);
-        verify(participantService).createWithSchedule(eq(MEETING_ID), captor.capture());
-        assertThat(captor.getValue()).isEqualTo(request);
-    }
-
-    @Test
     @DisplayName("위치 투표와 함께 참여 API 는 201 상태와 응답 본문을 반환한다")
     void joinWithLocation_returnsCreatedResponse() throws Exception {
         CreateParticipantWithLocationRequest request = new CreateParticipantWithLocationRequest(
@@ -136,30 +98,6 @@ class ParticipantControllerTest {
                 ArgumentCaptor.forClass(CreateParticipantWithLocationRequest.class);
         verify(participantService).createWithLocation(eq(MEETING_ID), captor.capture());
         assertThat(captor.getValue()).isEqualTo(request);
-    }
-
-    @Test
-    @DisplayName("일정 투표와 함께 참여 API 는 요청 검증 실패 시 400을 반환한다")
-    void joinWithSchedule_returnsBadRequestOnValidationError() throws Exception {
-        String invalidPayload = """
-                {
-                  "name": "",
-                  "localStorageKey": "",
-                  "availableSchedules": []
-                }
-                """;
-
-        mockMvc.perform(post("/api/participants/join-with-schedule")
-                        .param("meetingId", MEETING_ID)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(invalidPayload))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value(ErrorCode.INVALID_PARAMETER.getCode()))
-                .andExpect(jsonPath("$.data.name").exists())
-                .andExpect(jsonPath("$.data.localStorageKey").exists())
-                .andExpect(jsonPath("$.data.availableSchedules").exists());
-
-        verifyNoInteractions(participantService);
     }
 
     @Test

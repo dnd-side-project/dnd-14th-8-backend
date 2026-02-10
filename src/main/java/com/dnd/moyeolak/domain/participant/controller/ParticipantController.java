@@ -2,7 +2,6 @@ package com.dnd.moyeolak.domain.participant.controller;
 
 import com.dnd.moyeolak.domain.participant.dto.CreateParticipantResponse;
 import com.dnd.moyeolak.domain.participant.dto.CreateParticipantWithLocationRequest;
-import com.dnd.moyeolak.domain.participant.dto.CreateParticipantWithScheduleRequest;
 import com.dnd.moyeolak.domain.participant.dto.GetParticipantResponse;
 import com.dnd.moyeolak.domain.participant.dto.ListParticipantResponse;
 import com.dnd.moyeolak.domain.participant.service.ParticipantService;
@@ -28,116 +27,6 @@ import org.springframework.web.bind.annotation.*;
 public class ParticipantController {
 
     private final ParticipantService participantService;
-
-    @PostMapping("/join-with-schedule")
-    @Operation(
-            summary = "일정 투표와 함께 참여",
-            description = """
-                    참여자 생성과 동시에 가능한 시간대에 투표합니다.
-
-                    ### 사용 시점
-                    - 모임 생성자가 일정 투표를 시작한 후
-                    - 참여자가 자신의 가능한 시간대를 선택할 때
-
-                    ### 주의사항
-                    - `availableSchedules`는 30분 단위로 전송 (예: 09:00, 09:30, 10:00)
-                    - 시간은 ISO-8601 형식 + Asia/Seoul 기준
-                    - `localStorageKey`는 브라우저별 고유값 (재참여 방지용)
-                    """
-    )
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "201",
-                    description = "참여자 생성 및 일정 투표 성공",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = CreateParticipantResponse.class),
-                            examples = @ExampleObject(
-                                    name = "성공 응답",
-                                    summary = "일정 투표 참여 성공",
-                                    value = """
-                                            {
-                                              "code": "S101",
-                                              "message": "리소스가 성공적으로 생성되었습니다.",
-                                              "data": {
-                                                "participantId": 15,
-                                                "name": "김철수",
-                                                "scheduleVoteCount": 4,
-                                                "hasLocation": false,
-                                                "createdAt": "2025-02-06T14:30:00"
-                                              }
-                                            }
-                                            """
-                            )
-                    )
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "400",
-                    description = "요청 데이터 검증 실패",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = {
-                                    @ExampleObject(
-                                            name = "필수값 누락",
-                                            summary = "이름 미입력",
-                                            value = """
-                                                    {
-                                                      "code": "E103",
-                                                      "message": "유효성 검증 실패",
-                                                      "data": {
-                                                        "name": "이름은 필수입니다"
-                                                      }
-                                                    }
-                                                    """
-                                    ),
-                                    @ExampleObject(
-                                            name = "빈 일정 목록",
-                                            summary = "가능한 시간 미선택",
-                                            value = """
-                                                    {
-                                                      "code": "E103",
-                                                      "message": "유효성 검증 실패",
-                                                      "data": {
-                                                        "availableSchedules": "가능한 시간 정보는 필수입니다"
-                                                      }
-                                                    }
-                                                    """
-                                    )
-                            }
-                    )
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "404",
-                    description = "모임을 찾을 수 없음",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    name = "모임 없음",
-                                    value = """
-                                            {
-                                              "code": "E410",
-                                              "message": "모임이 존재하지 않습니다."
-                                            }
-                                            """
-                            )
-                    )
-            )
-    })
-    public ResponseEntity<ApiResponse<CreateParticipantResponse>> joinWithSchedule(
-            @Parameter(
-                    description = "참여할 모임 ID",
-                    example = "abc123",
-                    required = true
-            )
-            @RequestParam String meetingId,
-            @Valid @RequestBody CreateParticipantWithScheduleRequest request) {
-
-        CreateParticipantResponse response = participantService.createWithSchedule(meetingId, request);
-
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(ApiResponse.success(SuccessCode.RESOURCE_CREATED, response));
-    }
 
     @PostMapping("/join-with-location")
     @Operation(
