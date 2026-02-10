@@ -3,7 +3,7 @@ package com.dnd.moyeolak.domain.schedule.service;
 import com.dnd.moyeolak.domain.meeting.entity.Meeting;
 import com.dnd.moyeolak.domain.participant.entity.Participant;
 import com.dnd.moyeolak.domain.participant.service.ParticipantService;
-import com.dnd.moyeolak.domain.schedule.dto.UpdateScheduleVotesRequest;
+import com.dnd.moyeolak.domain.schedule.dto.UpdateScheduleVoteRequest;
 import com.dnd.moyeolak.domain.schedule.entity.SchedulePoll;
 import com.dnd.moyeolak.domain.schedule.entity.ScheduleVote;
 import com.dnd.moyeolak.domain.schedule.repository.ScheduleVoteRepository;
@@ -59,7 +59,7 @@ class ScheduleServiceUnitTest {
                     today.atTime(10, 0)
             );
 
-            UpdateScheduleVotesRequest request = new UpdateScheduleVotesRequest(
+            UpdateScheduleVoteRequest request = new UpdateScheduleVoteRequest(
                     1L, "홍길동", votedDates, true
             );
 
@@ -67,7 +67,7 @@ class ScheduleServiceUnitTest {
             when(scheduleVoteRepository.findById(1L)).thenReturn(Optional.of(scheduleVote));
 
             // when
-            scheduleService.updateScheduleVotes(1L, request);
+            scheduleService.updateParticipantVote(1L, request);
 
             // then
             assertThat(scheduleVote.getVotedDate()).isEqualTo(votedDates);
@@ -88,7 +88,7 @@ class ScheduleServiceUnitTest {
                     today.atTime(8, 0)
             );
 
-            UpdateScheduleVotesRequest request = new UpdateScheduleVotesRequest(
+            UpdateScheduleVoteRequest request = new UpdateScheduleVoteRequest(
                     1L, "홍길동", unavailableDates, false
             );
 
@@ -96,7 +96,7 @@ class ScheduleServiceUnitTest {
             when(scheduleVoteRepository.findById(1L)).thenReturn(Optional.of(scheduleVote));
 
             // when
-            scheduleService.updateScheduleVotes(1L, request);
+            scheduleService.updateParticipantVote(1L, request);
 
             // then
             List<LocalDateTime> allSlots = schedulePoll.generateAllTimeSlots();
@@ -115,7 +115,7 @@ class ScheduleServiceUnitTest {
             Participant participant = Participant.of(meeting, "local-key", "홍길동");
             ScheduleVote scheduleVote = ScheduleVote.of(participant, schedulePoll, new ArrayList<>());
 
-            UpdateScheduleVotesRequest request = new UpdateScheduleVotesRequest(
+            UpdateScheduleVoteRequest request = new UpdateScheduleVoteRequest(
                     1L, "홍길동", List.of(), false
             );
 
@@ -123,7 +123,7 @@ class ScheduleServiceUnitTest {
             when(scheduleVoteRepository.findById(1L)).thenReturn(Optional.of(scheduleVote));
 
             // when
-            scheduleService.updateScheduleVotes(1L, request);
+            scheduleService.updateParticipantVote(1L, request);
 
             // then
             List<LocalDateTime> allSlots = schedulePoll.generateAllTimeSlots();
@@ -139,7 +139,7 @@ class ScheduleServiceUnitTest {
             Participant participant = Participant.of(meeting, "local-key", "기존이름");
             ScheduleVote scheduleVote = ScheduleVote.of(participant, schedulePoll, new ArrayList<>());
 
-            UpdateScheduleVotesRequest request = new UpdateScheduleVotesRequest(
+            UpdateScheduleVoteRequest request = new UpdateScheduleVoteRequest(
                     1L, "새이름", List.of(), true
             );
 
@@ -147,7 +147,7 @@ class ScheduleServiceUnitTest {
             when(scheduleVoteRepository.findById(1L)).thenReturn(Optional.of(scheduleVote));
 
             // when
-            scheduleService.updateScheduleVotes(1L, request);
+            scheduleService.updateParticipantVote(1L, request);
 
             // then
             assertThat(participant.getName()).isEqualTo("새이름");
@@ -160,7 +160,7 @@ class ScheduleServiceUnitTest {
             Meeting meeting = Meeting.ofId("test-meeting");
             Participant participant = Participant.of(meeting, "local-key", "홍길동");
 
-            UpdateScheduleVotesRequest request = new UpdateScheduleVotesRequest(
+            UpdateScheduleVoteRequest request = new UpdateScheduleVoteRequest(
                     1L, "홍길동", List.of(), true
             );
 
@@ -168,7 +168,7 @@ class ScheduleServiceUnitTest {
             when(scheduleVoteRepository.findById(999L)).thenReturn(Optional.empty());
 
             // when & then
-            assertThatThrownBy(() -> scheduleService.updateScheduleVotes(999L, request))
+            assertThatThrownBy(() -> scheduleService.updateParticipantVote(999L, request))
                     .isInstanceOf(BusinessException.class);
         }
     }

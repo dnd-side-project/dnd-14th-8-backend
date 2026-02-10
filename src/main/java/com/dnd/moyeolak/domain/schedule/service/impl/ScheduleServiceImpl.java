@@ -2,7 +2,7 @@ package com.dnd.moyeolak.domain.schedule.service.impl;
 
 import com.dnd.moyeolak.domain.participant.entity.Participant;
 import com.dnd.moyeolak.domain.participant.service.ParticipantService;
-import com.dnd.moyeolak.domain.schedule.dto.UpdateScheduleVotesRequest;
+import com.dnd.moyeolak.domain.schedule.dto.UpdateScheduleVoteRequest;
 import com.dnd.moyeolak.domain.schedule.entity.ScheduleVote;
 import com.dnd.moyeolak.domain.schedule.repository.ScheduleVoteRepository;
 import com.dnd.moyeolak.domain.schedule.service.ScheduleService;
@@ -25,7 +25,7 @@ public class ScheduleServiceImpl implements ScheduleService {
 
     @Override
     @Transactional
-    public void updateScheduleVotes(Long scheduleVoteId, UpdateScheduleVotesRequest request) {
+    public void updateParticipantVote(Long scheduleVoteId, UpdateScheduleVoteRequest request) {
         Participant participant = participantService.getById(request.participantId());
         participant.updateName(request.participantName());
 

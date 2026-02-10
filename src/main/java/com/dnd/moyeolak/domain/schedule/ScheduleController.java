@@ -1,6 +1,6 @@
 package com.dnd.moyeolak.domain.schedule;
 
-import com.dnd.moyeolak.domain.schedule.dto.UpdateScheduleVotesRequest;
+import com.dnd.moyeolak.domain.schedule.dto.UpdateScheduleVoteRequest;
 import com.dnd.moyeolak.domain.schedule.service.ScheduleService;
 import com.dnd.moyeolak.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -19,11 +19,11 @@ public class ScheduleController {
 
     @PutMapping("/vote/{scheduleVoteId}")
     @Operation(summary = "시간 투표 수정", description = "특정 시간 투표를 수정합니다.")
-    public ResponseEntity<ApiResponse<Void>> updateScheduleVotes(
+    public ResponseEntity<ApiResponse<Void>> updateScheduleVote(
             @PathVariable Long scheduleVoteId,
-            @RequestBody UpdateScheduleVotesRequest request
+            @RequestBody UpdateScheduleVoteRequest request
     ) {
-        scheduleService.updateScheduleVotes(scheduleVoteId, request);
+        scheduleService.updateParticipantVote(scheduleVoteId, request);
         return ResponseEntity.ok(ApiResponse.success());
     }
 
