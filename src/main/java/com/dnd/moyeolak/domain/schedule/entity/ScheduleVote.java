@@ -34,24 +34,27 @@ public class ScheduleVote extends BaseEntity {
     @Column(columnDefinition = "TEXT", comment = "투표한 날짜", nullable = false)
     private List<LocalDateTime> votedDate = new ArrayList<>();
 
-    public static ScheduleVote of(Participant participant, SchedulePoll schedulePoll, LocalDateTime votedDate) {
-        return ScheduleVote.builder()
-                .participant(participant)
-                .schedulePoll(schedulePoll)
-                //.votedDate(votedDate) TODO : 추후 수정
-                .build();
-    }
-
-    public static ScheduleVote of(Participant participant, SchedulePoll schedulePoll, List<LocalDateTime> localDateTimes) {
-        return ScheduleVote.builder()
-                .participant(participant)
-                .schedulePoll(schedulePoll)
-                .votedDate(localDateTimes)
-                .build();
+    public void assignParticipant(Participant participant) {
+        this.participant = participant;
     }
 
     public void updateDateTimeOption(List<LocalDateTime> newDateTimes) {
         this.votedDate.clear();
         this.votedDate.addAll(newDateTimes);
+    }
+
+    public static ScheduleVote of(SchedulePoll schedulePoll, List<LocalDateTime> votedDate) {
+        return ScheduleVote.builder()
+                .schedulePoll(schedulePoll)
+                .votedDate(votedDate)
+                .build();
+    }
+
+    public static ScheduleVote of(Participant participant, SchedulePoll schedulePoll, List<LocalDateTime> votedDate) {
+        return ScheduleVote.builder()
+                .participant(participant)
+                .schedulePoll(schedulePoll)
+                .votedDate(votedDate)
+                .build();
     }
 }
