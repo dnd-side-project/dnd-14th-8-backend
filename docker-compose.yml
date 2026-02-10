@@ -16,5 +16,28 @@ services:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
 
+  redis:
+    image: redis:7-alpine
+    container_name: moyeolak-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  postgres:
+    image: postgis/postgis:15-3.3
+    container_name: moyeolak-postgres
+    environment:
+      POSTGRES_DB: moyeolak_spatial
+      POSTGRES_USER: moyeolak
+      POSTGRES_PASSWORD: moyeolak
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./src/main/resources/postgis-init.sql:/docker-entrypoint-initdb.d/init.sql
+      - pgdata:/var/lib/postgresql/data
+
 volumes:
   mysql_data:
+  redis_data:
+  pgdata:
