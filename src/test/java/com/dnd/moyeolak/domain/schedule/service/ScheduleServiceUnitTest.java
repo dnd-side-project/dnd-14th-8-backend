@@ -50,8 +50,8 @@ class ScheduleServiceUnitTest {
     class CreateParticipantVote {
 
         @Test
-        @DisplayName("정상적으로 참가자와 시간 투표가 생성된다")
-        void createParticipantVote_success() {
+        @DisplayName("참가자가 모임에 추가된다")
+        void createsParticipantInMeeting() {
             // given
             String meetingId = "test-meeting";
             Meeting meeting = Meeting.ofId(meetingId);
@@ -74,7 +74,66 @@ class ScheduleServiceUnitTest {
             scheduleService.createParticipantVote(meetingId, request);
 
             // then
-            verify(meetingService).get(meetingId);
+            assertThat(meeting.getParticipants()).hasSize(1);
+
+            Participant createdParticipant = meeting.getParticipants().get(0);
+            assertThat(createdParticipant.getName()).isEqualTo("홍길동");
+            assertThat(createdParticipant.getLocalStorageKey()).isEqualTo("local-key-123");
+        }
+
+        @Test
+        @DisplayName("참가자에 시간 투표가 연결된다")
+        void createsScheduleVoteLinkedToParticipant() {
+            // given
+            String meetingId = "test-meeting";
+            Meeting meeting = Meeting.ofId(meetingId);
+            SchedulePoll schedulePoll = SchedulePoll.defaultOf(meeting);
+            meeting.addPolls(schedulePoll, null);
+
+            LocalDate today = LocalDate.now();
+            List<LocalDateTime> votedDates = List.of(
+                    today.atTime(9, 0),
+                    today.atTime(9, 30)
+            );
+
+            CreateScheduleVoteRequest request = new CreateScheduleVoteRequest(
+                    "홍길동", "local-key-123", votedDates, true
+            );
+
+            when(meetingService.get(meetingId)).thenReturn(meeting);
+
+            // when
+            scheduleService.createParticipantVote(meetingId, request);
+
+            // then
+            Participant createdParticipant = meeting.getParticipants().get(0);
+            assertThat(createdParticipant.getScheduleVotes()).hasSize(1);
+
+            ScheduleVote createdVote = createdParticipant.getScheduleVotes().get(0);
+            assertThat(createdVote.getVotedDate()).isEqualTo(votedDates);
+            assertThat(createdVote.getParticipant()).isEqualTo(createdParticipant);
+            assertThat(createdVote.getSchedulePoll()).isEqualTo(schedulePoll);
+        }
+
+        @Test
+        @DisplayName("localStorageKey 중복 검증이 수행된다")
+        void validatesLocalStorageKeyUniqueness() {
+            // given
+            String meetingId = "test-meeting";
+            Meeting meeting = Meeting.ofId(meetingId);
+            SchedulePoll schedulePoll = SchedulePoll.defaultOf(meeting);
+            meeting.addPolls(schedulePoll, null);
+
+            CreateScheduleVoteRequest request = new CreateScheduleVoteRequest(
+                    "홍길동", "local-key-123", List.of(LocalDate.now().atTime(9, 0)), true
+            );
+
+            when(meetingService.get(meetingId)).thenReturn(meeting);
+
+            // when
+            scheduleService.createParticipantVote(meetingId, request);
+
+            // then
             verify(participantService).validateLocalStorageKeyUnique(meeting, "local-key-123");
         }
 
@@ -110,6 +169,25 @@ class ScheduleServiceUnitTest {
             );
 
             when(meetingService.get(meetingId)).thenThrow(new BusinessException(ErrorCode.MEETING_NOT_FOUND));
+
+            // when & then
+            assertThatThrownBy(() -> scheduleService.createParticipantVote(meetingId, request))
+                    .isInstanceOf(BusinessException.class);
+        }
+
+        @Test
+        @DisplayName("일정 투표판이 없으면 예외가 발생한다")
+        void schedulePollNotFound_throwsException() {
+            // given
+            String meetingId = "test-meeting";
+            Meeting meeting = Meeting.ofId(meetingId);
+            // addPolls 호출 안 함 → schedulePoll이 null
+
+            CreateScheduleVoteRequest request = new CreateScheduleVoteRequest(
+                    "홍길동", "local-key", List.of(LocalDate.now().atTime(9, 0)), true
+            );
+
+            when(meetingService.get(meetingId)).thenReturn(meeting);
 
             // when & then
             assertThatThrownBy(() -> scheduleService.createParticipantVote(meetingId, request))

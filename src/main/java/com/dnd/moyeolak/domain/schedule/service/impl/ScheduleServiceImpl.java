@@ -41,7 +41,10 @@ public class ScheduleServiceImpl implements ScheduleService {
         }
 
         ScheduleVote scheduleVote = ScheduleVote.of(schedulePoll, request.votedDates());
-        Participant.of(Meeting.ofId(meetingId), request.localStorageKey(), request.participantName(), scheduleVote);
+        Participant participant = Participant.of(
+                Meeting.ofId(meetingId), request.localStorageKey(), request.participantName(), scheduleVote
+        );
+        meeting.addParticipant(participant);
     }
 
     @Override
