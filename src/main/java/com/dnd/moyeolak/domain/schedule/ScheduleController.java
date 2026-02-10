@@ -18,7 +18,7 @@ public class ScheduleController {
     private final ScheduleService scheduleService;
 
     @PutMapping("/vote/{scheduleVoteId}")
-    @Operation(summary = "모임 일정 투표 수정", description = "모임의 일정 투표를 수정하는 API입니다.")
+    @Operation(summary = "시간 투표 수정", description = "특정 시간 투표를 수정합니다.")
     public ResponseEntity<ApiResponse<Void>> updateScheduleVotes(
             @PathVariable Long scheduleVoteId,
             @RequestBody UpdateScheduleVotesRequest request
