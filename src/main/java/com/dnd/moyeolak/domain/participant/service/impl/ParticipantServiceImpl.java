@@ -80,6 +80,12 @@ public class ParticipantServiceImpl implements ParticipantService {
     }
 
     @Override
+    public Participant getById(Long participantId) {
+        return participantRepository.findById(participantId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PARTICIPANT_NOT_FOUND));
+    }
+
+    @Override
     public GetParticipantResponse getParticipant(Long participantId) {
         Participant participant = participantRepository.findById(participantId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PARTICIPANT_NOT_FOUND));
