@@ -52,6 +52,10 @@ public class Participant extends BaseEntity {
     @OneToMany(mappedBy = "participant", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LocationVote> locationVotes = new ArrayList<>();
 
+    public void updateName(String name) {
+        this.name = name;
+    }
+
     private static Participant createParticipant(Meeting meeting, String localStorageKey, String name, boolean host) {
         return Participant.builder()
                 .meeting(meeting)
@@ -71,7 +75,7 @@ public class Participant extends BaseEntity {
 
     public static Participant of(Meeting meeting, String localStorageKey, String name, ScheduleVote scheduleVote) {
         Participant participant = Participant.of(meeting, localStorageKey, name);
-        participant.getScheduleVotes().add(scheduleVote);
+        participant.addScheduleVote(scheduleVote);
         return participant;
     }
 
@@ -79,6 +83,11 @@ public class Participant extends BaseEntity {
         Participant participant = Participant.of(meeting, localStorageKey, name);
         participant.addLocationVote(locationVote);
         return participant;
+    }
+
+    private void addScheduleVote(ScheduleVote scheduleVote) {
+        this.scheduleVotes.add(scheduleVote);
+        scheduleVote.assignParticipant(this);
     }
 
     private void addLocationVote(LocationVote locationVote) {

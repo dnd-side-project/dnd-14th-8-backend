@@ -1,11 +1,14 @@
 package com.dnd.moyeolak.domain.schedule.entity;
 
 import com.dnd.moyeolak.domain.participant.entity.Participant;
+import com.dnd.moyeolak.global.converter.LocalDateTimeListConverter;
 import com.dnd.moyeolak.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Entity
@@ -26,10 +29,28 @@ public class ScheduleVote extends BaseEntity {
     @JoinColumn(name = "schedule_poll_id", nullable = false)
     private SchedulePoll schedulePoll;
 
-    @Column(columnDefinition = "DATETIME(0)", comment = "투표한 날짜", nullable = false)
-    private LocalDateTime votedDate;
+    @Builder.Default
+    @Convert(converter = LocalDateTimeListConverter.class)
+    @Column(columnDefinition = "TEXT", comment = "투표한 날짜", nullable = false)
+    private List<LocalDateTime> votedDate = new ArrayList<>();
 
-    public static ScheduleVote of(Participant participant, SchedulePoll schedulePoll, LocalDateTime votedDate) {
+    public void assignParticipant(Participant participant) {
+        this.participant = participant;
+    }
+
+    public void updateDateTimeOption(List<LocalDateTime> newDateTimes) {
+        this.votedDate.clear();
+        this.votedDate.addAll(newDateTimes);
+    }
+
+    public static ScheduleVote of(SchedulePoll schedulePoll, List<LocalDateTime> votedDate) {
+        return ScheduleVote.builder()
+                .schedulePoll(schedulePoll)
+                .votedDate(votedDate)
+                .build();
+    }
+
+    public static ScheduleVote of(Participant participant, SchedulePoll schedulePoll, List<LocalDateTime> votedDate) {
         return ScheduleVote.builder()
                 .participant(participant)
                 .schedulePoll(schedulePoll)
