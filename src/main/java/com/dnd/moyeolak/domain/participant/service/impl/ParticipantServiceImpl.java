@@ -20,8 +20,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -29,29 +27,6 @@ public class ParticipantServiceImpl implements ParticipantService {
 
     private final MeetingService meetingService;
     private final ParticipantRepository participantRepository;
-
-    @Override
-    @Transactional
-    public CreateParticipantResponse createWithSchedule(String meetingId, CreateParticipantWithScheduleRequest request) {
-        Meeting meeting = meetingService.get(meetingId);
-        validateLocalStorageKeyUnique(meeting, request.localStorageKey());
-
-        SchedulePoll schedulePoll = meeting.getSchedulePoll();
-        if (schedulePoll == null) {
-            throw new BusinessException(ErrorCode.SCHEDULE_POLL_NOT_FOUND);
-        }
-
-        Participant participant = Participant.of(meeting, request.localStorageKey(), request.name());
-
-        List<ScheduleVote> votes = request.availableSchedules().stream()
-                .map(schedule -> ScheduleVote.of(participant, schedulePoll, schedule))
-                .toList();
-        participant.getScheduleVotes().addAll(votes);
-
-        meeting.addParticipant(participant);
-
-        return CreateParticipantResponse.fromSchedule(participant, votes.size());
-    }
 
     @Override
     @Transactional
@@ -80,6 +55,12 @@ public class ParticipantServiceImpl implements ParticipantService {
     }
 
     @Override
+    public Participant getById(Long participantId) {
+        return participantRepository.findById(participantId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PARTICIPANT_NOT_FOUND));
+    }
+
+    @Override
     public GetParticipantResponse getParticipant(Long participantId) {
         Participant participant = participantRepository.findById(participantId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PARTICIPANT_NOT_FOUND));
@@ -98,7 +79,8 @@ public class ParticipantServiceImpl implements ParticipantService {
         participantRepository.save(participant);
     }
 
-    private void validateLocalStorageKeyUnique(Meeting meeting, String localStorageKey) {
+    @Override
+    public void validateLocalStorageKeyUnique(Meeting meeting, String localStorageKey) {
         if (participantRepository.existsByMeetingAndLocalStorageKey(meeting, localStorageKey)) {
             throw new BusinessException(ErrorCode.DUPLICATE_LOCAL_STORAGE_KEY);
         }

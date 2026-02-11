@@ -71,25 +71,28 @@ public class SchedulePoll extends BaseEntity {
                 .build();
     }
 
-    public void addDate(LocalDate date) {
-        if (!this.dateOptions.contains(date)) {
-            this.dateOptions.add(date);
-            this.dateOptions.sort(Comparator.naturalOrder());
+    public List<LocalDateTime> generateAllTimeSlots() {
+        List<LocalDateTime> allTimeSlots = new ArrayList<>();
+        // 분 단위(ex: 420) → 시:분(ex: 7시 0분)으로 변환하여 LocalDateTime 생성
+        int startMinutes = getStartTime();
+        int endMinutes = getEndTime();
+        for (LocalDate date : dateOptions) {
+            LocalDateTime current = date.atTime(startMinutes / 60, startMinutes % 60);
+            LocalDateTime end = endMinutes == 24 * 60
+                    ? date.plusDays(1).atStartOfDay()
+                    : date.atTime(endMinutes / 60, endMinutes % 60);
+            while (current.isBefore(end)) {
+                allTimeSlots.add(current);
+                current = current.plusMinutes(30);
+            }
         }
-    }
-
-    public void removeDate(LocalDate date) {
-        this.dateOptions.remove(date);
-    }
-
-    public void updateDateOption(List<LocalDate> newDates) {
-        this.dateOptions.clear();
-        this.dateOptions.addAll(newDates);
-        this.dateOptions.sort(Comparator.naturalOrder());
+        return allTimeSlots;
     }
 
     public void updateOptions(List<LocalDate> dateOptions, int startTime, int endTime) {
-        updateDateOption(dateOptions);
+        this.dateOptions.clear();
+        this.dateOptions.addAll(dateOptions);
+        this.dateOptions.sort(Comparator.naturalOrder());
         this.startTime = startTime;
         this.endTime = endTime;
     }
