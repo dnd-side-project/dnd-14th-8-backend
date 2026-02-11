@@ -14,6 +14,8 @@ import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
+import org.springframework.beans.factory.annotation.Value;
+
 import javax.sql.DataSource;
 import java.util.Map;
 
@@ -25,6 +27,9 @@ import java.util.Map;
         transactionManagerRef = "primaryTransactionManager"
 )
 public class PrimaryDatasourceConfig {
+
+    @Value("${spring.jpa.primary.ddl-auto:none}")
+    private String ddlAuto;
 
     @Primary
     @Bean
@@ -52,7 +57,7 @@ public class PrimaryDatasourceConfig {
                 .packages("com.dnd.moyeolak.domain", "com.dnd.moyeolak.global.entity")
                 .persistenceUnit("primary")
                 .properties(Map.of(
-                        "hibernate.hbm2ddl.auto", "create",
+                        "hibernate.hbm2ddl.auto", ddlAuto,
                         "hibernate.show_sql", "true",
                         "hibernate.format_sql", "true"
                 ))
