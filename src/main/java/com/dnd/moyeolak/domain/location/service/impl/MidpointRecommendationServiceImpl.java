@@ -97,9 +97,9 @@ public class MidpointRecommendationServiceImpl implements MidpointRecommendation
 
     private CenterPointDto calculateCentroid(List<LocationVote> votes) {
         String[] wktPoints = votes.stream()
-                .map(v -> "ST_SetSRID(ST_MakePoint(" +
-                        v.getDepartureLng().doubleValue() + ", " +
-                        v.getDepartureLat().doubleValue() + "), 4326)")
+                .map(v -> "SRID=4326;POINT(" +
+                        v.getDepartureLng().doubleValue() + " " +
+                        v.getDepartureLat().doubleValue() + ")")
                 .toArray(String[]::new);
 
         try {
