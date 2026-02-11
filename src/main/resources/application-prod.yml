@@ -13,6 +13,8 @@ spring:
 
   jpa:
     open-in-view: false
+    primary:
+      ddl-auto: none
 
 kakao:
   api:
