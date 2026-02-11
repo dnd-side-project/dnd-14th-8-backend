@@ -43,8 +43,17 @@ INSERT INTO location_poll (meeting_id, poll_status, created_at, updated_at) VALU
 
 INSERT INTO participant (meeting_id, local_storage_key, name, is_host, created_at, updated_at) VALUES
 ('test-meeting-001', 'host-key-001', '김민준', TRUE, NOW(), NOW()),
+('test-meeting-001', 'key-001-02', '이서연', FALSE, NOW(), NOW()),
+('test-meeting-001', 'key-001-03', '박도윤', FALSE, NOW(), NOW()),
+('test-meeting-001', 'key-001-04', '최하은', FALSE, NOW(), NOW()),
 ('test-meeting-002', 'host-key-002', '이서연', TRUE, NOW(), NOW()),
+('test-meeting-002', 'key-002-02', '정시우', FALSE, NOW(), NOW()),
+('test-meeting-002', 'key-002-03', '강지아', FALSE, NOW(), NOW()),
+('test-meeting-002', 'key-002-04', '조예준', FALSE, NOW(), NOW()),
 ('test-meeting-003', 'host-key-003', '박도윤', TRUE, NOW(), NOW()),
+('test-meeting-003', 'key-003-02', '윤수아', FALSE, NOW(), NOW()),
+('test-meeting-003', 'key-003-03', '임건우', FALSE, NOW(), NOW()),
+('test-meeting-003', 'key-003-04', '한지유', FALSE, NOW(), NOW()),
 ('test-meeting-004', 'host-key-004', '최하은', TRUE, NOW(), NOW()),
 ('test-meeting-005', 'host-key-005', '정시우', TRUE, NOW(), NOW()),
 ('test-meeting-006', 'host-key-006', '강지아', TRUE, NOW(), NOW()),
@@ -52,3 +61,81 @@ INSERT INTO participant (meeting_id, local_storage_key, name, is_host, created_a
 ('test-meeting-008', 'host-key-008', '윤수아', TRUE, NOW(), NOW()),
 ('test-meeting-009', 'host-key-009', '임건우', TRUE, NOW(), NOW()),
 ('test-meeting-010', 'host-key-010', '한지유', TRUE, NOW(), NOW());
+
+-- =====================================================
+-- 중간지점 추천 테스트용 더미 데이터 (test-meeting-001)
+-- 시나리오: 수원, 강남, 일산, 인천에서 출발하는 4명
+-- 무게중심이 서울 중심부(홍대~신촌 부근)에 잡히도록 설정
+-- 테스트: GET /api/locations/midpoint-recommendations?meetingId=test-meeting-001
+-- =====================================================
+INSERT INTO location_vote (location_poll_id, participant_id, departure_name, departure_location, departure_lat, departure_lng, created_at, updated_at)
+SELECT lp.location_poll_id, p.participant_id, '김민준', '수원시 영통구 영통동', 37.2553, 127.0726, NOW(), NOW()
+FROM location_poll lp JOIN participant p ON p.meeting_id = lp.meeting_id AND p.name = '김민준'
+WHERE lp.meeting_id = 'test-meeting-001';
+
+INSERT INTO location_vote (location_poll_id, participant_id, departure_name, departure_location, departure_lat, departure_lng, created_at, updated_at)
+SELECT lp.location_poll_id, p.participant_id, '이서연', '서울시 강남구 역삼동', 37.4979, 127.0276, NOW(), NOW()
+FROM location_poll lp JOIN participant p ON p.meeting_id = lp.meeting_id AND p.name = '이서연'
+WHERE lp.meeting_id = 'test-meeting-001';
+
+INSERT INTO location_vote (location_poll_id, participant_id, departure_name, departure_location, departure_lat, departure_lng, created_at, updated_at)
+SELECT lp.location_poll_id, p.participant_id, '박도윤', '고양시 일산동구 장항동', 37.6584, 126.7737, NOW(), NOW()
+FROM location_poll lp JOIN participant p ON p.meeting_id = lp.meeting_id AND p.name = '박도윤'
+WHERE lp.meeting_id = 'test-meeting-001';
+
+INSERT INTO location_vote (location_poll_id, participant_id, departure_name, departure_location, departure_lat, departure_lng, created_at, updated_at)
+SELECT lp.location_poll_id, p.participant_id, '최하은', '인천시 남동구 구월동', 37.4486, 126.7052, NOW(), NOW()
+FROM location_poll lp JOIN participant p ON p.meeting_id = lp.meeting_id AND p.name = '최하은'
+WHERE lp.meeting_id = 'test-meeting-001';
+
+-- =====================================================
+-- 중간지점 추천 테스트용 더미 데이터 (test-meeting-002)
+-- 시나리오: 서울 내 4개 지역 (강남, 홍대, 잠실, 노원)
+-- 무게중심이 서울 중심부(종로~을지로 부근)에 잡히도록 설정
+-- 테스트: GET /api/locations/midpoint-recommendations?meetingId=test-meeting-002
+-- =====================================================
+INSERT INTO location_vote (location_poll_id, participant_id, departure_name, departure_location, departure_lat, departure_lng, created_at, updated_at)
+SELECT lp.location_poll_id, p.participant_id, '이서연', '서울시 강남구 역삼동', 37.4979, 127.0276, NOW(), NOW()
+FROM location_poll lp JOIN participant p ON p.meeting_id = lp.meeting_id AND p.name = '이서연'
+WHERE lp.meeting_id = 'test-meeting-002';
+
+INSERT INTO location_vote (location_poll_id, participant_id, departure_name, departure_location, departure_lat, departure_lng, created_at, updated_at)
+SELECT lp.location_poll_id, p.participant_id, '정시우', '서울시 마포구 서교동', 37.5563, 126.9220, NOW(), NOW()
+FROM location_poll lp JOIN participant p ON p.meeting_id = lp.meeting_id AND p.name = '정시우'
+WHERE lp.meeting_id = 'test-meeting-002';
+
+INSERT INTO location_vote (location_poll_id, participant_id, departure_name, departure_location, departure_lat, departure_lng, created_at, updated_at)
+SELECT lp.location_poll_id, p.participant_id, '강지아', '서울시 송파구 잠실동', 37.5133, 127.1001, NOW(), NOW()
+FROM location_poll lp JOIN participant p ON p.meeting_id = lp.meeting_id AND p.name = '강지아'
+WHERE lp.meeting_id = 'test-meeting-002';
+
+INSERT INTO location_vote (location_poll_id, participant_id, departure_name, departure_location, departure_lat, departure_lng, created_at, updated_at)
+SELECT lp.location_poll_id, p.participant_id, '조예준', '서울시 노원구 상계동', 37.6542, 127.0568, NOW(), NOW()
+FROM location_poll lp JOIN participant p ON p.meeting_id = lp.meeting_id AND p.name = '조예준'
+WHERE lp.meeting_id = 'test-meeting-002';
+
+-- =====================================================
+-- 중간지점 추천 테스트용 더미 데이터 (test-meeting-003)
+-- 시나리오: 경기도 내 4개 지역 (수원, 성남, 용인, 안양)
+-- 무게중심이 경기 중부(과천~의왕 부근)에 잡히도록 설정
+-- 테스트: GET /api/locations/midpoint-recommendations?meetingId=test-meeting-003
+-- =====================================================
+INSERT INTO location_vote (location_poll_id, participant_id, departure_name, departure_location, departure_lat, departure_lng, created_at, updated_at)
+SELECT lp.location_poll_id, p.participant_id, '박도윤', '수원시 영통구 영통동', 37.2553, 127.0726, NOW(), NOW()
+FROM location_poll lp JOIN participant p ON p.meeting_id = lp.meeting_id AND p.name = '박도윤'
+WHERE lp.meeting_id = 'test-meeting-003';
+
+INSERT INTO location_vote (location_poll_id, participant_id, departure_name, departure_location, departure_lat, departure_lng, created_at, updated_at)
+SELECT lp.location_poll_id, p.participant_id, '윤수아', '성남시 분당구 정자동', 37.3595, 127.1086, NOW(), NOW()
+FROM location_poll lp JOIN participant p ON p.meeting_id = lp.meeting_id AND p.name = '윤수아'
+WHERE lp.meeting_id = 'test-meeting-003';
+
+INSERT INTO location_vote (location_poll_id, participant_id, departure_name, departure_location, departure_lat, departure_lng, created_at, updated_at)
+SELECT lp.location_poll_id, p.participant_id, '임건우', '용인시 수지구 죽전동', 37.3245, 127.1070, NOW(), NOW()
+FROM location_poll lp JOIN participant p ON p.meeting_id = lp.meeting_id AND p.name = '임건우'
+WHERE lp.meeting_id = 'test-meeting-003';
+
+INSERT INTO location_vote (location_poll_id, participant_id, departure_name, departure_location, departure_lat, departure_lng, created_at, updated_at)
+SELECT lp.location_poll_id, p.participant_id, '한지유', '안양시 동안구 평촌동', 37.3943, 126.9568, NOW(), NOW()
+FROM location_poll lp JOIN participant p ON p.meeting_id = lp.meeting_id AND p.name = '한지유'
+WHERE lp.meeting_id = 'test-meeting-003';
