@@ -7,7 +7,7 @@ import com.dnd.moyeolak.domain.location.docs.UpdateLocationVoteApiDocs;
 import com.dnd.moyeolak.domain.location.dto.CreateLocationVoteRequest;
 import com.dnd.moyeolak.domain.location.dto.LocationVoteResponse;
 import com.dnd.moyeolak.domain.location.dto.MidpointRecommendationResponse;
-import com.dnd.moyeolak.domain.location.service.LocationService;
+import com.dnd.moyeolak.domain.location.service.LocationVoteService;
 import com.dnd.moyeolak.domain.location.service.MidpointRecommendationService;
 import com.dnd.moyeolak.domain.meeting.dto.UpdateLocationVoteRequest;
 import com.dnd.moyeolak.global.response.ApiResponse;
@@ -22,13 +22,13 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@Tag(name = "LocationVote", description = "위치 투표 관련 API")
+@Tag(name = "LocationVote", description = "위치/장소 관련 API")
 @RestController
 @RequestMapping("/api/locations")
 @RequiredArgsConstructor
 public class LocationController {
 
-    private final LocationService locationService;
+    private final LocationVoteService locationVoteService;
     private final MidpointRecommendationService midpointRecommendationService;
 
     @GetMapping("/midpoint-recommendations")
@@ -47,7 +47,7 @@ public class LocationController {
     public ResponseEntity<ApiResponse<?>> listLocationVote(
             @Parameter(description = "위치 투표판 ID", example = "1", required = true)
             @PathVariable Long locationPollId) {
-        List<LocationVoteResponse> listLocationVote = locationService.listLocationVote(locationPollId);
+        List<LocationVoteResponse> listLocationVote = locationVoteService.listLocationVote(locationPollId);
         return ResponseEntity.ok(ApiResponse.success(listLocationVote));
     }
 
@@ -58,14 +58,14 @@ public class LocationController {
             @PathVariable Long locationVoteId,
             @Valid @RequestBody UpdateLocationVoteRequest request
     ) {
-        locationService.updateLocationVote(locationVoteId, request);
+        locationVoteService.updateLocationVote(locationVoteId, request);
         return ResponseEntity.ok(ApiResponse.success());
     }
 
     @PostMapping("/vote")
     @CreateLocationVoteApiDocs
     public ResponseEntity<ApiResponse<Void>> createLocationVote(@Valid @RequestBody CreateLocationVoteRequest request) {
-        locationService.createLocationVote(request);
+        locationVoteService.createLocationVote(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success());
     }
 
@@ -74,7 +74,7 @@ public class LocationController {
     public ResponseEntity<ApiResponse<Void>> deleteLocationVote(
             @Parameter(description = "삭제할 출발지 투표 ID", example = "1", required = true)
             @PathVariable Long locationVoteId) {
-        locationService.deleteLocationVote(locationVoteId);
+        locationVoteService.deleteLocationVote(locationVoteId);
         return ResponseEntity.ok(ApiResponse.success());
     }
 }

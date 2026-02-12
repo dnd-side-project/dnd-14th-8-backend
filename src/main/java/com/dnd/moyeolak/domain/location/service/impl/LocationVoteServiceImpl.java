@@ -4,7 +4,7 @@ import com.dnd.moyeolak.domain.location.dto.CreateLocationVoteRequest;
 import com.dnd.moyeolak.domain.location.dto.LocationVoteResponse;
 import com.dnd.moyeolak.domain.location.entity.LocationVote;
 import com.dnd.moyeolak.domain.location.repository.LocationVoteRepository;
-import com.dnd.moyeolak.domain.location.service.LocationService;
+import com.dnd.moyeolak.domain.location.service.LocationVoteService;
 import com.dnd.moyeolak.domain.meeting.dto.UpdateLocationVoteRequest;
 import com.dnd.moyeolak.domain.meeting.entity.Meeting;
 import com.dnd.moyeolak.domain.participant.entity.Participant;
@@ -21,7 +21,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class LocationServiceImpl implements LocationService {
+public class LocationVoteServiceImpl implements LocationVoteService {
 
     private final ParticipantService participantService;
     private final LocationVoteRepository locationVoteRepository;

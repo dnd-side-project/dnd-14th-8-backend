@@ -27,7 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class LocationVoteIntegrationTest {
 
     @Autowired
-    private LocationService locationService;
+    private LocationVoteService locationVoteService;
 
     @Autowired
     private MeetingService meetingService;
@@ -57,7 +57,7 @@ class LocationVoteIntegrationTest {
         );
 
         // when
-        locationService.createLocationVote(request);
+        locationVoteService.createLocationVote(request);
         em.flush();
         em.clear();
 
@@ -94,7 +94,7 @@ class LocationVoteIntegrationTest {
         );
 
         // when
-        locationService.createLocationVote(request);
+        locationVoteService.createLocationVote(request);
         em.flush();
         em.clear();
 
@@ -136,7 +136,7 @@ class LocationVoteIntegrationTest {
         );
 
         // when
-        locationService.createLocationVote(request);
+        locationVoteService.createLocationVote(request);
         em.flush();
         em.clear();
 
@@ -181,8 +181,8 @@ class LocationVoteIntegrationTest {
         );
 
         // when
-        locationService.createLocationVote(manualRequest);
-        locationService.createLocationVote(participantRequest);
+        locationVoteService.createLocationVote(manualRequest);
+        locationVoteService.createLocationVote(participantRequest);
         em.flush();
         em.clear();
 
@@ -213,7 +213,7 @@ class LocationVoteIntegrationTest {
                 "127.0276368"
         );
 
-        locationService.createLocationVote(request);
+        locationVoteService.createLocationVote(request);
         em.flush();
         em.clear();
 
@@ -226,7 +226,7 @@ class LocationVoteIntegrationTest {
         Long locationVoteId = votes.getFirst().getLocationVoteId();
 
         // when
-        locationService.deleteLocationVote(locationVoteId);
+        locationVoteService.deleteLocationVote(locationVoteId);
         em.flush();
         em.clear();
 
@@ -253,7 +253,7 @@ class LocationVoteIntegrationTest {
                 "127.0276368"
         );
 
-        locationService.createLocationVote(createRequest);
+        locationVoteService.createLocationVote(createRequest);
         em.flush();
         em.clear();
 
@@ -270,7 +270,7 @@ class LocationVoteIntegrationTest {
                 "37.5571010",
                 "126.9236450"
         );
-        locationService.updateLocationVote(locationVoteId, updateRequest);
+        locationVoteService.updateLocationVote(locationVoteId, updateRequest);
         em.flush();
         em.clear();
 

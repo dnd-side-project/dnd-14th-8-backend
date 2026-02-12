@@ -9,7 +9,7 @@ import com.dnd.moyeolak.domain.schedule.dto.UpdateScheduleVoteRequest;
 import com.dnd.moyeolak.domain.schedule.entity.SchedulePoll;
 import com.dnd.moyeolak.domain.schedule.entity.ScheduleVote;
 import com.dnd.moyeolak.domain.schedule.repository.ScheduleVoteRepository;
-import com.dnd.moyeolak.domain.schedule.service.ScheduleService;
+import com.dnd.moyeolak.domain.schedule.service.ScheduleVoteService;
 import com.dnd.moyeolak.global.exception.BusinessException;
 import com.dnd.moyeolak.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +22,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class ScheduleServiceImpl implements ScheduleService {
+public class ScheduleVoteServiceImpl implements ScheduleVoteService {
 
     private final MeetingService meetingService;
     private final ParticipantService participantService;

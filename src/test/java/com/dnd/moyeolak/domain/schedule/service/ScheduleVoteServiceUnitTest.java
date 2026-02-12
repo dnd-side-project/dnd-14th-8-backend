@@ -9,7 +9,7 @@ import com.dnd.moyeolak.domain.schedule.dto.UpdateScheduleVoteRequest;
 import com.dnd.moyeolak.domain.schedule.entity.SchedulePoll;
 import com.dnd.moyeolak.domain.schedule.entity.ScheduleVote;
 import com.dnd.moyeolak.domain.schedule.repository.ScheduleVoteRepository;
-import com.dnd.moyeolak.domain.schedule.service.impl.ScheduleServiceImpl;
+import com.dnd.moyeolak.domain.schedule.service.impl.ScheduleVoteServiceImpl;
 import com.dnd.moyeolak.global.exception.BusinessException;
 import com.dnd.moyeolak.global.response.ErrorCode;
 import org.junit.jupiter.api.DisplayName;
@@ -31,7 +31,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class ScheduleServiceUnitTest {
+class ScheduleVoteServiceUnitTest {
 
     @Mock
     private MeetingService meetingService;
@@ -43,7 +43,7 @@ class ScheduleServiceUnitTest {
     private ScheduleVoteRepository scheduleVoteRepository;
 
     @InjectMocks
-    private ScheduleServiceImpl scheduleService;
+    private ScheduleVoteServiceImpl scheduleService;
 
     @Nested
     @DisplayName("일정 투표 생성")
