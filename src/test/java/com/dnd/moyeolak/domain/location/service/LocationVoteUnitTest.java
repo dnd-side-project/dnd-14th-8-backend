@@ -4,7 +4,7 @@ import com.dnd.moyeolak.domain.location.dto.CreateLocationVoteRequest;
 import com.dnd.moyeolak.domain.location.entity.LocationVote;
 import com.dnd.moyeolak.domain.location.repository.LocationPollRepository;
 import com.dnd.moyeolak.domain.location.repository.LocationVoteRepository;
-import com.dnd.moyeolak.domain.location.service.impl.LocationServiceImpl;
+import com.dnd.moyeolak.domain.location.service.impl.LocationVoteServiceImpl;
 import com.dnd.moyeolak.domain.participant.entity.Participant;
 import com.dnd.moyeolak.domain.participant.service.ParticipantService;
 import org.junit.jupiter.api.DisplayName;
@@ -34,7 +34,7 @@ class LocationVoteUnitTest {
     private LocationVoteRepository locationVoteRepository;
 
     @InjectMocks
-    private LocationServiceImpl locationService;
+    private LocationVoteServiceImpl locationService;
 
     @Test
     @DisplayName("수동 추가 시 LocationVote만 저장된다")

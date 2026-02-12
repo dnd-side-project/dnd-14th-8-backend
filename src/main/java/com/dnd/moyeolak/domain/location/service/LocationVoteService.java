@@ -6,7 +6,7 @@ import com.dnd.moyeolak.domain.meeting.dto.UpdateLocationVoteRequest;
 
 import java.util.List;
 
-public interface LocationService {
+public interface LocationVoteService {
 
     List<LocationVoteResponse> listLocationVote(Long locationPollId);
 
