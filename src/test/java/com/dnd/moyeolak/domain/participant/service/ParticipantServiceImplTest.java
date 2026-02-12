@@ -1,10 +1,7 @@
 package com.dnd.moyeolak.domain.participant.service;
 
-import com.dnd.moyeolak.domain.location.entity.LocationPoll;
 import com.dnd.moyeolak.domain.meeting.entity.Meeting;
 import com.dnd.moyeolak.domain.meeting.service.MeetingService;
-import com.dnd.moyeolak.domain.participant.dto.CreateParticipantResponse;
-import com.dnd.moyeolak.domain.participant.dto.CreateParticipantWithLocationRequest;
 import com.dnd.moyeolak.domain.participant.dto.GetParticipantResponse;
 import com.dnd.moyeolak.domain.participant.dto.ListParticipantResponse;
 import com.dnd.moyeolak.domain.participant.entity.Participant;
@@ -19,12 +16,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.math.BigDecimal;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -41,71 +34,6 @@ class ParticipantServiceImplTest {
 
     @InjectMocks
     private ParticipantServiceImpl participantService;
-
-    @Test
-    @DisplayName("위치 투표 기반 참여자 생성 성공 시 위치 투표 정보가 저장된다")
-    void createWithLocation_success() {
-        Meeting meeting = Meeting.of(10);
-        LocationPoll locationPoll = LocationPoll.defaultOf(meeting);
-        meeting.addPolls(null, locationPoll);
-
-        CreateParticipantWithLocationRequest request = new CreateParticipantWithLocationRequest(
-                "이영희", LOCAL_STORAGE_KEY,
-                new CreateParticipantWithLocationRequest.LocationInput(
-                        new BigDecimal("37.5665"), new BigDecimal("126.9780"), "서울시 중구 명동"
-                )
-        );
-
-        when(meetingService.get(MEETING_ID)).thenReturn(meeting);
-        when(participantRepository.existsByMeetingAndLocalStorageKey(any(), anyString())).thenReturn(false);
-
-        CreateParticipantResponse response = participantService.createWithLocation(MEETING_ID, request);
-
-        assertThat(response.name()).isEqualTo("이영희");
-        assertThat(response.hasLocation()).isTrue();
-        assertThat(response.scheduleVoteCount()).isNull();
-        assertThat(meeting.getParticipants()).hasSize(1);
-    }
-
-    @Test
-    @DisplayName("위치 투표 기반 참여자 생성 시 localStorageKey 중복이면 예외를 던진다")
-    void createWithLocation_duplicateLocalStorageKey() {
-        Meeting meeting = Meeting.of(10);
-        CreateParticipantWithLocationRequest request = new CreateParticipantWithLocationRequest(
-                "이영희", LOCAL_STORAGE_KEY,
-                new CreateParticipantWithLocationRequest.LocationInput(
-                        new BigDecimal("37.5665"), new BigDecimal("126.9780"), "서울시 중구 명동"
-                )
-        );
-
-        when(meetingService.get(MEETING_ID)).thenReturn(meeting);
-        when(participantRepository.existsByMeetingAndLocalStorageKey(meeting, LOCAL_STORAGE_KEY)).thenReturn(true);
-
-        assertThatThrownBy(() -> participantService.createWithLocation(MEETING_ID, request))
-                .isInstanceOf(BusinessException.class)
-                .extracting("errorCode")
-                .isEqualTo(ErrorCode.DUPLICATE_LOCAL_STORAGE_KEY);
-    }
-
-    @Test
-    @DisplayName("위치 투표 기반 참여자 생성 시 위치 투표판이 없으면 예외를 던진다")
-    void createWithLocation_locationPollNotFound() {
-        Meeting meeting = Meeting.of(10);
-        CreateParticipantWithLocationRequest request = new CreateParticipantWithLocationRequest(
-                "이영희", LOCAL_STORAGE_KEY,
-                new CreateParticipantWithLocationRequest.LocationInput(
-                        new BigDecimal("37.5665"), new BigDecimal("126.9780"), "서울시 중구 명동"
-                )
-        );
-
-        when(meetingService.get(MEETING_ID)).thenReturn(meeting);
-        when(participantRepository.existsByMeetingAndLocalStorageKey(any(), anyString())).thenReturn(false);
-
-        assertThatThrownBy(() -> participantService.createWithLocation(MEETING_ID, request))
-                .isInstanceOf(BusinessException.class)
-                .extracting("errorCode")
-                .isEqualTo(ErrorCode.LOCATION_POLL_NOT_FOUND);
-    }
 
     @Test
     @DisplayName("참여자 조회 성공 시 참여자 정보를 반환한다")
