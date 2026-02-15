@@ -15,12 +15,12 @@ public interface MeetingRepository extends JpaRepository<Meeting, String> {
         LEFT JOIN FETCH m.schedulePoll
         LEFT JOIN FETCH m.locationPoll
         LEFT JOIN FETCH m.participants
-        WHERE m.meetingId = :meetingId
+        WHERE m.id = :meetingId
     """)
     Optional<Meeting> findByIdWithAllAssociations(@Param("meetingId") String meetingId);
 
     @Query("""
-        SELECT m.meetingId FROM Meeting m
+        SELECT m.id FROM Meeting m
     """)
     List<String> findAllMeetingsId();
 }

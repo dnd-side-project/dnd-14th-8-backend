@@ -25,7 +25,7 @@ public record LocationVoteResponse(
 
     public static LocationVoteResponse from(LocationVote locationVote) {
         return new LocationVoteResponse(
-            locationVote.getLocationVoteId(),
+            locationVote.getId(),
             locationVote.getDepartureName(),
             locationVote.getDepartureLocation(),
             locationVote.getDepartureLat(),

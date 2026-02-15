@@ -28,7 +28,7 @@ public class LocationVoteServiceImpl implements LocationVoteService {
 
     @Override
     public List<LocationVoteResponse> listLocationVote(Long locationPollId) {
-        return locationVoteRepository.findByLocationPoll_LocationPollId(locationPollId)
+        return locationVoteRepository.findByLocationPoll_Id(locationPollId)
                 .stream().map(LocationVoteResponse::from).toList();
     }
 

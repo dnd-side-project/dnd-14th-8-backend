@@ -45,7 +45,7 @@ public record GetMeetingScheduleResponse(
         List<LocalDate> dateOptions = meeting.getSchedulePoll().getDateOptions();
 
         return new GetMeetingScheduleResponse(
-                meeting.getMeetingId(),
+                meeting.getId(),
                 meeting.getParticipantCount(),
                 votedParticipantCount,
                 participantResponses,

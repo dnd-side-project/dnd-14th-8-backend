@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@Tag(name = "LocationVote", description = "위치/장소 관련 API")
+@Tag(name = "Locations", description = "위치/장소 관련 API")
 @RestController
 @RequestMapping("/api/locations")
 @RequiredArgsConstructor
