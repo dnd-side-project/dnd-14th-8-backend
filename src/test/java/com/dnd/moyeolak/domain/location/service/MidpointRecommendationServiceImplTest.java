@@ -79,8 +79,8 @@ class MidpointRecommendationServiceImplTest {
             LocationPoll locationPoll = mock(LocationPoll.class);
             when(meetingService.get(MEETING_ID)).thenReturn(meeting);
             when(meeting.getLocationPoll()).thenReturn(locationPoll);
-            when(locationPoll.getLocationPollId()).thenReturn(1L);
-            when(locationVoteRepository.findByLocationPoll_LocationPollId(1L)).thenReturn(Collections.emptyList());
+            when(locationPoll.getId()).thenReturn(1L);
+            when(locationVoteRepository.findByLocationPoll_Id(1L)).thenReturn(Collections.emptyList());
 
             // when & then
             assertThatThrownBy(() -> midpointRecommendationService.calculateMidpointRecommendations(MEETING_ID))
@@ -96,10 +96,10 @@ class MidpointRecommendationServiceImplTest {
             LocationPoll locationPoll = mock(LocationPoll.class);
             when(meetingService.get(MEETING_ID)).thenReturn(meeting);
             when(meeting.getLocationPoll()).thenReturn(locationPoll);
-            when(locationPoll.getLocationPollId()).thenReturn(1L);
+            when(locationPoll.getId()).thenReturn(1L);
 
             LocationVote vote = createMockVote("37.5000", "127.0000", "테스터", "서울시 강남구");
-            when(locationVoteRepository.findByLocationPoll_LocationPollId(1L)).thenReturn(List.of(vote));
+            when(locationVoteRepository.findByLocationPoll_Id(1L)).thenReturn(List.of(vote));
 
             // PostGIS 무게중심 계산 실패 → 산술 평균으로 대체
             lenient().when(stationRepository.calculateCentroid(any())).thenThrow(new RuntimeException("PostGIS 미지원"));
@@ -120,10 +120,10 @@ class MidpointRecommendationServiceImplTest {
             LocationPoll locationPoll = mock(LocationPoll.class);
             when(meetingService.get(MEETING_ID)).thenReturn(meeting);
             when(meeting.getLocationPoll()).thenReturn(locationPoll);
-            when(locationPoll.getLocationPollId()).thenReturn(1L);
+            when(locationPoll.getId()).thenReturn(1L);
 
             LocationVote vote = createMockVote("37.5000", "127.0000", "테스터", "서울시 강남구");
-            when(locationVoteRepository.findByLocationPoll_LocationPollId(1L)).thenReturn(List.of(vote));
+            when(locationVoteRepository.findByLocationPoll_Id(1L)).thenReturn(List.of(vote));
 
             lenient().when(stationRepository.calculateCentroid(any())).thenThrow(new RuntimeException("PostGIS 미지원"));
 
@@ -155,11 +155,11 @@ class MidpointRecommendationServiceImplTest {
             LocationPoll locationPoll = mock(LocationPoll.class);
             when(meetingService.get(MEETING_ID)).thenReturn(meeting);
             when(meeting.getLocationPoll()).thenReturn(locationPoll);
-            when(locationPoll.getLocationPollId()).thenReturn(1L);
+            when(locationPoll.getId()).thenReturn(1L);
 
             LocationVote vote1 = createMockVote("37.5000", "127.0000", "참가자A", "서울시 강남구");
             LocationVote vote2 = createMockVote("37.5500", "126.9500", "참가자B", "서울시 마포구");
-            when(locationVoteRepository.findByLocationPoll_LocationPollId(1L)).thenReturn(List.of(vote1, vote2));
+            when(locationVoteRepository.findByLocationPoll_Id(1L)).thenReturn(List.of(vote1, vote2));
 
             when(stationRepository.calculateCentroid(any())).thenThrow(new RuntimeException("PostGIS 미지원"));
 
@@ -201,10 +201,10 @@ class MidpointRecommendationServiceImplTest {
             LocationPoll locationPoll = mock(LocationPoll.class);
             when(meetingService.get(MEETING_ID)).thenReturn(meeting);
             when(meeting.getLocationPoll()).thenReturn(locationPoll);
-            when(locationPoll.getLocationPollId()).thenReturn(1L);
+            when(locationPoll.getId()).thenReturn(1L);
 
             LocationVote vote = createMockVote("37.5000", "127.0000", "참가자A", "서울시 강남구");
-            when(locationVoteRepository.findByLocationPoll_LocationPollId(1L)).thenReturn(List.of(vote));
+            when(locationVoteRepository.findByLocationPoll_Id(1L)).thenReturn(List.of(vote));
 
             when(stationRepository.calculateCentroid(any())).thenThrow(new RuntimeException("PostGIS 미지원"));
 
@@ -249,10 +249,10 @@ class MidpointRecommendationServiceImplTest {
             LocationPoll locationPoll = mock(LocationPoll.class);
             when(meetingService.get(MEETING_ID)).thenReturn(meeting);
             when(meeting.getLocationPoll()).thenReturn(locationPoll);
-            when(locationPoll.getLocationPollId()).thenReturn(1L);
+            when(locationPoll.getId()).thenReturn(1L);
 
             LocationVote vote = createMockVote("37.5000", "127.0000", "참가자A", "서울시 강남구");
-            when(locationVoteRepository.findByLocationPoll_LocationPollId(1L)).thenReturn(List.of(vote));
+            when(locationVoteRepository.findByLocationPoll_Id(1L)).thenReturn(List.of(vote));
 
             when(stationRepository.calculateCentroid(any())).thenThrow(new RuntimeException("PostGIS 미지원"));
 
@@ -284,7 +284,7 @@ class MidpointRecommendationServiceImplTest {
             LocationPoll locationPoll = mock(LocationPoll.class);
             when(meetingService.get(MEETING_ID)).thenReturn(meeting);
             when(meeting.getLocationPoll()).thenReturn(locationPoll);
-            when(locationPoll.getLocationPollId()).thenReturn(1L);
+            when(locationPoll.getId()).thenReturn(1L);
 
             LocationVote vote = mock(LocationVote.class);
             when(vote.getDepartureLat()).thenReturn(new BigDecimal("37.5000"));
@@ -295,7 +295,7 @@ class MidpointRecommendationServiceImplTest {
             when(participant.getName()).thenReturn("김참가자");
             when(vote.getParticipant()).thenReturn(participant);
 
-            when(locationVoteRepository.findByLocationPoll_LocationPollId(anyLong())).thenReturn(List.of(vote));
+            when(locationVoteRepository.findByLocationPoll_Id(anyLong())).thenReturn(List.of(vote));
             when(stationRepository.calculateCentroid(any())).thenThrow(new RuntimeException("PostGIS 미지원"));
 
             Station station = createMockStation("역삼역", "2호선", 37.5006, 127.0366);
