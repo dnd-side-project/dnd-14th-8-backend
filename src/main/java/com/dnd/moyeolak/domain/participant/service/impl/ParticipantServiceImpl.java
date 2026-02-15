@@ -1,7 +1,7 @@
 package com.dnd.moyeolak.domain.participant.service.impl;
 
 import com.dnd.moyeolak.domain.meeting.entity.Meeting;
-import com.dnd.moyeolak.domain.meeting.service.MeetingService;
+import com.dnd.moyeolak.domain.meeting.repository.MeetingRepository;
 import com.dnd.moyeolak.domain.participant.dto.GetParticipantResponse;
 import com.dnd.moyeolak.domain.participant.dto.ListParticipantResponse;
 import com.dnd.moyeolak.domain.participant.entity.Participant;
@@ -18,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class ParticipantServiceImpl implements ParticipantService {
 
-    private final MeetingService meetingService;
+    private final MeetingRepository meetingRepository;
     private final ParticipantRepository participantRepository;
 
     @Override
@@ -36,7 +36,8 @@ public class ParticipantServiceImpl implements ParticipantService {
 
     @Override
     public ListParticipantResponse listParticipants(String meetingId) {
-        Meeting meeting = meetingService.get(meetingId);
+        Meeting meeting = meetingRepository.findByIdWithAllAssociations(meetingId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEETING_NOT_FOUND));
         return ListParticipantResponse.from(meeting.getParticipants());
     }
 
