@@ -144,6 +144,6 @@ class LocationVoteUnitTest {
         verify(participantService).save(captor.capture());
 
         Participant savedParticipant = captor.getValue();
-        assertThat(savedParticipant.getMeeting().getMeetingId()).isEqualTo("meeting-id-456");
+        assertThat(savedParticipant.getMeeting().getId()).isEqualTo("meeting-id-456");
     }
 }

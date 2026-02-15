@@ -253,7 +253,7 @@ class MeetingServiceIntegrationTest {
             // given
             String meetingId = createTestMeeting();
             Meeting meeting = meetingRepository.findByIdWithAllAssociations(meetingId).orElseThrow();
-            Long schedulePollId = meeting.getSchedulePoll().getSchedulePollId();
+            Long schedulePollId = meeting.getSchedulePoll().getId();
 
             // when
             meetingService.deleteMeeting(meetingId);
@@ -270,7 +270,7 @@ class MeetingServiceIntegrationTest {
             // given
             String meetingId = createTestMeeting();
             Meeting meeting = meetingRepository.findByIdWithAllAssociations(meetingId).orElseThrow();
-            Long locationPollId = meeting.getLocationPoll().getLocationPollId();
+            Long locationPollId = meeting.getLocationPoll().getId();
 
             // when
             meetingService.deleteMeeting(meetingId);
@@ -287,7 +287,7 @@ class MeetingServiceIntegrationTest {
             // given
             String meetingId = createTestMeeting();
             Meeting meeting = meetingRepository.findByIdWithAllAssociations(meetingId).orElseThrow();
-            Long participantId = meeting.getParticipants().getFirst().getParticipantId();
+            Long participantId = meeting.getParticipants().getFirst().getId();
 
             // when
             meetingService.deleteMeeting(meetingId);
@@ -304,8 +304,8 @@ class MeetingServiceIntegrationTest {
             // given
             String meetingId = createTestMeeting();
             Meeting meeting = meetingRepository.findByIdWithAllAssociations(meetingId).orElseThrow();
-            Long schedulePollId = meeting.getSchedulePoll().getSchedulePollId();
-            Long participantId = meeting.getParticipants().getFirst().getParticipantId();
+            Long schedulePollId = meeting.getSchedulePoll().getId();
+            Long participantId = meeting.getParticipants().getFirst().getId();
 
             LocalDateTime now = LocalDateTime.now();
             String votedDateJson = "[\"" + now + "\"]";
@@ -326,7 +326,7 @@ class MeetingServiceIntegrationTest {
 
             // then
             Long count = em.createQuery(
-                    "SELECT COUNT(sv) FROM ScheduleVote sv WHERE sv.schedulePoll.schedulePollId = :id", Long.class)
+                    "SELECT COUNT(sv) FROM ScheduleVote sv WHERE sv.schedulePoll.id = :id", Long.class)
                     .setParameter("id", schedulePollId)
                     .getSingleResult();
             assertThat(count).isZero();
@@ -338,8 +338,8 @@ class MeetingServiceIntegrationTest {
             // given
             String meetingId = createTestMeeting();
             Meeting meeting = meetingRepository.findByIdWithAllAssociations(meetingId).orElseThrow();
-            Long locationPollId = meeting.getLocationPoll().getLocationPollId();
-            Long participantId = meeting.getParticipants().getFirst().getParticipantId();
+            Long locationPollId = meeting.getLocationPoll().getId();
+            Long participantId = meeting.getParticipants().getFirst().getId();
 
             LocalDateTime now = LocalDateTime.now();
             em.createNativeQuery("INSERT INTO location_vote (location_poll_id, participant_id, departure_location, departure_lat, departure_lng, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)")
@@ -361,7 +361,7 @@ class MeetingServiceIntegrationTest {
 
             // then
             Long count = em.createQuery(
-                    "SELECT COUNT(lv) FROM LocationVote lv WHERE lv.locationPoll.locationPollId = :id", Long.class)
+                    "SELECT COUNT(lv) FROM LocationVote lv WHERE lv.locationPoll.id = :id", Long.class)
                     .setParameter("id", locationPollId)
                     .getSingleResult();
             assertThat(count).isZero();

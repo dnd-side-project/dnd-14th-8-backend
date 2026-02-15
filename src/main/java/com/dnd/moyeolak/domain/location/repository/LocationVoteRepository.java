@@ -6,5 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface LocationVoteRepository extends JpaRepository<LocationVote, Long> {
-    List<LocationVote> findByLocationPoll_LocationPollId(Long locationPollId);
+    List<LocationVote> findByLocationPoll_Id(Long locationPollId);
 }

@@ -18,7 +18,8 @@ public class LocationPoll extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long locationPollId;
+    @Column(name = "location_poll_id")
+    private Long id;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "meeting_id", nullable = false)
@@ -43,9 +44,9 @@ public class LocationPoll extends BaseEntity {
                 .build();
     }
 
-    public static LocationPoll ofId(Long locationPollId) {
+    public static LocationPoll ofId(Long id) {
         return LocationPoll.builder()
-                .locationPollId(locationPollId)
+                .id(id)
                 .build();
     }
 

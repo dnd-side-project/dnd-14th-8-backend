@@ -1,7 +1,7 @@
 package com.dnd.moyeolak.domain.participant.service;
 
 import com.dnd.moyeolak.domain.meeting.entity.Meeting;
-import com.dnd.moyeolak.domain.meeting.service.MeetingService;
+import com.dnd.moyeolak.domain.meeting.repository.MeetingRepository;
 import com.dnd.moyeolak.domain.participant.dto.GetParticipantResponse;
 import com.dnd.moyeolak.domain.participant.dto.ListParticipantResponse;
 import com.dnd.moyeolak.domain.participant.entity.Participant;
@@ -16,6 +16,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.Optional;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
@@ -27,7 +29,7 @@ class ParticipantServiceImplTest {
     private static final String LOCAL_STORAGE_KEY = "local-storage-key";
 
     @Mock
-    private MeetingService meetingService;
+    private MeetingRepository meetingRepository;
 
     @Mock
     private ParticipantRepository participantRepository;
@@ -47,7 +49,7 @@ class ParticipantServiceImplTest {
         GetParticipantResponse response = participantService.getParticipant(participantId);
 
         // Then
-        assertThat(response.participantId()).isEqualTo(participant.getParticipantId());
+        assertThat(response.participantId()).isEqualTo(participant.getId());
         assertThat(response.name()).isEqualTo("김철수");
         assertThat(response.isHost()).isFalse();
     }
@@ -64,7 +66,7 @@ class ParticipantServiceImplTest {
         GetParticipantResponse response = participantService.getParticipant(participantId);
 
         // Then
-        assertThat(response.participantId()).isEqualTo(hostParticipant.getParticipantId());
+        assertThat(response.participantId()).isEqualTo(hostParticipant.getId());
         assertThat(response.name()).isEqualTo("이방장");
         assertThat(response.isHost()).isTrue();
     }
@@ -79,7 +81,7 @@ class ParticipantServiceImplTest {
         meeting.addParticipant(host);
         meeting.addParticipant(member);
 
-        when(meetingService.get(MEETING_ID)).thenReturn(meeting);
+        when(meetingRepository.findByIdWithAllAssociations(MEETING_ID)).thenReturn(Optional.of(meeting));
 
         // When
         ListParticipantResponse response = participantService.listParticipants(MEETING_ID);
@@ -98,7 +100,7 @@ class ParticipantServiceImplTest {
     void listParticipants_emptyList() {
         // Given
         Meeting meeting = Meeting.of(10);
-        when(meetingService.get(MEETING_ID)).thenReturn(meeting);
+        when(meetingRepository.findByIdWithAllAssociations(MEETING_ID)).thenReturn(Optional.of(meeting));
 
         // When
         ListParticipantResponse response = participantService.listParticipants(MEETING_ID);
@@ -112,7 +114,7 @@ class ParticipantServiceImplTest {
     @DisplayName("참여자 전체 조회 시 모임을 찾지 못하면 예외를 던진다")
     void listParticipants_meetingNotFound() {
         // Given
-        when(meetingService.get(MEETING_ID)).thenThrow(new BusinessException(ErrorCode.MEETING_NOT_FOUND));
+        when(meetingRepository.findByIdWithAllAssociations(MEETING_ID)).thenReturn(Optional.empty());
 
         // When & Then
         assertThatThrownBy(() -> participantService.listParticipants(MEETING_ID))

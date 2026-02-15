@@ -24,7 +24,7 @@ public record CreateParticipantResponse(
 ) {
     public static CreateParticipantResponse fromLocation(Participant participant) {
         return new CreateParticipantResponse(
-                participant.getParticipantId(),
+                participant.getId(),
                 participant.getName(),
                 null,
                 true,

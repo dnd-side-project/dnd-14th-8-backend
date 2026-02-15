@@ -2,6 +2,7 @@ package com.dnd.moyeolak.domain.meeting.controller;
 
 import com.dnd.moyeolak.domain.meeting.dto.CreateMeetingRequest;
 import com.dnd.moyeolak.domain.meeting.dto.GetMeetingScheduleResponse;
+import com.dnd.moyeolak.domain.meeting.dto.GetMeetingScheduleVoteResultResponse;
 import com.dnd.moyeolak.domain.meeting.service.MeetingService;
 import com.dnd.moyeolak.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,11 +31,20 @@ public class MeetingController {
         return ResponseEntity.ok(ApiResponse.success(allMeetings));
     }
 
-    @GetMapping("/{id}/schedules")
+    @GetMapping("/{meetingId}/schedules")
     @Operation(summary = "모임 일정 조회", description = "특정 모임의 일정을 조회합니다.")
-    public ResponseEntity<ApiResponse<GetMeetingScheduleResponse>> getMeetingSchedules(@PathVariable String id) {
-        GetMeetingScheduleResponse meetingSchedules = meetingService.getMeetingSchedules(id);
+    public ResponseEntity<ApiResponse<GetMeetingScheduleResponse>> getMeetingSchedules(@PathVariable String meetingId) {
+        GetMeetingScheduleResponse meetingSchedules = meetingService.getMeetingSchedules(meetingId);
         return ResponseEntity.ok(ApiResponse.success(meetingSchedules));
+    }
+
+    @GetMapping("/{meetingId}/schedule-vote/results")
+    @Operation(summary = "모임 일정 투표 결과 조회", description = "특정 모임의 일정 투표 결과를 조회합니다.")
+    public ResponseEntity<ApiResponse<GetMeetingScheduleVoteResultResponse>> getMeetingScheduleVoteResults(
+            @PathVariable String meetingId
+    ) {
+        GetMeetingScheduleVoteResultResponse voteResults = meetingService.getMeetingScheduleVoteResults(meetingId);
+        return ResponseEntity.ok(ApiResponse.success(voteResults));
     }
 
     @PostMapping

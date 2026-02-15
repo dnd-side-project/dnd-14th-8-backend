@@ -48,7 +48,7 @@ public class MidpointRecommendationServiceImpl implements MidpointRecommendation
             throw new BusinessException(ErrorCode.LOCATION_POLL_NOT_FOUND);
         }
 
-        List<LocationVote> votes = locationVoteRepository.findByLocationPoll_LocationPollId(locationPoll.getLocationPollId());
+        List<LocationVote> votes = locationVoteRepository.findByLocationPoll_Id(locationPoll.getId());
         if (votes.isEmpty()) {
             throw new BusinessException(ErrorCode.NO_LOCATION_VOTES);
         }

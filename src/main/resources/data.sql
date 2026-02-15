@@ -4,7 +4,7 @@
 
 -- Meeting 10개
 INSERT INTO meeting (meeting_id, participant_count, created_at, updated_at) VALUES
-('test-meeting-001', 5, NOW(), NOW()),
+('test-meeting-001', 10, NOW(), NOW()),
 ('test-meeting-002', 4, NOW(), NOW()),
 ('test-meeting-003', 6, NOW(), NOW()),
 ('test-meeting-004', 3, NOW(), NOW()),
@@ -46,6 +46,11 @@ INSERT INTO participant (meeting_id, local_storage_key, name, is_host, created_a
 ('test-meeting-001', 'key-001-02', '이서연', FALSE, NOW(), NOW()),
 ('test-meeting-001', 'key-001-03', '박도윤', FALSE, NOW(), NOW()),
 ('test-meeting-001', 'key-001-04', '최하은', FALSE, NOW(), NOW()),
+('test-meeting-001', 'key-001-05', '백도현', FALSE, NOW(), NOW()),
+('test-meeting-001', 'key-001-06', '홍길동', FALSE, NOW(), NOW()),
+('test-meeting-001', 'key-001-07', '백무식', FALSE, NOW(), NOW()),
+('test-meeting-001', 'key-001-08', '차은지', FALSE, NOW(), NOW()),
+('test-meeting-001', 'key-001-09', '김하온', FALSE, NOW(), NOW()),
 ('test-meeting-002', 'host-key-002', '이서연', TRUE, NOW(), NOW()),
 ('test-meeting-002', 'key-002-02', '정시우', FALSE, NOW(), NOW()),
 ('test-meeting-002', 'key-002-03', '강지아', FALSE, NOW(), NOW()),
@@ -61,6 +66,76 @@ INSERT INTO participant (meeting_id, local_storage_key, name, is_host, created_a
 ('test-meeting-008', 'host-key-008', '윤수아', TRUE, NOW(), NOW()),
 ('test-meeting-009', 'host-key-009', '임건우', TRUE, NOW(), NOW()),
 ('test-meeting-010', 'host-key-010', '한지유', TRUE, NOW(), NOW());
+
+-- =====================================================
+-- 일정 투표 테스트용 더미 데이터 (test-meeting-001)
+-- 시나리오: 참가자 1~8번이 투표, 9번(김하온)·10번(양우렉)은 미투표
+-- 인기 시간대: 2/8(토) 18:00~20:00, 2/9(일) 14:00~16:00
+-- =====================================================
+
+-- 1번 김민준 (방장) - 수요일·목요일 저녁 + 주말 오후~저녁
+INSERT INTO schedule_vote (schedule_poll_id, participant_id, voted_date, created_at, updated_at)
+SELECT sp.schedule_poll_id, p.participant_id,
+'["2025-02-05T19:00:00","2025-02-05T19:30:00","2025-02-05T20:00:00","2025-02-06T19:00:00","2025-02-06T19:30:00","2025-02-06T20:00:00","2025-02-08T14:00:00","2025-02-08T14:30:00","2025-02-08T15:00:00","2025-02-08T18:00:00","2025-02-08T18:30:00","2025-02-08T19:00:00","2025-02-08T19:30:00","2025-02-09T14:00:00","2025-02-09T14:30:00","2025-02-09T15:00:00","2025-02-09T15:30:00","2025-02-12T19:00:00","2025-02-12T19:30:00","2025-02-12T20:00:00"]',
+NOW(), NOW()
+FROM schedule_poll sp JOIN participant p ON p.meeting_id = sp.meeting_id AND p.name = '김민준'
+WHERE sp.meeting_id = 'test-meeting-001';
+
+-- 2번 이서연 - 화요일·수요일 저녁 + 토요일 저녁, 일요일 오후
+INSERT INTO schedule_vote (schedule_poll_id, participant_id, voted_date, created_at, updated_at)
+SELECT sp.schedule_poll_id, p.participant_id,
+'["2025-02-05T19:00:00","2025-02-05T19:30:00","2025-02-05T20:00:00","2025-02-05T20:30:00","2025-02-11T19:30:00","2025-02-11T20:00:00","2025-02-11T20:30:00","2025-02-08T17:00:00","2025-02-08T17:30:00","2025-02-08T18:00:00","2025-02-08T18:30:00","2025-02-08T19:00:00","2025-02-08T19:30:00","2025-02-08T20:00:00","2025-02-09T13:00:00","2025-02-09T13:30:00","2025-02-09T14:00:00","2025-02-09T14:30:00","2025-02-09T15:00:00"]',
+NOW(), NOW()
+FROM schedule_poll sp JOIN participant p ON p.meeting_id = sp.meeting_id AND p.name = '이서연'
+WHERE sp.meeting_id = 'test-meeting-001';
+
+-- 3번 박도윤 - 수요일·금요일 저녁 + 토요일 저녁 집중
+INSERT INTO schedule_vote (schedule_poll_id, participant_id, voted_date, created_at, updated_at)
+SELECT sp.schedule_poll_id, p.participant_id,
+'["2025-02-05T18:30:00","2025-02-05T19:00:00","2025-02-05T19:30:00","2025-02-07T19:00:00","2025-02-07T19:30:00","2025-02-07T20:00:00","2025-02-12T19:00:00","2025-02-12T19:30:00","2025-02-12T20:00:00","2025-02-08T18:00:00","2025-02-08T18:30:00","2025-02-08T19:00:00","2025-02-08T19:30:00","2025-02-08T20:00:00","2025-02-08T20:30:00","2025-02-09T14:00:00","2025-02-09T14:30:00"]',
+NOW(), NOW()
+FROM schedule_poll sp JOIN participant p ON p.meeting_id = sp.meeting_id AND p.name = '박도윤'
+WHERE sp.meeting_id = 'test-meeting-001';
+
+-- 4번 최하은 - 목요일 저녁 + 주말 넓게 투표
+INSERT INTO schedule_vote (schedule_poll_id, participant_id, voted_date, created_at, updated_at)
+SELECT sp.schedule_poll_id, p.participant_id,
+'["2025-02-06T18:30:00","2025-02-06T19:00:00","2025-02-06T19:30:00","2025-02-06T20:00:00","2025-02-13T19:00:00","2025-02-13T19:30:00","2025-02-13T20:00:00","2025-02-08T12:00:00","2025-02-08T12:30:00","2025-02-08T13:00:00","2025-02-08T18:00:00","2025-02-08T18:30:00","2025-02-08T19:00:00","2025-02-09T14:00:00","2025-02-09T14:30:00","2025-02-09T15:00:00","2025-02-09T15:30:00","2025-02-09T16:00:00","2025-02-09T16:30:00"]',
+NOW(), NOW()
+FROM schedule_poll sp JOIN participant p ON p.meeting_id = sp.meeting_id AND p.name = '최하은'
+WHERE sp.meeting_id = 'test-meeting-001';
+
+-- 5번 백도현 - 월요일·수요일 저녁 + 토요일 저녁 강하게
+INSERT INTO schedule_vote (schedule_poll_id, participant_id, voted_date, created_at, updated_at)
+SELECT sp.schedule_poll_id, p.participant_id,
+'["2025-02-10T19:00:00","2025-02-10T19:30:00","2025-02-10T20:00:00","2025-02-05T19:00:00","2025-02-05T19:30:00","2025-02-12T19:00:00","2025-02-12T19:30:00","2025-02-12T20:00:00","2025-02-08T17:30:00","2025-02-08T18:00:00","2025-02-08T18:30:00","2025-02-08T19:00:00","2025-02-08T19:30:00","2025-02-08T20:00:00","2025-02-08T20:30:00","2025-02-08T21:00:00"]',
+NOW(), NOW()
+FROM schedule_poll sp JOIN participant p ON p.meeting_id = sp.meeting_id AND p.name = '백도현'
+WHERE sp.meeting_id = 'test-meeting-001';
+
+-- 6번 홍길동 - 화요일·목요일 저녁 + 일요일 오후 집중, 토요일 저녁 일부
+INSERT INTO schedule_vote (schedule_poll_id, participant_id, voted_date, created_at, updated_at)
+SELECT sp.schedule_poll_id, p.participant_id,
+'["2025-02-11T19:00:00","2025-02-11T19:30:00","2025-02-11T20:00:00","2025-02-06T19:00:00","2025-02-06T19:30:00","2025-02-06T20:00:00","2025-02-13T19:00:00","2025-02-13T19:30:00","2025-02-08T18:30:00","2025-02-08T19:00:00","2025-02-08T19:30:00","2025-02-09T12:00:00","2025-02-09T12:30:00","2025-02-09T13:00:00","2025-02-09T13:30:00","2025-02-09T14:00:00","2025-02-09T14:30:00","2025-02-09T15:00:00","2025-02-09T15:30:00"]',
+NOW(), NOW()
+FROM schedule_poll sp JOIN participant p ON p.meeting_id = sp.meeting_id AND p.name = '홍길동'
+WHERE sp.meeting_id = 'test-meeting-001';
+
+-- 7번 백무식 - 수요일·금요일 저녁 + 금토 저녁
+INSERT INTO schedule_vote (schedule_poll_id, participant_id, voted_date, created_at, updated_at)
+SELECT sp.schedule_poll_id, p.participant_id,
+'["2025-02-05T19:00:00","2025-02-05T19:30:00","2025-02-05T20:00:00","2025-02-05T20:30:00","2025-02-07T18:00:00","2025-02-07T18:30:00","2025-02-07T19:00:00","2025-02-12T18:30:00","2025-02-12T19:00:00","2025-02-12T19:30:00","2025-02-14T19:00:00","2025-02-14T19:30:00","2025-02-14T20:00:00","2025-02-08T18:00:00","2025-02-08T18:30:00","2025-02-08T19:00:00","2025-02-08T19:30:00","2025-02-08T20:00:00","2025-02-09T15:00:00","2025-02-09T15:30:00"]',
+NOW(), NOW()
+FROM schedule_poll sp JOIN participant p ON p.meeting_id = sp.meeting_id AND p.name = '백무식'
+WHERE sp.meeting_id = 'test-meeting-001';
+
+-- 8번 차은지 - 목요일·금요일 저녁 + 토요일 오후~저녁 넓게
+INSERT INTO schedule_vote (schedule_poll_id, participant_id, voted_date, created_at, updated_at)
+SELECT sp.schedule_poll_id, p.participant_id,
+'["2025-02-06T19:00:00","2025-02-06T19:30:00","2025-02-06T20:00:00","2025-02-07T19:00:00","2025-02-07T19:30:00","2025-02-07T20:00:00","2025-02-13T19:00:00","2025-02-13T19:30:00","2025-02-13T20:00:00","2025-02-08T15:00:00","2025-02-08T15:30:00","2025-02-08T16:00:00","2025-02-08T16:30:00","2025-02-08T17:00:00","2025-02-08T17:30:00","2025-02-08T18:00:00","2025-02-08T18:30:00","2025-02-08T19:00:00","2025-02-09T14:00:00","2025-02-09T14:30:00","2025-02-09T15:00:00"]',
+NOW(), NOW()
+FROM schedule_poll sp JOIN participant p ON p.meeting_id = sp.meeting_id AND p.name = '차은지'
+WHERE sp.meeting_id = 'test-meeting-001';
 
 -- =====================================================
 -- 중간지점 추천 테스트용 더미 데이터 (test-meeting-001)
