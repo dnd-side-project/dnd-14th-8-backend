@@ -8,7 +8,6 @@ import com.dnd.moyeolak.domain.meeting.repository.MeetingRepository;
 import com.dnd.moyeolak.domain.participant.entity.Participant;
 import com.dnd.moyeolak.domain.schedule.entity.SchedulePoll;
 import com.dnd.moyeolak.domain.schedule.entity.ScheduleVote;
-import com.dnd.moyeolak.domain.schedule.repository.ScheduleVoteRepository;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -31,10 +30,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 class MeetingScheduleVoteResultIntegrationTest {
 
     @Autowired
-    private MeetingRepository meetingRepository;
+    private MeetingService meetingService;
 
     @Autowired
-    private ScheduleVoteRepository scheduleVoteRepository;
+    private MeetingRepository meetingRepository;
 
     @Autowired
     private EntityManager em;
@@ -54,7 +53,7 @@ class MeetingScheduleVoteResultIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        // 모임 생성 (참가자 9명 — 임주원은 아직 미참가)
+        // 모임 생성 (정원 10명, 9명 참가 — 1명 미참가)
         meeting = Meeting.of(10);
         meeting.addPolls(SchedulePoll.defaultOf(meeting), LocationPoll.defaultOf(meeting));
 
@@ -177,13 +176,7 @@ class MeetingScheduleVoteResultIntegrationTest {
     class GetScheduleVoteResults {
 
         private GetMeetingScheduleVoteResultResponse getResponse() {
-            List<ScheduleVote> votes = scheduleVoteRepository.findAllBySchedulePollId(
-                    meeting.getSchedulePoll().getId()
-            );
-            List<String> participantNames = List.of(
-                    김민준, 이서연, 박도윤, 최하은, 백도현, 홍길동, 백무식, 차은지, 강재현
-            );
-            return GetMeetingScheduleVoteResultResponse.of(9, participantNames, votes);
+            return meetingService.getMeetingScheduleVoteResults(meeting.getId());
         }
 
         @Test
@@ -194,7 +187,7 @@ class MeetingScheduleVoteResultIntegrationTest {
 
             // then
             assertThat(response).isNotNull();
-            assertThat(response.participantCount()).isEqualTo(9);
+            assertThat(response.participantCount()).isEqualTo(10);
             assertThat(response.scheduleVoteResult()).isNotEmpty();
         }
 
