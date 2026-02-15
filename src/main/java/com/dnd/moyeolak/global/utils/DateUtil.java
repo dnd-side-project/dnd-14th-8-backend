@@ -5,7 +5,9 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
-public class DateUtil {
+public final class DateUtil {
+
+    private DateUtil() {}
 
     private static final Map<DayOfWeek, String> DAY_OF_WEEK_KOREAN = Map.of(
             DayOfWeek.MONDAY, "월요일",
