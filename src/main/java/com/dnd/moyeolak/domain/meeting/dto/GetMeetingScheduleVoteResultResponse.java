@@ -4,6 +4,7 @@ package com.dnd.moyeolak.domain.meeting.dto;
 import com.dnd.moyeolak.domain.schedule.entity.ScheduleVote;
 import com.dnd.moyeolak.global.utils.DateUtil;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.time.Duration;
 import java.time.LocalDate;
@@ -27,9 +28,10 @@ public record GetMeetingScheduleVoteResultResponse(
 
     @Getter
     private static class MergedRange {
-        LocalDateTime start;
-        LocalDateTime end;
-        Set<String> voters;
+        private final LocalDateTime start;
+        @Setter
+        private LocalDateTime end;
+        private final Set<String> voters;
 
         public MergedRange(LocalDateTime start, LocalDateTime end, Set<String> voters) {
             this.start = start;
@@ -63,7 +65,7 @@ public record GetMeetingScheduleVoteResultResponse(
                 boolean consecutive = last.end.equals(localDateTime);
                 boolean sameVoters = last.voters.equals(voters);
                 if(consecutive && sameVoters){
-                    last.end = localDateTime.plusMinutes(30); // 범위 확장
+                    last.setEnd(localDateTime.plusMinutes(30)); // 범위 확장
                     continue;
                 }
             }
