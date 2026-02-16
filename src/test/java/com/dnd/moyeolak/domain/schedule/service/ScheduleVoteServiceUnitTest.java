@@ -1,7 +1,7 @@
 package com.dnd.moyeolak.domain.schedule.service;
 
 import com.dnd.moyeolak.domain.meeting.entity.Meeting;
-import com.dnd.moyeolak.domain.meeting.service.MeetingService;
+import com.dnd.moyeolak.domain.meeting.repository.MeetingRepository;
 import com.dnd.moyeolak.domain.participant.entity.Participant;
 import com.dnd.moyeolak.domain.participant.service.ParticipantService;
 import com.dnd.moyeolak.domain.schedule.dto.CreateScheduleVoteRequest;
@@ -9,7 +9,7 @@ import com.dnd.moyeolak.domain.schedule.dto.UpdateScheduleVoteRequest;
 import com.dnd.moyeolak.domain.schedule.entity.SchedulePoll;
 import com.dnd.moyeolak.domain.schedule.entity.ScheduleVote;
 import com.dnd.moyeolak.domain.schedule.repository.ScheduleVoteRepository;
-import com.dnd.moyeolak.domain.schedule.service.impl.ScheduleServiceImpl;
+import com.dnd.moyeolak.domain.schedule.service.impl.ScheduleVoteServiceImpl;
 import com.dnd.moyeolak.global.exception.BusinessException;
 import com.dnd.moyeolak.global.response.ErrorCode;
 import org.junit.jupiter.api.DisplayName;
@@ -31,10 +31,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class ScheduleServiceUnitTest {
+class ScheduleVoteServiceUnitTest {
 
     @Mock
-    private MeetingService meetingService;
+    private MeetingRepository meetingRepository;
 
     @Mock
     private ParticipantService participantService;
@@ -43,7 +43,7 @@ class ScheduleServiceUnitTest {
     private ScheduleVoteRepository scheduleVoteRepository;
 
     @InjectMocks
-    private ScheduleServiceImpl scheduleService;
+    private ScheduleVoteServiceImpl scheduleService;
 
     @Nested
     @DisplayName("일정 투표 생성")
@@ -68,7 +68,7 @@ class ScheduleServiceUnitTest {
                     "홍길동", "local-key-123", votedDates, true
             );
 
-            when(meetingService.get(meetingId)).thenReturn(meeting);
+            when(meetingRepository.findByIdWithAllAssociations(meetingId)).thenReturn(Optional.of(meeting));
 
             // when
             scheduleService.createParticipantVote(meetingId, request);
@@ -100,7 +100,7 @@ class ScheduleServiceUnitTest {
                     "홍길동", "local-key-123", votedDates, true
             );
 
-            when(meetingService.get(meetingId)).thenReturn(meeting);
+            when(meetingRepository.findByIdWithAllAssociations(meetingId)).thenReturn(Optional.of(meeting));
 
             // when
             scheduleService.createParticipantVote(meetingId, request);
@@ -128,7 +128,7 @@ class ScheduleServiceUnitTest {
                     "홍길동", "local-key-123", List.of(LocalDate.now().atTime(9, 0)), true
             );
 
-            when(meetingService.get(meetingId)).thenReturn(meeting);
+            when(meetingRepository.findByIdWithAllAssociations(meetingId)).thenReturn(Optional.of(meeting));
 
             // when
             scheduleService.createParticipantVote(meetingId, request);
@@ -150,7 +150,7 @@ class ScheduleServiceUnitTest {
                     "홍길동", "duplicate-key", List.of(LocalDate.now().atTime(9, 0)), true
             );
 
-            when(meetingService.get(meetingId)).thenReturn(meeting);
+            when(meetingRepository.findByIdWithAllAssociations(meetingId)).thenReturn(Optional.of(meeting));
             doThrow(new BusinessException(ErrorCode.DUPLICATE_LOCAL_STORAGE_KEY))
                     .when(participantService).validateLocalStorageKeyUnique(meeting, "duplicate-key");
 
@@ -168,7 +168,7 @@ class ScheduleServiceUnitTest {
                     "홍길동", "local-key", List.of(LocalDate.now().atTime(9, 0)), true
             );
 
-            when(meetingService.get(meetingId)).thenThrow(new BusinessException(ErrorCode.MEETING_NOT_FOUND));
+            when(meetingRepository.findByIdWithAllAssociations(meetingId)).thenReturn(Optional.empty());
 
             // when & then
             assertThatThrownBy(() -> scheduleService.createParticipantVote(meetingId, request))
@@ -187,7 +187,7 @@ class ScheduleServiceUnitTest {
                     "홍길동", "local-key", List.of(LocalDate.now().atTime(9, 0)), true
             );
 
-            when(meetingService.get(meetingId)).thenReturn(meeting);
+            when(meetingRepository.findByIdWithAllAssociations(meetingId)).thenReturn(Optional.of(meeting));
 
             // when & then
             assertThatThrownBy(() -> scheduleService.createParticipantVote(meetingId, request))

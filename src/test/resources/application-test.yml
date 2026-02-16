@@ -12,7 +12,7 @@ spring:
       password:
 
   jpa:
-    hibernate:
+    primary:
       ddl-auto: create-drop
     show-sql: true
     properties:

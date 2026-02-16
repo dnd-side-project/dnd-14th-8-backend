@@ -27,7 +27,8 @@ public class Participant extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long participantId;
+    @Column(name = "participant_id")
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "meeting_id", nullable = false)

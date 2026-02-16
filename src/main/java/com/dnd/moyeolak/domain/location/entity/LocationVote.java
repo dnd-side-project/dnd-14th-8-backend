@@ -18,7 +18,8 @@ public class LocationVote extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long locationVoteId;
+    @Column(name = "location_vote_id")
+    private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "location_poll_id", nullable = false)

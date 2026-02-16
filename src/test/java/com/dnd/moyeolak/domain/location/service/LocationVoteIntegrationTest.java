@@ -27,7 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class LocationVoteIntegrationTest {
 
     @Autowired
-    private LocationService locationService;
+    private LocationVoteService locationVoteService;
 
     @Autowired
     private MeetingService meetingService;
@@ -44,7 +44,7 @@ class LocationVoteIntegrationTest {
         // given
         String meetingId = createTestMeeting();
         Meeting meeting = meetingRepository.findByIdWithAllAssociations(meetingId).orElseThrow();
-        Long locationPollId = meeting.getLocationPoll().getLocationPollId();
+        Long locationPollId = meeting.getLocationPoll().getId();
 
         CreateLocationVoteRequest request = new CreateLocationVoteRequest(
                 meetingId,
@@ -57,13 +57,13 @@ class LocationVoteIntegrationTest {
         );
 
         // when
-        locationService.createLocationVote(request);
+        locationVoteService.createLocationVote(request);
         em.flush();
         em.clear();
 
         // then
         List<LocationVote> votes = em.createQuery(
-                "SELECT lv FROM LocationVote lv WHERE lv.locationPoll.locationPollId = :id", LocationVote.class)
+                "SELECT lv FROM LocationVote lv WHERE lv.locationPoll.id = :id", LocationVote.class)
                 .setParameter("id", locationPollId)
                 .getResultList();
 
@@ -81,7 +81,7 @@ class LocationVoteIntegrationTest {
         // given
         String meetingId = createTestMeeting();
         Meeting meeting = meetingRepository.findByIdWithAllAssociations(meetingId).orElseThrow();
-        Long locationPollId = meeting.getLocationPoll().getLocationPollId();
+        Long locationPollId = meeting.getLocationPoll().getId();
 
         CreateLocationVoteRequest request = new CreateLocationVoteRequest(
                 meetingId,
@@ -94,14 +94,14 @@ class LocationVoteIntegrationTest {
         );
 
         // when
-        locationService.createLocationVote(request);
+        locationVoteService.createLocationVote(request);
         em.flush();
         em.clear();
 
         // then - Participant 생성 검증
         List<Participant> participants = em.createQuery(
                 "SELECT p FROM Participant p LEFT JOIN FETCH p.locationVotes " +
-                "WHERE p.meeting.meetingId = :meetingId AND p.name = :name", Participant.class)
+                "WHERE p.meeting.id = :meetingId AND p.name = :name", Participant.class)
                 .setParameter("meetingId", meetingId)
                 .setParameter("name", "김철수")
                 .getResultList();
@@ -123,7 +123,7 @@ class LocationVoteIntegrationTest {
         // given
         String meetingId = createTestMeeting();
         Meeting meeting = meetingRepository.findByIdWithAllAssociations(meetingId).orElseThrow();
-        Long locationPollId = meeting.getLocationPoll().getLocationPollId();
+        Long locationPollId = meeting.getLocationPoll().getId();
 
         CreateLocationVoteRequest request = new CreateLocationVoteRequest(
                 meetingId,
@@ -136,13 +136,13 @@ class LocationVoteIntegrationTest {
         );
 
         // when
-        locationService.createLocationVote(request);
+        locationVoteService.createLocationVote(request);
         em.flush();
         em.clear();
 
         // then
         List<LocationVote> votes = em.createQuery(
-                "SELECT lv FROM LocationVote lv WHERE lv.locationPoll.locationPollId = :id", LocationVote.class)
+                "SELECT lv FROM LocationVote lv WHERE lv.locationPoll.id = :id", LocationVote.class)
                 .setParameter("id", locationPollId)
                 .getResultList();
 
@@ -158,7 +158,7 @@ class LocationVoteIntegrationTest {
         // given
         String meetingId = createTestMeeting();
         Meeting meeting = meetingRepository.findByIdWithAllAssociations(meetingId).orElseThrow();
-        Long locationPollId = meeting.getLocationPoll().getLocationPollId();
+        Long locationPollId = meeting.getLocationPoll().getId();
 
         CreateLocationVoteRequest manualRequest = new CreateLocationVoteRequest(
                 meetingId,
@@ -181,14 +181,14 @@ class LocationVoteIntegrationTest {
         );
 
         // when
-        locationService.createLocationVote(manualRequest);
-        locationService.createLocationVote(participantRequest);
+        locationVoteService.createLocationVote(manualRequest);
+        locationVoteService.createLocationVote(participantRequest);
         em.flush();
         em.clear();
 
         // then
         List<LocationVote> votes = em.createQuery(
-                "SELECT lv FROM LocationVote lv WHERE lv.locationPoll.locationPollId = :id", LocationVote.class)
+                "SELECT lv FROM LocationVote lv WHERE lv.locationPoll.id = :id", LocationVote.class)
                 .setParameter("id", locationPollId)
                 .getResultList();
 
@@ -201,7 +201,7 @@ class LocationVoteIntegrationTest {
         // given - 모임 생성 후 참여자와 LocationVote 추가
         String meetingId = createTestMeeting();
         Meeting meeting = meetingRepository.findByIdWithAllAssociations(meetingId).orElseThrow();
-        Long locationPollId = meeting.getLocationPoll().getLocationPollId();
+        Long locationPollId = meeting.getLocationPoll().getId();
 
         CreateLocationVoteRequest request = new CreateLocationVoteRequest(
                 meetingId,
@@ -213,20 +213,20 @@ class LocationVoteIntegrationTest {
                 "127.0276368"
         );
 
-        locationService.createLocationVote(request);
+        locationVoteService.createLocationVote(request);
         em.flush();
         em.clear();
 
         // 저장된 LocationVote ID 조회
         List<LocationVote> votes = em.createQuery(
-                "SELECT lv FROM LocationVote lv WHERE lv.locationPoll.locationPollId = :id", LocationVote.class)
+                "SELECT lv FROM LocationVote lv WHERE lv.locationPoll.id = :id", LocationVote.class)
                 .setParameter("id", locationPollId)
                 .getResultList();
         assertThat(votes).hasSize(1);
-        Long locationVoteId = votes.getFirst().getLocationVoteId();
+        Long locationVoteId = votes.getFirst().getId();
 
         // when
-        locationService.deleteLocationVote(locationVoteId);
+        locationVoteService.deleteLocationVote(locationVoteId);
         em.flush();
         em.clear();
 
@@ -241,7 +241,7 @@ class LocationVoteIntegrationTest {
         // given - 모임 생성 후 출발지 추가
         String meetingId = createTestMeeting();
         Meeting meeting = meetingRepository.findByIdWithAllAssociations(meetingId).orElseThrow();
-        Long locationPollId = meeting.getLocationPoll().getLocationPollId();
+        Long locationPollId = meeting.getLocationPoll().getId();
 
         CreateLocationVoteRequest createRequest = new CreateLocationVoteRequest(
                 meetingId,
@@ -253,15 +253,15 @@ class LocationVoteIntegrationTest {
                 "127.0276368"
         );
 
-        locationService.createLocationVote(createRequest);
+        locationVoteService.createLocationVote(createRequest);
         em.flush();
         em.clear();
 
         Long locationVoteId = em.createQuery(
-                "SELECT lv FROM LocationVote lv WHERE lv.locationPoll.locationPollId = :id", LocationVote.class)
+                "SELECT lv FROM LocationVote lv WHERE lv.locationPoll.id = :id", LocationVote.class)
                 .setParameter("id", locationPollId)
                 .getSingleResult()
-                .getLocationVoteId();
+                .getId();
 
         // when
         UpdateLocationVoteRequest updateRequest = new UpdateLocationVoteRequest(
@@ -270,7 +270,7 @@ class LocationVoteIntegrationTest {
                 "37.5571010",
                 "126.9236450"
         );
-        locationService.updateLocationVote(locationVoteId, updateRequest);
+        locationVoteService.updateLocationVote(locationVoteId, updateRequest);
         em.flush();
         em.clear();
 

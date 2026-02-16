@@ -1,7 +1,7 @@
 package com.dnd.moyeolak.domain.schedule.service.impl;
 
 import com.dnd.moyeolak.domain.meeting.entity.Meeting;
-import com.dnd.moyeolak.domain.meeting.service.MeetingService;
+import com.dnd.moyeolak.domain.meeting.repository.MeetingRepository;
 import com.dnd.moyeolak.domain.participant.entity.Participant;
 import com.dnd.moyeolak.domain.participant.service.ParticipantService;
 import com.dnd.moyeolak.domain.schedule.dto.CreateScheduleVoteRequest;
@@ -9,7 +9,7 @@ import com.dnd.moyeolak.domain.schedule.dto.UpdateScheduleVoteRequest;
 import com.dnd.moyeolak.domain.schedule.entity.SchedulePoll;
 import com.dnd.moyeolak.domain.schedule.entity.ScheduleVote;
 import com.dnd.moyeolak.domain.schedule.repository.ScheduleVoteRepository;
-import com.dnd.moyeolak.domain.schedule.service.ScheduleService;
+import com.dnd.moyeolak.domain.schedule.service.ScheduleVoteService;
 import com.dnd.moyeolak.global.exception.BusinessException;
 import com.dnd.moyeolak.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -22,16 +22,17 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class ScheduleServiceImpl implements ScheduleService {
+public class ScheduleVoteServiceImpl implements ScheduleVoteService {
 
-    private final MeetingService meetingService;
+    private final MeetingRepository meetingRepository;
     private final ParticipantService participantService;
     private final ScheduleVoteRepository scheduleVoteRepository;
 
     @Override
     @Transactional
     public void createParticipantVote(String meetingId, CreateScheduleVoteRequest request) {
-        Meeting meeting = meetingService.get(meetingId);
+        Meeting meeting = meetingRepository.findByIdWithAllAssociations(meetingId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEETING_NOT_FOUND));
 
         participantService.validateLocalStorageKeyUnique(meeting, request.localStorageKey());
 
@@ -65,5 +66,10 @@ public class ScheduleServiceImpl implements ScheduleService {
                     .toList();
             scheduleVote.updateDateTimeOption(availableSlots);
         }
+    }
+
+    @Override
+    public List<ScheduleVote> findAllBySchedulePollId(Long schedulePollId) {
+        return scheduleVoteRepository.findAllBySchedulePollId(schedulePollId);
     }
 }

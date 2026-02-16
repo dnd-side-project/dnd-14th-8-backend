@@ -23,7 +23,8 @@ public class SchedulePoll extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long schedulePollId;
+    @Column(name = "schedule_poll_id")
+    private Long id;
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "meeting_id", nullable = false)

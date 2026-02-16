@@ -20,8 +20,8 @@ import java.util.List;
 public class Meeting extends BaseEntity {
 
     @Id
-    @Column(length = 21, comment = "회의 ID")
-    private String meetingId;
+    @Column(name = "meeting_id", length = 21, comment = "회의 ID")
+    private String id;
 
     @Column(comment = "참여자 수")
     private int participantCount;
@@ -39,8 +39,8 @@ public class Meeting extends BaseEntity {
     // save() 호출 시 자동 실행되어 NanoId 생성
     @PrePersist
     public void generateMeetingId() {
-        if (meetingId == null) {
-            meetingId = NanoIdUtils.randomNanoId();
+        if (id == null) {
+            id = NanoIdUtils.randomNanoId();
         }
     }
 
@@ -59,9 +59,9 @@ public class Meeting extends BaseEntity {
                 .build();
     }
 
-    public static Meeting ofId(String meetingId) {
+    public static Meeting ofId(String id) {
         return Meeting.builder()
-                .meetingId(meetingId)
+                .id(id)
                 .build();
     }
 }

@@ -26,7 +26,7 @@ public record ListParticipantResponse(
     ) {
         public static ParticipantInfo from(Participant participant) {
             return new ParticipantInfo(
-                    participant.getParticipantId(),
+                    participant.getId(),
                     participant.getName(),
                     participant.isHost()
             );

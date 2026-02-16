@@ -2,10 +2,15 @@ package com.dnd.moyeolak.domain.schedule.service;
 
 import com.dnd.moyeolak.domain.schedule.dto.CreateScheduleVoteRequest;
 import com.dnd.moyeolak.domain.schedule.dto.UpdateScheduleVoteRequest;
+import com.dnd.moyeolak.domain.schedule.entity.ScheduleVote;
 
-public interface ScheduleService {
+import java.util.List;
+
+public interface ScheduleVoteService {
 
     void createParticipantVote(String meetingId, CreateScheduleVoteRequest request);
 
     void updateParticipantVote(Long scheduleVoteId, UpdateScheduleVoteRequest request);
+
+    List<ScheduleVote> findAllBySchedulePollId(Long schedulePollId);
 }
