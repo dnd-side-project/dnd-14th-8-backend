@@ -36,6 +36,12 @@ public class ScheduleController {
         return ResponseEntity.ok(ApiResponse.success());
     }
 
+    @PutMapping("/poll/{schedulePollId}/confirm")
+    public ResponseEntity<ApiResponse<Void>> confirmSchedulePoll(@PathVariable Long schedulePollId) {
+        schedulePollService.confirmSchedulePoll(schedulePollId);
+        return ResponseEntity.ok(ApiResponse.success());
+    }
+
     @PostMapping("/vote")
     @CreateScheduleVoteApiDocs
     public ResponseEntity<ApiResponse<Long>> createScheduleVote(

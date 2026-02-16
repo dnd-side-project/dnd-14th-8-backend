@@ -1,10 +1,14 @@
 package com.dnd.moyeolak.domain.schedule.service.impl;
 
 import com.dnd.moyeolak.domain.meeting.entity.Meeting;
+import com.dnd.moyeolak.domain.meeting.repository.MeetingRepository;
 import com.dnd.moyeolak.domain.meeting.service.MeetingService;
 import com.dnd.moyeolak.domain.schedule.dto.UpdateSchedulePollRequest;
 import com.dnd.moyeolak.domain.schedule.entity.SchedulePoll;
+import com.dnd.moyeolak.domain.schedule.repository.SchedulePollRepository;
+import com.dnd.moyeolak.domain.schedule.repository.ScheduleVoteRepository;
 import com.dnd.moyeolak.domain.schedule.service.SchedulePollService;
+import com.dnd.moyeolak.global.enums.PollStatus;
 import com.dnd.moyeolak.global.exception.BusinessException;
 import com.dnd.moyeolak.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -23,12 +27,14 @@ public class SchedulePollServiceImpl implements SchedulePollService {
     private static final int MINUTE_STEP = 30;
     private static final String MIDNIGHT_STRING = "24:00";
 
-    private final MeetingService meetingService;
+    private final MeetingRepository meetingRepository;
+    private final SchedulePollRepository schedulePollRepository;
 
     @Override
     @Transactional
     public void updateSchedulePoll(String meetingId, UpdateSchedulePollRequest request) {
-        Meeting meeting = meetingService.get(meetingId);
+        Meeting meeting = meetingRepository.findByIdWithAllAssociations(meetingId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEETING_NOT_FOUND));
         SchedulePoll schedulePoll = meeting.getSchedulePoll();
 
         if (schedulePoll == null) {
@@ -43,6 +49,15 @@ public class SchedulePollServiceImpl implements SchedulePollService {
         }
 
         schedulePoll.updateOptions(request.dateOptions(), startMinute, endMinute);
+    }
+
+    @Override
+    @Transactional
+    public void confirmSchedulePoll(Long schedulePollId) {
+        SchedulePoll schedulePoll = schedulePollRepository.findById(schedulePollId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.SCHEDULE_POLL_NOT_FOUND));
+
+        schedulePoll.updateStatus(PollStatus.CONFIRMED);
     }
 
     private int parseToMinuteOfDay(String value, boolean allowMidnight) {

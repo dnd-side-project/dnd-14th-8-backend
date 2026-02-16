@@ -80,6 +80,10 @@ public class SchedulePoll extends BaseEntity {
         this.endTime = endTime;
     }
 
+    public void updateStatus(PollStatus pollStatus) {
+        this.pollStatus = pollStatus;
+    }
+
     public int getStartTime() {
         return normalizeMinuteOfDay(startTime);
     }
