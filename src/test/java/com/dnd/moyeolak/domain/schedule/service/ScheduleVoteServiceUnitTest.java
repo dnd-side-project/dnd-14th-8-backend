@@ -65,7 +65,7 @@ class ScheduleVoteServiceUnitTest {
             );
 
             CreateScheduleVoteRequest request = new CreateScheduleVoteRequest(
-                    "홍길동", "local-key-123", votedDates, true
+                    "홍길동", "local-key-123", votedDates
             );
 
             when(meetingRepository.findByIdWithAllAssociations(meetingId)).thenReturn(Optional.of(meeting));
@@ -96,7 +96,7 @@ class ScheduleVoteServiceUnitTest {
             );
 
             CreateScheduleVoteRequest request = new CreateScheduleVoteRequest(
-                    "홍길동", "local-key-123", votedDates, true
+                    "홍길동", "local-key-123", votedDates
             );
 
             when(meetingRepository.findByIdWithAllAssociations(meetingId)).thenReturn(Optional.of(meeting));
@@ -125,7 +125,7 @@ class ScheduleVoteServiceUnitTest {
             meeting.addPolls(schedulePoll, null);
 
             CreateScheduleVoteRequest request = new CreateScheduleVoteRequest(
-                    "홍길동", "local-key-123", List.of(LocalDate.now().atTime(9, 0)), true
+                    "홍길동", "local-key-123", List.of(LocalDate.now().atTime(9, 0))
             );
 
             when(meetingRepository.findByIdWithAllAssociations(meetingId)).thenReturn(Optional.of(meeting));
@@ -147,7 +147,7 @@ class ScheduleVoteServiceUnitTest {
             meeting.addPolls(schedulePoll, null);
 
             CreateScheduleVoteRequest request = new CreateScheduleVoteRequest(
-                    "홍길동", "duplicate-key", List.of(LocalDate.now().atTime(9, 0)), true
+                    "홍길동", "duplicate-key", List.of(LocalDate.now().atTime(9, 0))
             );
 
             when(meetingRepository.findByIdWithAllAssociations(meetingId)).thenReturn(Optional.of(meeting));
@@ -165,7 +165,7 @@ class ScheduleVoteServiceUnitTest {
             // given
             String meetingId = "non-existent";
             CreateScheduleVoteRequest request = new CreateScheduleVoteRequest(
-                    "홍길동", "local-key", List.of(LocalDate.now().atTime(9, 0)), true
+                    "홍길동", "local-key", List.of(LocalDate.now().atTime(9, 0))
             );
 
             when(meetingRepository.findByIdWithAllAssociations(meetingId)).thenReturn(Optional.empty());
@@ -184,7 +184,7 @@ class ScheduleVoteServiceUnitTest {
             // addPolls 호출 안 함 → schedulePoll이 null
 
             CreateScheduleVoteRequest request = new CreateScheduleVoteRequest(
-                    "홍길동", "local-key", List.of(LocalDate.now().atTime(9, 0)), true
+                    "홍길동", "local-key", List.of(LocalDate.now().atTime(9, 0))
             );
 
             when(meetingRepository.findByIdWithAllAssociations(meetingId)).thenReturn(Optional.of(meeting));
@@ -200,8 +200,8 @@ class ScheduleVoteServiceUnitTest {
     class UpdateParticipantVote {
 
         @Test
-        @DisplayName("가능한 시간 선택 시 votedDates가 그대로 저장된다")
-        void selectingAvailable_savesVotedDatesDirectly() {
+        @DisplayName("votedDates가 그대로 저장된다")
+        void savesVotedDatesDirectly() {
             // given
             Meeting meeting = Meeting.ofId("test-meeting");
             SchedulePoll schedulePoll = SchedulePoll.defaultOf(meeting);
@@ -216,7 +216,7 @@ class ScheduleVoteServiceUnitTest {
             );
 
             UpdateScheduleVoteRequest request = new UpdateScheduleVoteRequest(
-                    1L, "홍길동", votedDates, true
+                    1L, "홍길동", votedDates
             );
 
             when(participantService.getById(1L)).thenReturn(participant);
@@ -230,63 +230,6 @@ class ScheduleVoteServiceUnitTest {
         }
 
         @Test
-        @DisplayName("불가능한 시간 선택 시 전체 슬롯에서 제외한 나머지가 저장된다")
-        void selectingUnavailable_savesRemainingSlots() {
-            // given
-            Meeting meeting = Meeting.ofId("test-meeting");
-            SchedulePoll schedulePoll = SchedulePoll.defaultOf(meeting);
-            Participant participant = Participant.of(meeting, "local-key", "홍길동");
-            ScheduleVote scheduleVote = ScheduleVote.of(participant, schedulePoll, new ArrayList<>());
-
-            LocalDate today = LocalDate.now();
-            List<LocalDateTime> unavailableDates = List.of(
-                    today.atTime(7, 30),
-                    today.atTime(8, 0)
-            );
-
-            UpdateScheduleVoteRequest request = new UpdateScheduleVoteRequest(
-                    1L, "홍길동", unavailableDates, false
-            );
-
-            when(participantService.getById(1L)).thenReturn(participant);
-            when(scheduleVoteRepository.findById(1L)).thenReturn(Optional.of(scheduleVote));
-
-            // when
-            scheduleService.updateParticipantVote(1L, request);
-
-            // then
-            List<LocalDateTime> allSlots = schedulePoll.generateAllTimeSlots();
-            List<LocalDateTime> expectedAvailable = allSlots.stream()
-                    .filter(slot -> !unavailableDates.contains(slot))
-                    .toList();
-            assertThat(scheduleVote.getVotedDate()).isEqualTo(expectedAvailable);
-        }
-
-        @Test
-        @DisplayName("불가능한 시간이 없으면 전체 슬롯이 저장된다")
-        void selectingUnavailable_emptyUnavailable_savesAllSlots() {
-            // given
-            Meeting meeting = Meeting.ofId("test-meeting");
-            SchedulePoll schedulePoll = SchedulePoll.defaultOf(meeting);
-            Participant participant = Participant.of(meeting, "local-key", "홍길동");
-            ScheduleVote scheduleVote = ScheduleVote.of(participant, schedulePoll, new ArrayList<>());
-
-            UpdateScheduleVoteRequest request = new UpdateScheduleVoteRequest(
-                    1L, "홍길동", List.of(), false
-            );
-
-            when(participantService.getById(1L)).thenReturn(participant);
-            when(scheduleVoteRepository.findById(1L)).thenReturn(Optional.of(scheduleVote));
-
-            // when
-            scheduleService.updateParticipantVote(1L, request);
-
-            // then
-            List<LocalDateTime> allSlots = schedulePoll.generateAllTimeSlots();
-            assertThat(scheduleVote.getVotedDate()).isEqualTo(allSlots);
-        }
-
-        @Test
         @DisplayName("참여자 이름이 업데이트된다")
         void updatesParticipantName() {
             // given
@@ -296,7 +239,7 @@ class ScheduleVoteServiceUnitTest {
             ScheduleVote scheduleVote = ScheduleVote.of(participant, schedulePoll, new ArrayList<>());
 
             UpdateScheduleVoteRequest request = new UpdateScheduleVoteRequest(
-                    1L, "새이름", List.of(), true
+                    1L, "새이름", List.of()
             );
 
             when(participantService.getById(1L)).thenReturn(participant);
@@ -317,7 +260,7 @@ class ScheduleVoteServiceUnitTest {
             Participant participant = Participant.of(meeting, "local-key", "홍길동");
 
             UpdateScheduleVoteRequest request = new UpdateScheduleVoteRequest(
-                    1L, "홍길동", List.of(), true
+                    1L, "홍길동", List.of()
             );
 
             when(participantService.getById(1L)).thenReturn(participant);

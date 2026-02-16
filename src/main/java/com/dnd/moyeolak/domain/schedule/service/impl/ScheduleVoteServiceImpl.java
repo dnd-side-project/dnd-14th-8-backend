@@ -59,15 +59,7 @@ public class ScheduleVoteServiceImpl implements ScheduleVoteService {
         ScheduleVote scheduleVote = scheduleVoteRepository.findById(scheduleVoteId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.SCHEDULE_VOTE_NOT_FOUND));
 
-        if (request.isSelectingAvailable()) {
-            scheduleVote.updateDateTimeOption(request.votedDates());
-        } else {
-            List<LocalDateTime> allSlots = scheduleVote.getSchedulePoll().generateAllTimeSlots();
-            List<LocalDateTime> availableSlots = allSlots.stream()
-                    .filter(dateTime -> !request.votedDates().contains(dateTime))
-                    .toList();
-            scheduleVote.updateDateTimeOption(availableSlots);
-        }
+        scheduleVote.updateDateTimeOption(request.votedDates());
     }
 
     @Override

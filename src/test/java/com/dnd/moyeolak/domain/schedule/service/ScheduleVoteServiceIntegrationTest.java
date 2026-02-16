@@ -50,7 +50,7 @@ class ScheduleVoteServiceIntegrationTest {
         );
 
         CreateScheduleVoteRequest request = new CreateScheduleVoteRequest(
-                "김철수", "new-local-key", votedDates, true
+                "김철수", "new-local-key", votedDates
         );
 
         // when
