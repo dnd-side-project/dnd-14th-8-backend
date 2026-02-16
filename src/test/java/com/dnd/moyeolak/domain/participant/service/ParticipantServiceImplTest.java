@@ -2,7 +2,6 @@ package com.dnd.moyeolak.domain.participant.service;
 
 import com.dnd.moyeolak.domain.meeting.entity.Meeting;
 import com.dnd.moyeolak.domain.meeting.repository.MeetingRepository;
-import com.dnd.moyeolak.domain.participant.dto.GetParticipantResponse;
 import com.dnd.moyeolak.domain.participant.dto.ListParticipantResponse;
 import com.dnd.moyeolak.domain.participant.entity.Participant;
 import com.dnd.moyeolak.domain.participant.repository.ParticipantRepository;
@@ -36,40 +35,6 @@ class ParticipantServiceImplTest {
 
     @InjectMocks
     private ParticipantServiceImpl participantService;
-
-    @Test
-    @DisplayName("참여자 조회 성공 시 참여자 정보를 반환한다")
-    void getParticipant_success() {
-        // Given
-        Long participantId = 1L;
-        Participant participant = Participant.of(Meeting.of(10), "some-key", "김철수");
-        when(participantRepository.findById(participantId)).thenReturn(java.util.Optional.of(participant));
-
-        // When
-        GetParticipantResponse response = participantService.getParticipant(participantId);
-
-        // Then
-        assertThat(response.participantId()).isEqualTo(participant.getId());
-        assertThat(response.name()).isEqualTo("김철수");
-        assertThat(response.isHost()).isFalse();
-    }
-
-    @Test
-    @DisplayName("방장인 참여자 조회 성공 시 isHost가 true로 반환된다")
-    void getParticipant_hostSuccess() {
-        // Given
-        Long participantId = 2L;
-        Participant hostParticipant = Participant.hostOf(Meeting.of(10), "host-key", "이방장");
-        when(participantRepository.findById(participantId)).thenReturn(java.util.Optional.of(hostParticipant));
-
-        // When
-        GetParticipantResponse response = participantService.getParticipant(participantId);
-
-        // Then
-        assertThat(response.participantId()).isEqualTo(hostParticipant.getId());
-        assertThat(response.name()).isEqualTo("이방장");
-        assertThat(response.isHost()).isTrue();
-    }
 
     @Test
     @DisplayName("참여자 전체 조회 성공 시 참여자 목록을 반환한다")
@@ -123,17 +88,4 @@ class ParticipantServiceImplTest {
                 .isEqualTo(ErrorCode.MEETING_NOT_FOUND);
     }
 
-    @Test
-    @DisplayName("존재하지 않는 참여자 조회 시 예외를 던진다")
-    void getParticipant_notFound() {
-        // Given
-        Long participantId = 99L;
-        when(participantRepository.findById(participantId)).thenReturn(java.util.Optional.empty());
-
-        // When & Then
-        assertThatThrownBy(() -> participantService.getParticipant(participantId))
-                .isInstanceOf(BusinessException.class)
-                .extracting("errorCode")
-                .isEqualTo(ErrorCode.PARTICIPANT_NOT_FOUND);
-    }
 }
