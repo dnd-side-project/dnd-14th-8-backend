@@ -4,6 +4,7 @@ import com.dnd.moyeolak.domain.participant.docs.GetParticipantApiDocs;
 import com.dnd.moyeolak.domain.participant.docs.ListParticipantsApiDocs;
 import com.dnd.moyeolak.domain.participant.dto.GetParticipantResponse;
 import com.dnd.moyeolak.domain.participant.dto.ListParticipantResponse;
+import com.dnd.moyeolak.domain.participant.dto.ParticipantResponse;
 import com.dnd.moyeolak.domain.participant.service.ParticipantService;
 import com.dnd.moyeolak.global.response.ApiResponse;
 import com.dnd.moyeolak.global.response.SuccessCode;
@@ -37,5 +38,14 @@ public class ParticipantController {
             @PathVariable Long participantId) {
         GetParticipantResponse response = participantService.getParticipant(participantId);
         return ResponseEntity.ok(ApiResponse.success(SuccessCode.OK, response));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<ParticipantResponse>> findByMeetingIdAndLocalStorageKey(
+            @RequestParam String meetingId, @RequestParam String localStorageKey
+    ) {
+        ParticipantResponse participantResponse
+                = participantService.findByMeetingIdAndLocalStorageKey(meetingId, localStorageKey);
+        return ResponseEntity.ok(ApiResponse.success(participantResponse));
     }
 }
