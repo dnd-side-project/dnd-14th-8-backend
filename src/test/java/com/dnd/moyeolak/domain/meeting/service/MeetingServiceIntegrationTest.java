@@ -141,7 +141,7 @@ class MeetingServiceIntegrationTest {
         UpdateMeetingRequest updateMeetingRequest = new UpdateMeetingRequest(
                 testMeetingId
                 , 10
-                , true
+                , "local-storage-key-123"
         );
 
         // when
@@ -160,7 +160,7 @@ class MeetingServiceIntegrationTest {
         UpdateMeetingRequest updateMeetingRequest = new UpdateMeetingRequest(
                 testMeetingId
                 , 10
-                , false
+                , "test1"
         );
 
         // when & then
@@ -176,7 +176,7 @@ class MeetingServiceIntegrationTest {
         UpdateMeetingRequest updateMeetingRequest = new UpdateMeetingRequest(
                 testMeetingId
                 , 4
-                , true
+                , "local-storage-key-123"
         );
 
         // when & then
@@ -443,7 +443,6 @@ class MeetingServiceIntegrationTest {
         meeting.addParticipant(Participant.of(meeting, "test2", "테스터2"));
         meeting.addParticipant(Participant.of(meeting, "test3", "테스터3"));
         meeting.addParticipant(Participant.of(meeting, "test4", "테스터4"));
-        meeting.addParticipant(Participant.of(meeting, "test5", "테스터5"));
         em.flush();
         em.clear();
         return meetingId;

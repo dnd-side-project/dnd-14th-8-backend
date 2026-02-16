@@ -13,7 +13,8 @@ public record UpdateMeetingRequest(
         @Min(value = 2, message = "참가자 수는 최소 2명 이상이어야 합니다")
         int participantCount,
 
-        @Schema(description = "호스트 여부")
-        boolean isHost
+        @NotBlank
+        @Schema(description = "참여자의 로컬 스토리지 키", example = "t3fZ_kLpQ9xNwR2hJmYaO")
+        String localStorageKey
 ) {
 }
