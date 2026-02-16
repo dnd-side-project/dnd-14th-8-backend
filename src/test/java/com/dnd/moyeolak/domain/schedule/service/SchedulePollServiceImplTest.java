@@ -1,7 +1,7 @@
 package com.dnd.moyeolak.domain.schedule.service;
 
 import com.dnd.moyeolak.domain.meeting.entity.Meeting;
-import com.dnd.moyeolak.domain.meeting.service.MeetingService;
+import com.dnd.moyeolak.domain.meeting.repository.MeetingRepository;
 import com.dnd.moyeolak.domain.schedule.dto.UpdateSchedulePollRequest;
 import com.dnd.moyeolak.domain.schedule.entity.SchedulePoll;
 import com.dnd.moyeolak.domain.schedule.service.impl.SchedulePollServiceImpl;
@@ -16,6 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
@@ -24,7 +25,7 @@ import static org.mockito.Mockito.*;
 class SchedulePollServiceImplTest {
 
     @Mock
-    private MeetingService meetingService;
+    private MeetingRepository meetingRepository;
 
     @InjectMocks
     private SchedulePollServiceImpl schedulePollService;
@@ -37,7 +38,7 @@ class SchedulePollServiceImplTest {
         Meeting meeting = Meeting.of(5);
         SchedulePoll schedulePoll = spy(SchedulePoll.defaultOf(meeting));
         meeting.addPolls(schedulePoll, null);
-        when(meetingService.get(meetingId)).thenReturn(meeting);
+        when(meetingRepository.findByIdWithAllAssociations(meetingId)).thenReturn(Optional.of(meeting));
 
         UpdateSchedulePollRequest request = new UpdateSchedulePollRequest(
                 List.of(LocalDate.of(2025, 2, 10)),
@@ -60,7 +61,7 @@ class SchedulePollServiceImplTest {
         Meeting meeting = Meeting.of(5);
         SchedulePoll schedulePoll = SchedulePoll.defaultOf(meeting);
         meeting.addPolls(schedulePoll, null);
-        when(meetingService.get(meetingId)).thenReturn(meeting);
+        when(meetingRepository.findByIdWithAllAssociations(meetingId)).thenReturn(Optional.of(meeting));
 
         UpdateSchedulePollRequest request = new UpdateSchedulePollRequest(
                 List.of(LocalDate.of(2025, 2, 10)),
@@ -82,7 +83,7 @@ class SchedulePollServiceImplTest {
         Meeting meeting = Meeting.of(5);
         SchedulePoll schedulePoll = SchedulePoll.defaultOf(meeting);
         meeting.addPolls(schedulePoll, null);
-        when(meetingService.get(meetingId)).thenReturn(meeting);
+        when(meetingRepository.findByIdWithAllAssociations(meetingId)).thenReturn(Optional.of(meeting));
 
         UpdateSchedulePollRequest request = new UpdateSchedulePollRequest(
                 List.of(LocalDate.of(2025, 2, 10)),

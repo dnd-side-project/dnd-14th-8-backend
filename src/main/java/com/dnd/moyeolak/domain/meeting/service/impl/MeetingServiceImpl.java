@@ -4,10 +4,13 @@ import com.dnd.moyeolak.domain.location.entity.LocationPoll;
 import com.dnd.moyeolak.domain.meeting.dto.CreateMeetingRequest;
 import com.dnd.moyeolak.domain.meeting.dto.GetMeetingScheduleResponse;
 import com.dnd.moyeolak.domain.meeting.dto.GetMeetingScheduleVoteResultResponse;
+import com.dnd.moyeolak.domain.meeting.dto.UpdateMeetingRequest;
 import com.dnd.moyeolak.domain.meeting.entity.Meeting;
 import com.dnd.moyeolak.domain.meeting.repository.MeetingRepository;
 import com.dnd.moyeolak.domain.meeting.service.MeetingService;
+import com.dnd.moyeolak.domain.participant.dto.ParticipantResponse;
 import com.dnd.moyeolak.domain.participant.entity.Participant;
+import com.dnd.moyeolak.domain.participant.service.ParticipantService;
 import com.dnd.moyeolak.domain.schedule.entity.SchedulePoll;
 import com.dnd.moyeolak.domain.schedule.entity.ScheduleVote;
 import com.dnd.moyeolak.domain.schedule.service.ScheduleVoteService;
@@ -25,6 +28,7 @@ import java.util.List;
 public class MeetingServiceImpl implements MeetingService {
 
     private final MeetingRepository meetingRepository;
+    private final ParticipantService participantService;
     private final ScheduleVoteService scheduleVoteService;
 
     @Override
@@ -38,6 +42,26 @@ public class MeetingServiceImpl implements MeetingService {
 
         Meeting saveMeeting = meetingRepository.save(meeting);
         return saveMeeting.getId();
+    }
+
+    @Override
+    @Transactional
+    public void updateMeeting(UpdateMeetingRequest request) {
+        Meeting meeting = meetingRepository.findById(request.meetingId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEETING_NOT_FOUND));
+
+        ParticipantResponse participantResponse
+                = participantService.findByMeetingIdAndLocalStorageKey(request.meetingId(), request.localStorageKey());
+
+        if (meeting.getParticipants().size() > request.participantCount()) {
+            throw new BusinessException(ErrorCode.PARTICIPANT_COUNT_BELOW_CURRENT);
+        }
+
+        if (!participantResponse.isHost()) {
+            throw new BusinessException(ErrorCode.MEETING_EDIT_FORBIDDEN);
+        }
+
+        meeting.update(request.participantCount());
     }
 
     @Override

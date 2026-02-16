@@ -39,6 +39,66 @@ class LocationVoteIntegrationTest {
     private EntityManager em;
 
     @Test
+    @DisplayName("수동 추가 시 LocationVote ID가 반환된다")
+    void createLocationVote_manualAdd_returnsLocationVoteId() {
+        // given
+        String meetingId = createTestMeeting();
+        Meeting meeting = meetingRepository.findByIdWithAllAssociations(meetingId).orElseThrow();
+        Long locationPollId = meeting.getLocationPoll().getId();
+
+        CreateLocationVoteRequest request = new CreateLocationVoteRequest(
+                meetingId,
+                locationPollId.toString(),
+                null,
+                "홍길동",
+                "서울시 강남구",
+                "37.4979502",
+                "127.0276368"
+        );
+
+        // when
+        Long locationVoteId = locationVoteService.createLocationVote(request);
+
+        // then
+        assertThat(locationVoteId).isNotNull();
+
+        LocationVote saved = em.find(LocationVote.class, locationVoteId);
+        assertThat(saved).isNotNull();
+        assertThat(saved.getDepartureLocation()).isEqualTo("서울시 강남구");
+        assertThat(saved.getParticipant()).isNull();
+    }
+
+    @Test
+    @DisplayName("실 참여자 추가 시 LocationVote ID가 반환된다")
+    void createLocationVote_participantAdd_returnsLocationVoteId() {
+        // given
+        String meetingId = createTestMeeting();
+        Meeting meeting = meetingRepository.findByIdWithAllAssociations(meetingId).orElseThrow();
+        Long locationPollId = meeting.getLocationPoll().getId();
+
+        CreateLocationVoteRequest request = new CreateLocationVoteRequest(
+                meetingId,
+                locationPollId.toString(),
+                "new-local-key",
+                "김철수",
+                "서울시 홍대입구",
+                "37.5571010",
+                "126.9236450"
+        );
+
+        // when
+        Long locationVoteId = locationVoteService.createLocationVote(request);
+
+        // then
+        assertThat(locationVoteId).isNotNull();
+
+        LocationVote saved = em.find(LocationVote.class, locationVoteId);
+        assertThat(saved).isNotNull();
+        assertThat(saved.getDepartureLocation()).isEqualTo("서울시 홍대입구");
+        assertThat(saved.getParticipant()).isNotNull();
+    }
+
+    @Test
     @DisplayName("수동 추가 시 LocationVote가 DB에 저장된다")
     void createLocationVote_manualAdd_persistsToDb() {
         // given

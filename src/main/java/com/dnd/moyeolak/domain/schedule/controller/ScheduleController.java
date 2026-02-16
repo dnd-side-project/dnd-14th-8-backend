@@ -36,16 +36,22 @@ public class ScheduleController {
         return ResponseEntity.ok(ApiResponse.success());
     }
 
+    @PutMapping("/poll/{schedulePollId}/confirm")
+    public ResponseEntity<ApiResponse<Void>> confirmSchedulePoll(@PathVariable Long schedulePollId) {
+        schedulePollService.confirmSchedulePoll(schedulePollId);
+        return ResponseEntity.ok(ApiResponse.success());
+    }
+
     @PostMapping("/vote")
     @CreateScheduleVoteApiDocs
-    public ResponseEntity<ApiResponse<Void>> createScheduleVote(
+    public ResponseEntity<ApiResponse<Long>> createScheduleVote(
             @RequestParam String meetingId,
             @Valid @RequestBody CreateScheduleVoteRequest request
     ) {
-        scheduleVoteService.createParticipantVote(meetingId, request);
+        Long scheduleVoteId = scheduleVoteService.createParticipantVote(meetingId, request);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(ApiResponse.success());
+                .body(ApiResponse.success(scheduleVoteId));
     }
 
     @PutMapping("/vote/{scheduleVoteId}")

@@ -35,9 +35,6 @@ public record CreateScheduleVoteRequest(
                 )
         )
         @NotEmpty(message = "가능한 시간 정보는 필수입니다")
-        List<@NotNull LocalDateTime> votedDates,
-
-        @Schema(description = "가능한 시간 체크 여부", example = "true")
-        boolean isSelectingAvailable
+        List<@NotNull LocalDateTime> votedDates
 ) {
 }
