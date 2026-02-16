@@ -53,6 +53,10 @@ public class Meeting extends BaseEntity {
         participants.add(participant);
     }
 
+    public void update(int participantCount) {
+        this.participantCount = participantCount;
+    }
+
     public static Meeting of(int participantCount) {
         return Meeting.builder()
                 .participantCount(participantCount)

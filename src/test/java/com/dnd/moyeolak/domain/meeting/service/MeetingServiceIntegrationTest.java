@@ -3,12 +3,11 @@ package com.dnd.moyeolak.domain.meeting.service;
 import com.dnd.moyeolak.domain.location.entity.LocationPoll;
 import com.dnd.moyeolak.domain.meeting.dto.CreateMeetingRequest;
 import com.dnd.moyeolak.domain.meeting.dto.GetMeetingScheduleResponse;
+import com.dnd.moyeolak.domain.meeting.dto.UpdateMeetingRequest;
 import com.dnd.moyeolak.domain.meeting.entity.Meeting;
 import com.dnd.moyeolak.domain.meeting.repository.MeetingRepository;
 import com.dnd.moyeolak.domain.participant.entity.Participant;
 import com.dnd.moyeolak.domain.schedule.entity.SchedulePoll;
-import com.dnd.moyeolak.domain.schedule.entity.ScheduleVote;
-import com.dnd.moyeolak.domain.location.entity.LocationVote;
 import com.dnd.moyeolak.global.exception.BusinessException;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.DisplayName;
@@ -132,6 +131,57 @@ class MeetingServiceIntegrationTest {
         // then
         Meeting saved = meetingRepository.findById(meetingId).orElseThrow();
         assertThat(saved.getLocationPoll()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("호스트가 모임의 참여인원 정보를 수정한다.")
+    void updateMeeting_participantCountEdit() {
+        // given
+        String testMeetingId = createTestMeeting(); // meeting.getParticipantCount() == 5
+        UpdateMeetingRequest updateMeetingRequest = new UpdateMeetingRequest(
+                testMeetingId
+                , 10
+                , "local-storage-key-123"
+        );
+
+        // when
+        meetingService.updateMeeting(updateMeetingRequest);
+
+        // then
+        Meeting meeting = meetingService.get(testMeetingId);
+        assertThat(meeting.getParticipantCount()).isEqualTo(10);
+    }
+
+    @Test
+    @DisplayName("호스트가 아닌 참여자가 모임의 참여인원 정보를 수정할 수 없다.")
+    void updateMeeting_notForbiddenEdit() {
+        // given
+        String testMeetingId = createTestMeeting();
+        UpdateMeetingRequest updateMeetingRequest = new UpdateMeetingRequest(
+                testMeetingId
+                , 10
+                , "test1"
+        );
+
+        // when & then
+        assertThatThrownBy(() -> meetingService.updateMeeting(updateMeetingRequest))
+                .hasMessage("모임 수정 권한이 없습니다.");
+    }
+
+    @Test
+    @DisplayName("현재 참여인원보다 더 적은 수로 인원 정보를 수정할 수 없습니다.")
+    void updateMeeting_participantCountBelowCurrent() {
+        // given
+        String testMeetingId = createTestMeeting();
+        UpdateMeetingRequest updateMeetingRequest = new UpdateMeetingRequest(
+                testMeetingId
+                , 4
+                , "local-storage-key-123"
+        );
+
+        // when & then
+        assertThatThrownBy(() -> meetingService.updateMeeting(updateMeetingRequest))
+                .hasMessage("현재 참여 인원보다 적은 수로 변경할 수 없습니다.");
     }
 
     @Nested
@@ -378,16 +428,23 @@ class MeetingServiceIntegrationTest {
                     .isInstanceOf(BusinessException.class);
         }
 
-        private String createTestMeeting() {
-            CreateMeetingRequest request = new CreateMeetingRequest(
-                    5,
-                    "local-storage-key-123",
-                    "홍길동"
-            );
-            String meetingId = meetingService.createMeeting(request);
-            em.flush();
-            em.clear();
-            return meetingId;
-        }
+    }
+
+    private String createTestMeeting() {
+        CreateMeetingRequest request = new CreateMeetingRequest(
+                5,
+                "local-storage-key-123",
+                "홍길동"
+        );
+        String meetingId = meetingService.createMeeting(request);
+
+        Meeting meeting = em.find(Meeting.class, meetingId);  // 영속 상태 엔티티 조회
+        meeting.addParticipant(Participant.of(meeting, "test1", "테스터1"));
+        meeting.addParticipant(Participant.of(meeting, "test2", "테스터2"));
+        meeting.addParticipant(Participant.of(meeting, "test3", "테스터3"));
+        meeting.addParticipant(Participant.of(meeting, "test4", "테스터4"));
+        em.flush();
+        em.clear();
+        return meetingId;
     }
 }
