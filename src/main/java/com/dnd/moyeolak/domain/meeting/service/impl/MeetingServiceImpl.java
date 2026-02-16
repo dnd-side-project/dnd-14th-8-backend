@@ -4,6 +4,7 @@ import com.dnd.moyeolak.domain.location.entity.LocationPoll;
 import com.dnd.moyeolak.domain.meeting.dto.CreateMeetingRequest;
 import com.dnd.moyeolak.domain.meeting.dto.GetMeetingScheduleResponse;
 import com.dnd.moyeolak.domain.meeting.dto.GetMeetingScheduleVoteResultResponse;
+import com.dnd.moyeolak.domain.meeting.dto.UpdateMeetingRequest;
 import com.dnd.moyeolak.domain.meeting.entity.Meeting;
 import com.dnd.moyeolak.domain.meeting.repository.MeetingRepository;
 import com.dnd.moyeolak.domain.meeting.service.MeetingService;
@@ -38,6 +39,19 @@ public class MeetingServiceImpl implements MeetingService {
 
         Meeting saveMeeting = meetingRepository.save(meeting);
         return saveMeeting.getId();
+    }
+
+    @Override
+    @Transactional
+    public void updateMeeting(UpdateMeetingRequest request) {
+        if (!request.isHost()) {
+            throw new BusinessException(ErrorCode.MEETING_EDIT_FORBIDDEN);
+        }
+
+        Meeting meeting = meetingRepository.findById(request.meetingId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEETING_NOT_FOUND));
+
+        meeting.update(request.participantCount());
     }
 
     @Override

@@ -3,10 +3,12 @@ package com.dnd.moyeolak.domain.meeting.controller;
 import com.dnd.moyeolak.domain.meeting.dto.CreateMeetingRequest;
 import com.dnd.moyeolak.domain.meeting.dto.GetMeetingScheduleResponse;
 import com.dnd.moyeolak.domain.meeting.dto.GetMeetingScheduleVoteResultResponse;
+import com.dnd.moyeolak.domain.meeting.dto.UpdateMeetingRequest;
 import com.dnd.moyeolak.domain.meeting.service.MeetingService;
 import com.dnd.moyeolak.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -52,5 +54,12 @@ public class MeetingController {
     public ResponseEntity<ApiResponse<String>> createMeeting(@RequestBody CreateMeetingRequest request) {
         String meetingId = meetingService.createMeeting(request);
         return ResponseEntity.ok(ApiResponse.success(meetingId));
+    }
+
+    @PutMapping
+    @Operation(summary = "모임 수정", description = "모임의 정보를 수정합니다.")
+    public ResponseEntity<ApiResponse<Void>> updateMeeting(@Valid @RequestBody UpdateMeetingRequest request) {
+        meetingService.updateMeeting(request);
+        return ResponseEntity.ok(ApiResponse.success());
     }
 }

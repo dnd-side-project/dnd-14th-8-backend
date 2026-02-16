@@ -3,6 +3,7 @@ package com.dnd.moyeolak.domain.meeting.service;
 import com.dnd.moyeolak.domain.location.entity.LocationPoll;
 import com.dnd.moyeolak.domain.meeting.dto.CreateMeetingRequest;
 import com.dnd.moyeolak.domain.meeting.dto.GetMeetingScheduleResponse;
+import com.dnd.moyeolak.domain.meeting.dto.UpdateMeetingRequest;
 import com.dnd.moyeolak.domain.meeting.entity.Meeting;
 import com.dnd.moyeolak.domain.meeting.repository.MeetingRepository;
 import com.dnd.moyeolak.domain.participant.entity.Participant;
@@ -132,6 +133,41 @@ class MeetingServiceIntegrationTest {
         // then
         Meeting saved = meetingRepository.findById(meetingId).orElseThrow();
         assertThat(saved.getLocationPoll()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("호스트가 모임의 참여인원 정보를 수정한다.")
+    void updateMeeting_participantCountEdit() {
+        // given
+        String testMeetingId = createTestMeeting(); // meeting.getParticipantCount() == 5
+        UpdateMeetingRequest updateMeetingRequest = new UpdateMeetingRequest(
+                testMeetingId
+                , 10
+                , true
+        );
+
+        // when
+        meetingService.updateMeeting(updateMeetingRequest);
+
+        // then
+        Meeting meeting = meetingService.get(testMeetingId);
+        assertThat(meeting.getParticipantCount()).isEqualTo(10);
+    }
+
+    @Test
+    @DisplayName("호스트가 아닌 참여자가 모임의 참여인원 정보를 수정할 수 없다.")
+    void updateMeeting_notForbiddenEdit() {
+        // given
+        String testMeetingId = createTestMeeting();
+        UpdateMeetingRequest updateMeetingRequest = new UpdateMeetingRequest(
+                testMeetingId
+                , 10
+                , false
+        );
+
+        // when & then
+        assertThatThrownBy(() -> meetingService.updateMeeting(updateMeetingRequest))
+                .hasMessage("모임 수정 권한이 없습니다.");
     }
 
     @Nested
@@ -378,16 +414,17 @@ class MeetingServiceIntegrationTest {
                     .isInstanceOf(BusinessException.class);
         }
 
-        private String createTestMeeting() {
-            CreateMeetingRequest request = new CreateMeetingRequest(
-                    5,
-                    "local-storage-key-123",
-                    "홍길동"
-            );
-            String meetingId = meetingService.createMeeting(request);
-            em.flush();
-            em.clear();
-            return meetingId;
-        }
+    }
+
+    private String createTestMeeting() {
+        CreateMeetingRequest request = new CreateMeetingRequest(
+                5,
+                "local-storage-key-123",
+                "홍길동"
+        );
+        String meetingId = meetingService.createMeeting(request);
+        em.flush();
+        em.clear();
+        return meetingId;
     }
 }
