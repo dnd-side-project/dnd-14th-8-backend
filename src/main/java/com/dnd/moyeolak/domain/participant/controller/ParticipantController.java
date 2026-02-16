@@ -1,5 +1,6 @@
 package com.dnd.moyeolak.domain.participant.controller;
 
+import com.dnd.moyeolak.domain.participant.docs.GetMyParticipantApiDocs;
 import com.dnd.moyeolak.domain.participant.docs.GetParticipantApiDocs;
 import com.dnd.moyeolak.domain.participant.docs.ListParticipantsApiDocs;
 import com.dnd.moyeolak.domain.participant.dto.GetParticipantResponse;
@@ -41,8 +42,12 @@ public class ParticipantController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<ApiResponse<ParticipantResponse>> findByMeetingIdAndLocalStorageKey(
-            @RequestParam String meetingId, @RequestParam String localStorageKey
+    @GetMyParticipantApiDocs
+    public ResponseEntity<ApiResponse<ParticipantResponse>> getMyParticipant(
+            @Parameter(description = "모임 ID", example = "abc123", required = true)
+            @RequestParam String meetingId,
+            @Parameter(description = "클라이언트 고유 키", example = "uuid-abc-def-123", required = true)
+            @RequestParam String localStorageKey
     ) {
         ParticipantResponse participantResponse
                 = participantService.findByMeetingIdAndLocalStorageKey(meetingId, localStorageKey);
