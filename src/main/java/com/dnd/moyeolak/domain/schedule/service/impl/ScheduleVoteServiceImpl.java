@@ -30,7 +30,7 @@ public class ScheduleVoteServiceImpl implements ScheduleVoteService {
 
     @Override
     @Transactional
-    public void createParticipantVote(String meetingId, CreateScheduleVoteRequest request) {
+    public Long createParticipantVote(String meetingId, CreateScheduleVoteRequest request) {
         Meeting meeting = meetingRepository.findByIdWithAllAssociations(meetingId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEETING_NOT_FOUND));
 
@@ -45,7 +45,9 @@ public class ScheduleVoteServiceImpl implements ScheduleVoteService {
         Participant participant = Participant.of(
                 Meeting.ofId(meetingId), request.localStorageKey(), request.participantName(), scheduleVote
         );
-        meeting.addParticipant(participant);
+        participantService.save(participant);
+
+        return scheduleVote.getId();
     }
 
     @Override

@@ -50,7 +50,7 @@ class ScheduleVoteServiceUnitTest {
     class CreateParticipantVote {
 
         @Test
-        @DisplayName("참가자가 모임에 추가된다")
+        @DisplayName("참가자가 저장된다")
         void createsParticipantInMeeting() {
             // given
             String meetingId = "test-meeting";
@@ -74,11 +74,10 @@ class ScheduleVoteServiceUnitTest {
             scheduleService.createParticipantVote(meetingId, request);
 
             // then
-            assertThat(meeting.getParticipants()).hasSize(1);
-
-            Participant createdParticipant = meeting.getParticipants().get(0);
-            assertThat(createdParticipant.getName()).isEqualTo("홍길동");
-            assertThat(createdParticipant.getLocalStorageKey()).isEqualTo("local-key-123");
+            verify(participantService).save(argThat(participant ->
+                    participant.getName().equals("홍길동") &&
+                    participant.getLocalStorageKey().equals("local-key-123")
+            ));
         }
 
         @Test
@@ -106,13 +105,14 @@ class ScheduleVoteServiceUnitTest {
             scheduleService.createParticipantVote(meetingId, request);
 
             // then
-            Participant createdParticipant = meeting.getParticipants().get(0);
-            assertThat(createdParticipant.getScheduleVotes()).hasSize(1);
-
-            ScheduleVote createdVote = createdParticipant.getScheduleVotes().get(0);
-            assertThat(createdVote.getVotedDate()).isEqualTo(votedDates);
-            assertThat(createdVote.getParticipant()).isEqualTo(createdParticipant);
-            assertThat(createdVote.getSchedulePoll()).isEqualTo(schedulePoll);
+            verify(participantService).save(argThat(participant -> {
+                assertThat(participant.getScheduleVotes()).hasSize(1);
+                ScheduleVote createdVote = participant.getScheduleVotes().get(0);
+                assertThat(createdVote.getVotedDate()).isEqualTo(votedDates);
+                assertThat(createdVote.getParticipant()).isEqualTo(participant);
+                assertThat(createdVote.getSchedulePoll()).isEqualTo(schedulePoll);
+                return true;
+            }));
         }
 
         @Test
