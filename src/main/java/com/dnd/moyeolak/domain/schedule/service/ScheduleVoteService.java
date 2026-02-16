@@ -8,7 +8,7 @@ import java.util.List;
 
 public interface ScheduleVoteService {
 
-    void createParticipantVote(String meetingId, CreateScheduleVoteRequest request);
+    Long createParticipantVote(String meetingId, CreateScheduleVoteRequest request);
 
     void updateParticipantVote(Long scheduleVoteId, UpdateScheduleVoteRequest request);
 

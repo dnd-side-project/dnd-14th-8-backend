@@ -2,7 +2,6 @@ package com.dnd.moyeolak.domain.participant.service.impl;
 
 import com.dnd.moyeolak.domain.meeting.entity.Meeting;
 import com.dnd.moyeolak.domain.meeting.repository.MeetingRepository;
-import com.dnd.moyeolak.domain.participant.dto.GetParticipantResponse;
 import com.dnd.moyeolak.domain.participant.dto.ListParticipantResponse;
 import com.dnd.moyeolak.domain.participant.dto.ParticipantResponse;
 import com.dnd.moyeolak.domain.participant.entity.Participant;
@@ -26,13 +25,6 @@ public class ParticipantServiceImpl implements ParticipantService {
     public Participant getById(Long participantId) {
         return participantRepository.findById(participantId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PARTICIPANT_NOT_FOUND));
-    }
-
-    @Override
-    public GetParticipantResponse getParticipant(Long participantId) {
-        Participant participant = participantRepository.findById(participantId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.PARTICIPANT_NOT_FOUND));
-        return GetParticipantResponse.from(participant);
     }
 
     @Override

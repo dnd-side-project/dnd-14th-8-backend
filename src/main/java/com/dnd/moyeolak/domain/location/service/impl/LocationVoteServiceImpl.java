@@ -42,7 +42,7 @@ public class LocationVoteServiceImpl implements LocationVoteService {
 
     @Override
     @Transactional
-    public void createLocationVote(CreateLocationVoteRequest request) {
+    public Long createLocationVote(CreateLocationVoteRequest request) {
         LocationVote locationVote = LocationVote.fromByCreateLocationVoteRequest(request);
         if (StringUtils.hasText(request.localStorageKey())) {
             Participant participant = Participant.of(
@@ -52,6 +52,8 @@ public class LocationVoteServiceImpl implements LocationVoteService {
         } else {
             locationVoteRepository.save(locationVote);
         }
+
+        return locationVote.getId();
     }
 
     @Override

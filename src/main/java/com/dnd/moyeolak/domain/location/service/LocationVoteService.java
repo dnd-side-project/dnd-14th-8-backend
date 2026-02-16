@@ -10,7 +10,7 @@ public interface LocationVoteService {
 
     List<LocationVoteResponse> listLocationVote(Long locationPollId);
 
-    void createLocationVote(CreateLocationVoteRequest createLocationVoteRequest);
+    Long createLocationVote(CreateLocationVoteRequest createLocationVoteRequest);
 
     void updateLocationVote(Long locationVoteId, UpdateLocationVoteRequest updateLocationVoteRequest);
 

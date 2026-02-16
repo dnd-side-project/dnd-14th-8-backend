@@ -64,9 +64,9 @@ public class LocationController {
 
     @PostMapping("/vote")
     @CreateLocationVoteApiDocs
-    public ResponseEntity<ApiResponse<Void>> createLocationVote(@Valid @RequestBody CreateLocationVoteRequest request) {
-        locationVoteService.createLocationVote(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success());
+    public ResponseEntity<ApiResponse<Long>> createLocationVote(@Valid @RequestBody CreateLocationVoteRequest request) {
+        Long locationVoteId = locationVoteService.createLocationVote(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(locationVoteId));
     }
 
     @DeleteMapping("/vote/{locationVoteId}")

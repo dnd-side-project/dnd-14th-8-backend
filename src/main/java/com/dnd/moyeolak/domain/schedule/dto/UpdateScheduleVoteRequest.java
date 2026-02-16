@@ -6,7 +6,6 @@ import java.util.List;
 public record UpdateScheduleVoteRequest(
     Long participantId,
     String participantName,
-    List<LocalDateTime> votedDates,
-    boolean isSelectingAvailable
+    List<LocalDateTime> votedDates
 ) {
 }
