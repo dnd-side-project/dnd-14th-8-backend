@@ -27,7 +27,9 @@ public enum ErrorCode {
     NO_LOCATION_VOTES("E416", "출발지가 등록되지 않았습니다.", HttpStatus.BAD_REQUEST),
     NO_NEARBY_STATIONS("E417", "반경 내 지하철역을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     GOOGLE_API_ERROR("E418", "외부 API 호출에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
-    SCHEDULE_VOTE_NOT_FOUND("E416", "시간 응답이 존재하지 않습니다.", HttpStatus.NOT_FOUND),
+    SCHEDULE_VOTE_NOT_FOUND("E419", "시간 응답이 존재하지 않습니다.", HttpStatus.NOT_FOUND),
+    MEETING_EDIT_FORBIDDEN("E420", "모임 수정 권한이 없습니다.", HttpStatus.FORBIDDEN),
+    PARTICIPANT_COUNT_BELOW_CURRENT("E421", "현재 참여 인원보다 적은 수로 변경할 수 없습니다.", HttpStatus.BAD_REQUEST),
 
     // 서버 오류
     SERVER_ERROR("E500", "서버 내부 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
