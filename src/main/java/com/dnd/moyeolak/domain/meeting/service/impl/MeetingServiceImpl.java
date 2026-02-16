@@ -51,6 +51,10 @@ public class MeetingServiceImpl implements MeetingService {
         Meeting meeting = meetingRepository.findById(request.meetingId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEETING_NOT_FOUND));
 
+        if (meeting.getParticipants().size() > request.participantCount()) {
+            throw new BusinessException(ErrorCode.PARTICIPANT_COUNT_BELOW_CURRENT);
+        }
+
         meeting.update(request.participantCount());
     }
 

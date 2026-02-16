@@ -8,8 +8,6 @@ import com.dnd.moyeolak.domain.meeting.entity.Meeting;
 import com.dnd.moyeolak.domain.meeting.repository.MeetingRepository;
 import com.dnd.moyeolak.domain.participant.entity.Participant;
 import com.dnd.moyeolak.domain.schedule.entity.SchedulePoll;
-import com.dnd.moyeolak.domain.schedule.entity.ScheduleVote;
-import com.dnd.moyeolak.domain.location.entity.LocationVote;
 import com.dnd.moyeolak.global.exception.BusinessException;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.DisplayName;
@@ -168,6 +166,22 @@ class MeetingServiceIntegrationTest {
         // when & then
         assertThatThrownBy(() -> meetingService.updateMeeting(updateMeetingRequest))
                 .hasMessage("모임 수정 권한이 없습니다.");
+    }
+
+    @Test
+    @DisplayName("현재 참여인원보다 더 적은 수로 인원 정보를 수정할 수 없습니다.")
+    void updateMeeting_participantCountBelowCurrent() {
+        // given
+        String testMeetingId = createTestMeeting();
+        UpdateMeetingRequest updateMeetingRequest = new UpdateMeetingRequest(
+                testMeetingId
+                , 4
+                , true
+        );
+
+        // when & then
+        assertThatThrownBy(() -> meetingService.updateMeeting(updateMeetingRequest))
+                .hasMessage("현재 참여 인원보다 적은 수로 변경할 수 없습니다.");
     }
 
     @Nested
@@ -423,6 +437,13 @@ class MeetingServiceIntegrationTest {
                 "홍길동"
         );
         String meetingId = meetingService.createMeeting(request);
+
+        Meeting meeting = em.find(Meeting.class, meetingId);  // 영속 상태 엔티티 조회
+        meeting.addParticipant(Participant.of(meeting, "test1", "테스터1"));
+        meeting.addParticipant(Participant.of(meeting, "test2", "테스터2"));
+        meeting.addParticipant(Participant.of(meeting, "test3", "테스터3"));
+        meeting.addParticipant(Participant.of(meeting, "test4", "테스터4"));
+        meeting.addParticipant(Participant.of(meeting, "test5", "테스터5"));
         em.flush();
         em.clear();
         return meetingId;
