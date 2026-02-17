@@ -66,7 +66,7 @@ class MidpointRecommendationServiceImplTest {
             when(meeting.getLocationPoll()).thenReturn(null);
 
             // when & then
-            assertThatThrownBy(() -> midpointRecommendationService.calculateMidpointRecommendations(MEETING_ID))
+            assertThatThrownBy(() -> midpointRecommendationService.calculateMidpointRecommendations(MEETING_ID, null))
                     .isInstanceOf(BusinessException.class)
                     .hasFieldOrPropertyWithValue("errorCode", ErrorCode.LOCATION_POLL_NOT_FOUND);
         }
@@ -83,7 +83,7 @@ class MidpointRecommendationServiceImplTest {
             when(locationVoteRepository.findByLocationPoll_Id(1L)).thenReturn(Collections.emptyList());
 
             // when & then
-            assertThatThrownBy(() -> midpointRecommendationService.calculateMidpointRecommendations(MEETING_ID))
+            assertThatThrownBy(() -> midpointRecommendationService.calculateMidpointRecommendations(MEETING_ID, null))
                     .isInstanceOf(BusinessException.class)
                     .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NO_LOCATION_VOTES);
         }
@@ -107,7 +107,7 @@ class MidpointRecommendationServiceImplTest {
                     .thenReturn(Collections.emptyList());
 
             // when & then
-            assertThatThrownBy(() -> midpointRecommendationService.calculateMidpointRecommendations(MEETING_ID))
+            assertThatThrownBy(() -> midpointRecommendationService.calculateMidpointRecommendations(MEETING_ID, null))
                     .isInstanceOf(BusinessException.class)
                     .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NO_NEARBY_STATIONS);
         }
@@ -131,13 +131,13 @@ class MidpointRecommendationServiceImplTest {
             when(stationRepository.findNearbyStations(anyDouble(), anyDouble(), anyInt(), anyInt()))
                     .thenReturn(List.of(station));
 
-            when(googleDistanceMatrixClient.calculateDistanceMatrix(anyList(), anyList(), eq("transit")))
+            when(googleDistanceMatrixClient.calculateDistanceMatrix(anyList(), anyList(), eq("transit"), isNull()))
                     .thenReturn(null);
-            when(googleDistanceMatrixClient.calculateDistanceMatrix(anyList(), anyList(), eq("driving")))
+            when(googleDistanceMatrixClient.calculateDistanceMatrix(anyList(), anyList(), eq("driving"), isNull()))
                     .thenReturn(null);
 
             // when & then
-            assertThatThrownBy(() -> midpointRecommendationService.calculateMidpointRecommendations(MEETING_ID))
+            assertThatThrownBy(() -> midpointRecommendationService.calculateMidpointRecommendations(MEETING_ID, null))
                     .isInstanceOf(BusinessException.class)
                     .hasFieldOrPropertyWithValue("errorCode", ErrorCode.GOOGLE_API_ERROR);
         }
@@ -169,14 +169,14 @@ class MidpointRecommendationServiceImplTest {
 
             GoogleDistanceMatrixResponse transitResponse = createDistanceMatrixResponse(2, 1, 1800, 10000);
             GoogleDistanceMatrixResponse drivingResponse = createDistanceMatrixResponse(2, 1, 900, 8000);
-            when(googleDistanceMatrixClient.calculateDistanceMatrix(anyList(), anyList(), eq("transit")))
+            when(googleDistanceMatrixClient.calculateDistanceMatrix(anyList(), anyList(), eq("transit"), isNull()))
                     .thenReturn(transitResponse);
-            when(googleDistanceMatrixClient.calculateDistanceMatrix(anyList(), anyList(), eq("driving")))
+            when(googleDistanceMatrixClient.calculateDistanceMatrix(anyList(), anyList(), eq("driving"), isNull()))
                     .thenReturn(drivingResponse);
 
             // when
             MidpointRecommendationResponse response =
-                    midpointRecommendationService.calculateMidpointRecommendations(MEETING_ID);
+                    midpointRecommendationService.calculateMidpointRecommendations(MEETING_ID, null);
 
             // then
             assertThat(response).isNotNull();
@@ -222,14 +222,14 @@ class MidpointRecommendationServiceImplTest {
             GoogleDistanceMatrixResponse drivingResponse = createVariedDistanceMatrixResponse(
                     1, 4, new int[]{300, 600, 900, 1200}, new int[]{4000, 8000, 12000, 16000}
             );
-            when(googleDistanceMatrixClient.calculateDistanceMatrix(anyList(), anyList(), eq("transit")))
+            when(googleDistanceMatrixClient.calculateDistanceMatrix(anyList(), anyList(), eq("transit"), isNull()))
                     .thenReturn(transitResponse);
-            when(googleDistanceMatrixClient.calculateDistanceMatrix(anyList(), anyList(), eq("driving")))
+            when(googleDistanceMatrixClient.calculateDistanceMatrix(anyList(), anyList(), eq("driving"), isNull()))
                     .thenReturn(drivingResponse);
 
             // when
             MidpointRecommendationResponse response =
-                    midpointRecommendationService.calculateMidpointRecommendations(MEETING_ID);
+                    midpointRecommendationService.calculateMidpointRecommendations(MEETING_ID, null);
 
             // then
             assertThat(response.recommendations()).hasSize(3);
@@ -261,14 +261,14 @@ class MidpointRecommendationServiceImplTest {
                     .thenReturn(List.of(station));
 
             GoogleDistanceMatrixResponse transitResponse = createDistanceMatrixResponse(1, 1, 2400, 15000);
-            when(googleDistanceMatrixClient.calculateDistanceMatrix(anyList(), anyList(), eq("transit")))
+            when(googleDistanceMatrixClient.calculateDistanceMatrix(anyList(), anyList(), eq("transit"), isNull()))
                     .thenReturn(transitResponse);
-            when(googleDistanceMatrixClient.calculateDistanceMatrix(anyList(), anyList(), eq("driving")))
+            when(googleDistanceMatrixClient.calculateDistanceMatrix(anyList(), anyList(), eq("driving"), isNull()))
                     .thenReturn(null);
 
             // when
             MidpointRecommendationResponse response =
-                    midpointRecommendationService.calculateMidpointRecommendations(MEETING_ID);
+                    midpointRecommendationService.calculateMidpointRecommendations(MEETING_ID, null);
 
             // then
             assertThat(response.recommendations()).hasSize(1);
@@ -303,14 +303,14 @@ class MidpointRecommendationServiceImplTest {
                     .thenReturn(List.of(station));
 
             GoogleDistanceMatrixResponse transitResponse = createDistanceMatrixResponse(1, 1, 600, 5000);
-            when(googleDistanceMatrixClient.calculateDistanceMatrix(anyList(), anyList(), eq("transit")))
+            when(googleDistanceMatrixClient.calculateDistanceMatrix(anyList(), anyList(), eq("transit"), isNull()))
                     .thenReturn(transitResponse);
-            when(googleDistanceMatrixClient.calculateDistanceMatrix(anyList(), anyList(), eq("driving")))
+            when(googleDistanceMatrixClient.calculateDistanceMatrix(anyList(), anyList(), eq("driving"), isNull()))
                     .thenReturn(null);
 
             // when
             MidpointRecommendationResponse response =
-                    midpointRecommendationService.calculateMidpointRecommendations(MEETING_ID);
+                    midpointRecommendationService.calculateMidpointRecommendations(MEETING_ID, null);
 
             // then
             assertThat(response.recommendations().get(0).routes().get(0).departureName()).isEqualTo("김참가자");

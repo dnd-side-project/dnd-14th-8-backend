@@ -37,10 +37,15 @@ import java.lang.annotation.Target;
                     | `test-meeting-002` | 서울 시내 | 강남, 홍대, 잠실, 노원 (무게중심: 종로~을지로) |
                     | `test-meeting-003` | 경기도 내 | 수원, 성남, 용인, 안양 (무게중심: 과천~의왕) |
 
+                    ### 파라미터
+                    - `meetingId` (필수): 모임 ID
+                    - `departureTime` (선택): 출발 시간 (ISO 8601 형식, 예: `2026-02-18T10:30:00`). 미입력 시 현재 시각 기준으로 대중교통 소요시간을 계산합니다.
+
                     ### 주의사항
                     - 출발지가 1개 이상 등록되어야 합니다
                     - 반경 5km 내 지하철역이 없으면 404 응답
                     - Google API 장애 시 500 응답
+                    - `departureTime`은 미래 시각이어야 합니다 (Google API 제약)
                     """)
 @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -61,6 +66,7 @@ import java.lang.annotation.Target;
                                                   "latitude": 37.5665,
                                                   "longitude": 126.9780
                                                 },
+                                                "departureTime": "2026-02-18T10:30:00",
                                                 "recommendations": [
                                                   {
                                                     "rank": 1,

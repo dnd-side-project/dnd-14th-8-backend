@@ -20,6 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Tag(name = "Locations", description = "위치/장소 관련 API")
@@ -35,10 +36,12 @@ public class LocationController {
     @GetMidpointRecommendationsApiDocs
     public ResponseEntity<ApiResponse<MidpointRecommendationResponse>> getMidpointRecommendations(
             @Parameter(description = "모임 ID", example = "test-meeting-001", required = true)
-            @RequestParam String meetingId
+            @RequestParam String meetingId,
+            @Parameter(description = "출발 시간 (미입력 시 현재 시각 기준)", example = "2026-02-18T10:30:00")
+            @RequestParam(required = false) LocalDateTime departureTime
     ) {
         MidpointRecommendationResponse response =
-                midpointRecommendationService.calculateMidpointRecommendations(meetingId);
+                midpointRecommendationService.calculateMidpointRecommendations(meetingId, departureTime);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
