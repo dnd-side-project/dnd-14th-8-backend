@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Optimal Location", description = "참가자 위치를 바탕으로 최적 만남 장소를 추천하는 테스트 API")
 @RestController
 @RequestMapping("/api/test/janghh/optimal-location")
+@Profile("local")
 @RequiredArgsConstructor
 public class OptimalLocationController {
 

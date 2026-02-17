@@ -1,11 +1,13 @@
 package com.dnd.moyeolak.test.janghh.service;
 
 import com.dnd.moyeolak.test.janghh.dto.request.OptimalLocationRequest.ParticipantInfo;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Component
+@Profile("local")
 public class GeographicCalculator {
 
     public double[] calculateGeographicCenter(List<ParticipantInfo> participants) {

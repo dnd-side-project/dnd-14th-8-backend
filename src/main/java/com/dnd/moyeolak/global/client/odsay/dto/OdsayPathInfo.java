@@ -29,4 +29,5 @@ public record OdsayPathInfo(
     public int safeBusTransit() { return busTransitCount != null ? busTransitCount : 0; }
     public int safeSubwayTransit() { return subwayTransitCount != null ? subwayTransitCount : 0; }
     public int safeTotalDistance() { return totalDistance != null ? totalDistance : 0; }
+    public int safeTotalWalk() { return totalWalk != null ? totalWalk : 0; }
 }

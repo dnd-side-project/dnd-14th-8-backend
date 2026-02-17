@@ -31,15 +31,17 @@ public class GoogleDistanceMatrixClient {
     /**
      * N개 출발지 × M개 도착지의 거리/시간 행렬을 한 번의 API 호출로 조회
      *
-     * @param origins      출발지 좌표 목록
-     * @param destinations 도착지 좌표 목록
-     * @param mode         "transit" 또는 "driving"
+     * @param origins       출발지 좌표 목록
+     * @param destinations  도착지 좌표 목록
+     * @param mode          "transit" 또는 "driving"
+     * @param departureTime 출발 시각 (Unix timestamp, 초 단위). null이면 현재 시각 기준
      * @return 거리/시간 행렬 응답
      */
     public GoogleDistanceMatrixResponse calculateDistanceMatrix(
             List<Coordinate> origins,
             List<Coordinate> destinations,
-            String mode
+            String mode,
+            Long departureTime
     ) {
         String originsParam = origins.stream()
                 .map(c -> c.latitude() + "," + c.longitude())
@@ -49,14 +51,18 @@ public class GoogleDistanceMatrixClient {
                 .map(c -> c.latitude() + "," + c.longitude())
                 .collect(Collectors.joining("|"));
 
-        String url = UriComponentsBuilder.fromUriString(BASE_URL)
+        UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(BASE_URL)
                 .queryParam("origins", originsParam)
                 .queryParam("destinations", destinationsParam)
                 .queryParam("mode", mode)
                 .queryParam("language", "ko")
-                .queryParam("key", config.getGoogleApiKey())
-                .build()
-                .toUriString();
+                .queryParam("key", config.getGoogleApiKey());
+
+        if (departureTime != null) {
+            uriBuilder.queryParam("departure_time", departureTime);
+        }
+
+        String url = uriBuilder.build().toUriString();
 
         log.debug("Google Distance Matrix API 호출: mode={}, origins={}, destinations={}",
                 mode, origins.size(), destinations.size());
