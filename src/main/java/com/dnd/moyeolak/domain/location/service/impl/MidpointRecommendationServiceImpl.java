@@ -173,7 +173,10 @@ public class MidpointRecommendationServiceImpl implements MidpointRecommendation
 
                 String departureName = resolveDepartureName(vote);
 
+                Long participantId = vote.getParticipant() != null ? vote.getParticipant().getId() : null;
+
                 routes.add(RouteDto.builder()
+                        .participantId(participantId)
                         .departureName(departureName)
                         .departureAddress(vote.getDepartureLocation())
                         .transitDuration(transitDuration)
@@ -195,6 +198,7 @@ public class MidpointRecommendationServiceImpl implements MidpointRecommendation
 
             results.add(StationRecommendationDto.builder()
                     .rank(0)
+                    .stationId(station.getId())
                     .stationName(station.getName())
                     .line(station.getLine())
                     .latitude(station.getLatitude())
@@ -214,6 +218,7 @@ public class MidpointRecommendationServiceImpl implements MidpointRecommendation
         return IntStream.range(0, sorted.size())
                 .mapToObj(i -> StationRecommendationDto.builder()
                         .rank(i + 1)
+                        .stationId(sorted.get(i).stationId())
                         .stationName(sorted.get(i).stationName())
                         .line(sorted.get(i).line())
                         .latitude(sorted.get(i).latitude())

@@ -127,7 +127,7 @@ class MidpointRecommendationServiceImplTest {
 
             lenient().when(stationRepository.calculateCentroid(any())).thenThrow(new RuntimeException("PostGIS 미지원"));
 
-            Station station = createMockStation("강남역", "2호선", 37.4979, 127.0276);
+            Station station = createMockStation(7L, "강남역", "2호선", 37.4979, 127.0276);
             when(stationRepository.findNearbyStations(anyDouble(), anyDouble(), anyInt(), anyInt()))
                     .thenReturn(List.of(station));
 
@@ -163,7 +163,7 @@ class MidpointRecommendationServiceImplTest {
 
             when(stationRepository.calculateCentroid(any())).thenThrow(new RuntimeException("PostGIS 미지원"));
 
-            Station station = createMockStation("합정역", "2호선", 37.5495, 126.9137);
+            Station station = createMockStation(1L, "합정역", "2호선", 37.5495, 126.9137);
             when(stationRepository.findNearbyStations(anyDouble(), anyDouble(), anyInt(), anyInt()))
                     .thenReturn(List.of(station));
 
@@ -208,10 +208,10 @@ class MidpointRecommendationServiceImplTest {
 
             when(stationRepository.calculateCentroid(any())).thenThrow(new RuntimeException("PostGIS 미지원"));
 
-            Station station1 = createMockStation("역1", "1호선", 37.50, 127.01);
-            Station station2 = createMockStation("역2", "2호선", 37.51, 127.02);
-            Station station3 = createMockStation("역3", "3호선", 37.52, 127.03);
-            Station station4 = createMockStation("역4", "4호선", 37.53, 127.04);
+            Station station1 = createMockStation(1L, "역1", "1호선", 37.50, 127.01);
+            Station station2 = createMockStation(2L, "역2", "2호선", 37.51, 127.02);
+            Station station3 = createMockStation(3L, "역3", "3호선", 37.52, 127.03);
+            Station station4 = createMockStation(4L, "역4", "4호선", 37.53, 127.04);
             when(stationRepository.findNearbyStations(anyDouble(), anyDouble(), anyInt(), anyInt()))
                     .thenReturn(List.of(station1, station2, station3, station4));
 
@@ -256,7 +256,7 @@ class MidpointRecommendationServiceImplTest {
 
             when(stationRepository.calculateCentroid(any())).thenThrow(new RuntimeException("PostGIS 미지원"));
 
-            Station station = createMockStation("강남역", "2호선", 37.4979, 127.0276);
+            Station station = createMockStation(5L, "강남역", "2호선", 37.4979, 127.0276);
             when(stationRepository.findNearbyStations(anyDouble(), anyDouble(), anyInt(), anyInt()))
                     .thenReturn(List.of(station));
 
@@ -298,7 +298,7 @@ class MidpointRecommendationServiceImplTest {
             when(locationVoteRepository.findByLocationPoll_Id(anyLong())).thenReturn(List.of(vote));
             when(stationRepository.calculateCentroid(any())).thenThrow(new RuntimeException("PostGIS 미지원"));
 
-            Station station = createMockStation("역삼역", "2호선", 37.5006, 127.0366);
+            Station station = createMockStation(6L, "역삼역", "2호선", 37.5006, 127.0366);
             when(stationRepository.findNearbyStations(anyDouble(), anyDouble(), anyInt(), anyInt()))
                     .thenReturn(List.of(station));
 
@@ -328,8 +328,9 @@ class MidpointRecommendationServiceImplTest {
         return vote;
     }
 
-    private Station createMockStation(String name, String line, double lat, double lng) {
+    private Station createMockStation(Long id, String name, String line, double lat, double lng) {
         Station station = mock(Station.class);
+        lenient().when(station.getId()).thenReturn(id);
         lenient().when(station.getName()).thenReturn(name);
         lenient().when(station.getLine()).thenReturn(line);
         lenient().when(station.getLatitude()).thenReturn(lat);

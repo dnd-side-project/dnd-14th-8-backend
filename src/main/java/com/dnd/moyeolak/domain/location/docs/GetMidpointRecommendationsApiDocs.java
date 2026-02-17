@@ -70,6 +70,7 @@ import java.lang.annotation.Target;
                                                 "recommendations": [
                                                   {
                                                     "rank": 1,
+                                                    "stationId": 901,
                                                     "stationName": "디지털미디어시티역",
                                                     "line": "경의중앙선",
                                                     "latitude": 37.5779,
@@ -78,6 +79,7 @@ import java.lang.annotation.Target;
                                                     "avgTransitDuration": 42.5,
                                                     "routes": [
                                                       {
+                                                        "participantId": 11,
                                                         "departureName": "김철수",
                                                         "departureAddress": "수원시 장안구 영화동",
                                                         "transitDuration": 55,
@@ -86,6 +88,7 @@ import java.lang.annotation.Target;
                                                         "drivingDistance": 18200
                                                       },
                                                       {
+                                                        "participantId": 12,
                                                         "departureName": "이영희",
                                                         "departureAddress": "서울시 강남구 역삼동",
                                                         "transitDuration": 30,
@@ -97,6 +100,7 @@ import java.lang.annotation.Target;
                                                   },
                                                   {
                                                     "rank": 2,
+                                                    "stationId": 902,
                                                     "stationName": "홍대입구역",
                                                     "line": "2호선",
                                                     "latitude": 37.5571,
@@ -105,6 +109,7 @@ import java.lang.annotation.Target;
                                                     "avgTransitDuration": 45.0,
                                                     "routes": [
                                                       {
+                                                        "participantId": 11,
                                                         "departureName": "김철수",
                                                         "departureAddress": "수원시 장안구 영화동",
                                                         "transitDuration": 50,
@@ -113,6 +118,7 @@ import java.lang.annotation.Target;
                                                         "drivingDistance": 17000
                                                       },
                                                       {
+                                                        "participantId": 12,
                                                         "departureName": "이영희",
                                                         "departureAddress": "서울시 강남구 역삼동",
                                                         "transitDuration": 40,
@@ -124,6 +130,7 @@ import java.lang.annotation.Target;
                                                   },
                                                   {
                                                     "rank": 3,
+                                                    "stationId": 903,
                                                     "stationName": "합정역",
                                                     "line": "2호선",
                                                     "latitude": 37.5495,
@@ -132,6 +139,7 @@ import java.lang.annotation.Target;
                                                     "avgTransitDuration": 48.0,
                                                     "routes": [
                                                       {
+                                                        "participantId": 11,
                                                         "departureName": "김철수",
                                                         "departureAddress": "수원시 장안구 영화동",
                                                         "transitDuration": 52,
@@ -140,6 +148,7 @@ import java.lang.annotation.Target;
                                                         "drivingDistance": 17500
                                                       },
                                                       {
+                                                        "participantId": 12,
                                                         "departureName": "이영희",
                                                         "departureAddress": "서울시 강남구 역삼동",
                                                         "transitDuration": 44,

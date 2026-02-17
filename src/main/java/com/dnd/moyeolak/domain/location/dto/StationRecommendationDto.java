@@ -11,6 +11,9 @@ public record StationRecommendationDto(
         @Schema(description = "추천 순위 (1=최적)", example = "1")
         int rank,
 
+        @Schema(description = "역 ID", example = "321")
+        Long stationId,
+
         @Schema(description = "지하철역 이름", example = "디지털미디어시티역")
         String stationName,
 
