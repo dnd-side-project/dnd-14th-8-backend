@@ -19,6 +19,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -40,7 +42,7 @@ public class MidpointRecommendationServiceImpl implements MidpointRecommendation
     private static final int TOP_RECOMMENDATIONS = 3;
 
     @Override
-    public MidpointRecommendationResponse calculateMidpointRecommendations(String meetingId) {
+    public MidpointRecommendationResponse calculateMidpointRecommendations(String meetingId, LocalDateTime departureTime) {
         // 1. 출발지 데이터 조회
         Meeting meeting = meetingService.get(meetingId);
         LocationPoll locationPoll = meeting.getLocationPoll();
@@ -78,10 +80,14 @@ public class MidpointRecommendationServiceImpl implements MidpointRecommendation
                 .map(s -> new Coordinate(s.getLatitude(), s.getLongitude()))
                 .toList();
 
+        Long departureTimeEpoch = departureTime != null
+                ? departureTime.atZone(ZoneId.of("Asia/Seoul")).toEpochSecond()
+                : null;
+
         GoogleDistanceMatrixResponse transitResponse =
-                googleDistanceMatrixClient.calculateDistanceMatrix(origins, destinations, "transit");
+                googleDistanceMatrixClient.calculateDistanceMatrix(origins, destinations, "transit", departureTimeEpoch);
         GoogleDistanceMatrixResponse drivingResponse =
-                googleDistanceMatrixClient.calculateDistanceMatrix(origins, destinations, "driving");
+                googleDistanceMatrixClient.calculateDistanceMatrix(origins, destinations, "driving", departureTimeEpoch);
 
         if (transitResponse == null && drivingResponse == null) {
             throw new BusinessException(ErrorCode.GOOGLE_API_ERROR);
@@ -92,7 +98,7 @@ public class MidpointRecommendationServiceImpl implements MidpointRecommendation
                 votes, candidateStations, transitResponse, drivingResponse, centerPoint
         );
 
-        return new MidpointRecommendationResponse(centerPoint, recommendations);
+        return new MidpointRecommendationResponse(centerPoint, recommendations, departureTime);
     }
 
     private CenterPointDto calculateCentroid(List<LocationVote> votes) {
@@ -167,7 +173,10 @@ public class MidpointRecommendationServiceImpl implements MidpointRecommendation
 
                 String departureName = resolveDepartureName(vote);
 
+                Long participantId = vote.getParticipant() != null ? vote.getParticipant().getId() : null;
+
                 routes.add(RouteDto.builder()
+                        .participantId(participantId)
                         .departureName(departureName)
                         .departureAddress(vote.getDepartureLocation())
                         .transitDuration(transitDuration)
@@ -189,6 +198,7 @@ public class MidpointRecommendationServiceImpl implements MidpointRecommendation
 
             results.add(StationRecommendationDto.builder()
                     .rank(0)
+                    .stationId(station.getId())
                     .stationName(station.getName())
                     .line(station.getLine())
                     .latitude(station.getLatitude())
@@ -208,6 +218,7 @@ public class MidpointRecommendationServiceImpl implements MidpointRecommendation
         return IntStream.range(0, sorted.size())
                 .mapToObj(i -> StationRecommendationDto.builder()
                         .rank(i + 1)
+                        .stationId(sorted.get(i).stationId())
                         .stationName(sorted.get(i).stationName())
                         .line(sorted.get(i).line())
                         .latitude(sorted.get(i).latitude())

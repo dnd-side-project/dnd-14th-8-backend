@@ -6,6 +6,8 @@ import lombok.Builder;
 @Schema(description = "참여자별 이동 경로 정보")
 @Builder
 public record RouteDto(
+        @Schema(description = "참여자 ID", example = "15")
+        Long participantId,
         @Schema(description = "참여자 이름", example = "김철수")
         String departureName,
 

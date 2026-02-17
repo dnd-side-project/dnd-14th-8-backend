@@ -8,6 +8,7 @@ import com.dnd.moyeolak.test.janghh.dto.request.OptimalLocationRequest.Participa
 import com.dnd.moyeolak.test.janghh.dto.response.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -19,6 +20,7 @@ import java.util.concurrent.Executors;
 
 @Slf4j
 @Service
+@Profile("local")
 @RequiredArgsConstructor
 public class OptimalLocationService {
 
