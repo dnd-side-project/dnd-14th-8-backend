@@ -1,7 +1,9 @@
 package com.dnd.moyeolak.global.client.kakao;
 
 import com.dnd.moyeolak.global.client.kakao.config.KakaoApiConfig;
+import com.dnd.moyeolak.global.client.kakao.dto.CategorySearchResponse;
 import com.dnd.moyeolak.global.client.kakao.dto.KakaoLocalResponse;
+import com.dnd.moyeolak.global.client.kakao.dto.KeywordSearchRequest;
 import com.dnd.moyeolak.test.janghh.dto.response.SubwayStation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -11,7 +13,9 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
+import java.net.URI;
 import java.util.List;
 
 @Slf4j
@@ -21,6 +25,7 @@ public class KakaoLocalClient {
     private final RestTemplate kakaoRestTemplate;
     private final KakaoApiConfig kakaoApiConfig;
 
+    private static final String KAKAO_LOCAL_BASE_URL = "https://dapi.kakao.com/v2/local/search";
     private static final String KAKAO_LOCAL_API_URL = "https://dapi.kakao.com/v2/local/search/category.json";
     private static final String SUBWAY_CATEGORY_CODE = "SW8";
 
@@ -83,5 +88,42 @@ public class KakaoLocalClient {
             log.error("Kakao Local API 호출 실패: {}", e.getMessage());
             throw new RuntimeException("지하철역 검색에 실패했습니다.", e);
         }
+    }
+
+    /**
+     * 키워드를 사용하여 장소 검색 기능
+     * - Google Places API 호출하여 나온 장소가 현재 한국지도에 실제 있는 장소인지 검증하는 용도.
+     */
+    public CategorySearchResponse searchByKeyword(KeywordSearchRequest request) {
+        UriComponentsBuilder builder = UriComponentsBuilder
+                .fromUriString(KAKAO_LOCAL_BASE_URL + "/keyword.json")
+                .queryParam("query", request.query());
+
+        if (request.x() != null && request.y() != null) {
+            builder.queryParam("x", request.x());
+            builder.queryParam("y", request.y());
+        }
+        if (request.radius() != null) {
+            builder.queryParam("radius", request.radius());
+        }
+        if (request.sort() != null) {
+            builder.queryParam("sort", request.sort());
+        }
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("Authorization", "KakaoAK " + kakaoApiConfig.getKakaoApiKey());
+
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+
+        URI uri = builder.build().encode().toUri();
+
+        ResponseEntity<CategorySearchResponse> response = kakaoRestTemplate.exchange(
+                uri,
+                HttpMethod.GET,
+                entity,
+                CategorySearchResponse.class
+        );
+
+        return response.getBody();
     }
 }
