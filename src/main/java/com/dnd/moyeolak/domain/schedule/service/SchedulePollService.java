@@ -6,5 +6,5 @@ public interface SchedulePollService {
 
     void updateSchedulePoll(String meetingId, UpdateSchedulePollRequest request);
 
-    void confirmSchedulePoll(Long schedulePollId);
+    void confirmSchedulePoll(String meetingId);
 }
