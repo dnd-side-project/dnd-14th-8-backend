@@ -40,16 +40,15 @@ class SchedulePollServiceIntegrationTest {
     void confirmSchedulePoll_changesStatusToConfirmed() {
         // given
         String meetingId = createTestMeeting();
-        Meeting meeting = meetingRepository.findByIdWithAllAssociations(meetingId).orElseThrow();
-        Long schedulePollId = meeting.getSchedulePoll().getId();
+        Meeting meeting = meetingRepository.findById(meetingId).orElseThrow();
 
         // when
-        schedulePollService.confirmSchedulePoll(schedulePollId);
+        schedulePollService.confirmSchedulePoll(meetingId);
         em.flush();
         em.clear();
 
         // then
-        SchedulePoll confirmed = em.find(SchedulePoll.class, schedulePollId);
+        SchedulePoll confirmed = em.find(SchedulePoll.class, meeting.getSchedulePoll().getId());
         assertThat(confirmed.getPollStatus()).isEqualTo(PollStatus.CONFIRMED);
     }
 
@@ -57,10 +56,10 @@ class SchedulePollServiceIntegrationTest {
     @DisplayName("존재하지 않는 일정 투표판 확정 시 예외가 발생한다")
     void confirmSchedulePoll_throwsException_whenNotFound() {
         // given
-        Long nonExistentId = 999L;
+        String nonMeetingId = "sadasdeikn";
 
         // when & then
-        assertThatThrownBy(() -> schedulePollService.confirmSchedulePoll(nonExistentId))
+        assertThatThrownBy(() -> schedulePollService.confirmSchedulePoll(nonMeetingId))
                 .isInstanceOf(BusinessException.class);
     }
 

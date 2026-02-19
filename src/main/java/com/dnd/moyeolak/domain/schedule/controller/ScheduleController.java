@@ -36,9 +36,13 @@ public class ScheduleController {
         return ResponseEntity.ok(ApiResponse.success());
     }
 
-    @PutMapping("/poll/{schedulePollId}/confirm")
-    public ResponseEntity<ApiResponse<Void>> confirmSchedulePoll(@PathVariable Long schedulePollId) {
-        schedulePollService.confirmSchedulePoll(schedulePollId);
+    @PutMapping("/poll/confirm")
+    @Operation(summary = "시간 투표 확정", description = "시간 투표를 확정 짓습니다.")
+    public ResponseEntity<ApiResponse<Void>> confirmSchedulePoll(
+            @Parameter(description = "모임 ID", example = "abc-123", required = true)
+            @RequestParam String meetingId
+    ) {
+        schedulePollService.confirmSchedulePoll(meetingId);
         return ResponseEntity.ok(ApiResponse.success());
     }
 

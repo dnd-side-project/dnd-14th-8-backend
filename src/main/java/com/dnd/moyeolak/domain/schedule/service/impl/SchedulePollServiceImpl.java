@@ -53,8 +53,11 @@ public class SchedulePollServiceImpl implements SchedulePollService {
 
     @Override
     @Transactional
-    public void confirmSchedulePoll(Long schedulePollId) {
-        SchedulePoll schedulePoll = schedulePollRepository.findById(schedulePollId)
+    public void confirmSchedulePoll(String meetingId) {
+        Meeting meeting = meetingRepository.findById(meetingId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEETING_NOT_FOUND));
+
+        SchedulePoll schedulePoll = schedulePollRepository.findById(meeting.getSchedulePoll().getId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.SCHEDULE_POLL_NOT_FOUND));
 
         schedulePoll.updateStatus(PollStatus.CONFIRMED);
