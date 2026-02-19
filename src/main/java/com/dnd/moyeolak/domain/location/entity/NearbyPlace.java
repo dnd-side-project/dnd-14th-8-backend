@@ -63,6 +63,10 @@ public class NearbyPlace extends BaseEntity {
     @OneToMany(mappedBy = "nearbyPlace", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<NearbyPlaceHours> nearbyPlaceHours = new ArrayList<>();
 
+    public void addHours(NearbyPlaceHours hours) {
+        this.nearbyPlaceHours.add(hours);
+    }
+
     public static NearbyPlace of(
             BigDecimal baseLatitude,
             BigDecimal baseLongitude,

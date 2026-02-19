@@ -7,7 +7,9 @@ public record KeywordSearchRequest(
         Integer radius,            // 반경 (0~20000m)
         String sort                // 정렬 기준 (distance, accuracy)
 ) {
-    public static KeywordSearchRequest of(String query, String x, String y, Integer radius) {
-        return new KeywordSearchRequest(query, x, y, radius,  "distance");
+    private final static int DEFAULT_RADIUS = 5;
+
+    public static KeywordSearchRequest of(String query, String x, String y) {
+        return new KeywordSearchRequest(query, x, y, DEFAULT_RADIUS,  "distance");
     }
 }

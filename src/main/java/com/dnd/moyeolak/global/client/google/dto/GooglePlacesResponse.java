@@ -2,7 +2,7 @@ package com.dnd.moyeolak.global.client.google.dto;
 
 import java.util.List;
 
-public record TextSearchResponse(
+public record GooglePlacesResponse(
         List<Place> places
 ) {
     public record Place(
@@ -10,7 +10,6 @@ public record TextSearchResponse(
             String formattedAddress,
             DisplayName displayName,
             Location location,
-            List<String> types,
             RegularOpeningHours regularOpeningHours
     ) {}
 

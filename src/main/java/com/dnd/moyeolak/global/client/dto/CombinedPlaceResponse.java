@@ -1,6 +1,6 @@
 package com.dnd.moyeolak.global.client.dto;
 
-import com.dnd.moyeolak.global.client.google.dto.TextSearchResponse;
+import com.dnd.moyeolak.global.client.google.dto.GooglePlacesResponse;
 import com.dnd.moyeolak.global.client.kakao.dto.CategorySearchResponse;
 
 import java.util.List;
@@ -15,33 +15,24 @@ public record CombinedPlaceResponse(
             String formattedAddress,
             Double latitude,
             Double longitude,
-            List<String> types,
-            TextSearchResponse.RegularOpeningHours regularOpeningHours,
+            GooglePlacesResponse.RegularOpeningHours regularOpeningHours,
 
             // Kakao 데이터
-            String kakaoPlaceId,
             String kakaoPlaceUrl,
-            String distance,
-            String phone,
-            String categoryName
+
+            // 계산 데이터 - 기준점으로부터의 거리 (미터, Haversine 계산)
+            long distanceFromBase
     ) {
-        public static CombinedPlace of(TextSearchResponse.Place googlePlace, CategorySearchResponse.Place kakaoPlace) {
+        public static CombinedPlace of(GooglePlacesResponse.Place googlePlace, CategorySearchResponse.Place kakaoPlace, long distanceFromBase) {
             return new CombinedPlace(
-                    // Google
                     googlePlace.id(),
                     googlePlace.displayName() != null ? googlePlace.displayName().text() : null,
                     googlePlace.formattedAddress(),
                     googlePlace.location() != null ? googlePlace.location().latitude() : null,
                     googlePlace.location() != null ? googlePlace.location().longitude() : null,
-                    googlePlace.types(),
                     googlePlace.regularOpeningHours(),
-
-                    // Kakao
-                    kakaoPlace.id(),
                     kakaoPlace.placeUrl(),
-                    kakaoPlace.distance(),
-                    kakaoPlace.phone(),
-                    kakaoPlace.categoryName()
+                    distanceFromBase
             );
         }
     }
