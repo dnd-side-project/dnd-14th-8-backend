@@ -14,9 +14,10 @@ import com.dnd.moyeolak.global.client.google.dto.GooglePlacesResponse;
 import com.dnd.moyeolak.global.client.google.dto.GoogleTextSearchRequest;
 import com.dnd.moyeolak.global.client.kakao.KakaoLocalClient;
 import com.dnd.moyeolak.global.client.kakao.dto.CategorySearchResponse;
-import com.dnd.moyeolak.global.client.kakao.dto.KeywordSearchRequest;
+import com.dnd.moyeolak.global.client.kakao.dto.KakaoKeywordSearchRequest;
 import com.dnd.moyeolak.global.utils.GeoUtils;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -27,6 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class NearbyPlaceSearchServiceImpl implements NearbyPlaceSearchService {
@@ -40,6 +42,8 @@ public class NearbyPlaceSearchServiceImpl implements NearbyPlaceSearchService {
     public NearbyPlaceSearchResponse nearbyPlaceSearch(String latitude, String longitude) {
         BigDecimal baseLat = new BigDecimal(latitude);
         BigDecimal baseLng = new BigDecimal(longitude);
+        double latDouble = baseLat.doubleValue();
+        double lngDouble = baseLng.doubleValue();
 
         // 1. DB 캐시 조회 (자체 짧은 tx)
         List<NearbyPlace> cached = nearbyPlaceRepository.findByBaseLatitudeAndBaseLongitude(baseLat, baseLng);
@@ -55,7 +59,7 @@ public class NearbyPlaceSearchServiceImpl implements NearbyPlaceSearchService {
         }
 
         // 2. API 호출 (tx 없음, DB 커넥션 미점유)
-        Map<PlaceCategory, List<CombinedPlaceResponse.CombinedPlace>> result = fetchFromApis(latitude, longitude);
+        Map<PlaceCategory, List<CombinedPlaceResponse.CombinedPlace>> result = fetchFromApis(latDouble, lngDouble);
 
         // 3. 엔티티 변환 + DB 저장 (카테고리 간 googlePlaceId 중복 제거)
         List<NearbyPlace> allPlaces = new ArrayList<>();
@@ -109,7 +113,7 @@ public class NearbyPlaceSearchServiceImpl implements NearbyPlaceSearchService {
         return buildResponse(allPlaces);
     }
 
-    private Map<PlaceCategory, List<CombinedPlaceResponse.CombinedPlace>> fetchFromApis(String latitude, String longitude) {
+    private Map<PlaceCategory, List<CombinedPlaceResponse.CombinedPlace>> fetchFromApis(double latitude, double longitude) {
         Map<PlaceCategory, List<CombinedPlaceResponse.CombinedPlace>> result = new LinkedHashMap<>();
 
         // 모든 카테고리의 키워드를 수집
@@ -124,7 +128,7 @@ public class NearbyPlaceSearchServiceImpl implements NearbyPlaceSearchService {
             List<CompletableFuture<Void>> googleFutures = allKeywords.stream()
                     .map(keyword -> CompletableFuture.runAsync(() -> {
                         GooglePlacesResponse response = googlePlacesClient.searchText(
-                                GoogleTextSearchRequest.ofDistanceSorted(keyword, Double.parseDouble(latitude), Double.parseDouble(longitude))
+                                GoogleTextSearchRequest.ofDistanceSorted(keyword, latitude, longitude)
                         );
                         keywordResults.put(keyword, response.places() != null ? response.places() : List.of());
                     }, executor))
@@ -165,7 +169,7 @@ public class NearbyPlaceSearchServiceImpl implements NearbyPlaceSearchService {
                             String placeName = googlePlace.displayName() != null ? googlePlace.displayName().text() : null;
                             if (placeName == null || googlePlace.location() == null) continue;
 
-                            KeywordSearchRequest kakaoRequest = KeywordSearchRequest.of(
+                            KakaoKeywordSearchRequest kakaoRequest = KakaoKeywordSearchRequest.of(
                                     placeName,
                                     String.valueOf(googlePlace.location().longitude()),
                                     String.valueOf(googlePlace.location().latitude())
@@ -179,8 +183,7 @@ public class NearbyPlaceSearchServiceImpl implements NearbyPlaceSearchService {
                                 }
 
                                 long distance = Math.round(GeoUtils.haversine(
-                                        Double.parseDouble(latitude), Double.parseDouble(longitude),
-                                        googlePlace.location().latitude(), googlePlace.location().longitude()
+                                        latitude, longitude, googlePlace.location().latitude(), googlePlace.location().longitude()
                                 ));
 
                                 verified.add(CombinedPlaceResponse.CombinedPlace.of(
@@ -190,6 +193,7 @@ public class NearbyPlaceSearchServiceImpl implements NearbyPlaceSearchService {
                                 ));
                             } catch (Exception e) {
                                 // Kakao 검증 실패 시 해당 장소 스킵
+                                log.warn("Kakao API 검증에 실패했습니다. 장소명: '{}', 오류: {}", placeName, e.getMessage());
                             }
                         }
 

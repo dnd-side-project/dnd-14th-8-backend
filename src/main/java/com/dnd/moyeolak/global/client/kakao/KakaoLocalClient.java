@@ -3,7 +3,7 @@ package com.dnd.moyeolak.global.client.kakao;
 import com.dnd.moyeolak.global.client.kakao.config.KakaoApiConfig;
 import com.dnd.moyeolak.global.client.kakao.dto.CategorySearchResponse;
 import com.dnd.moyeolak.global.client.kakao.dto.KakaoLocalResponse;
-import com.dnd.moyeolak.global.client.kakao.dto.KeywordSearchRequest;
+import com.dnd.moyeolak.global.client.kakao.dto.KakaoKeywordSearchRequest;
 import com.dnd.moyeolak.test.janghh.dto.response.SubwayStation;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -94,7 +94,7 @@ public class KakaoLocalClient {
      * 키워드를 사용하여 장소 검색 기능
      * - Google Places API 호출하여 나온 장소가 현재 한국지도에 실제 있는 장소인지 검증하는 용도.
      */
-    public CategorySearchResponse searchByKeyword(KeywordSearchRequest request) {
+    public CategorySearchResponse searchByKeyword(KakaoKeywordSearchRequest request) {
         UriComponentsBuilder builder = UriComponentsBuilder
                 .fromUriString(KAKAO_LOCAL_BASE_URL + "/keyword.json")
                 .queryParam("query", request.query());
