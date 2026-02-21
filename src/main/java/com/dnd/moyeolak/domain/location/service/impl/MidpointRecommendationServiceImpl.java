@@ -16,6 +16,7 @@ import com.dnd.moyeolak.global.station.entity.Station;
 import com.dnd.moyeolak.global.station.repository.StationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,6 +44,7 @@ public class MidpointRecommendationServiceImpl implements MidpointRecommendation
     private static final int MAX_ELEMENTS_PER_REQUEST = 100;
 
     @Override
+    @Cacheable(value = "midpointRecommendations", key = "#meetingId + '_' + #departureTime")
     public MidpointRecommendationResponse calculateMidpointRecommendations(String meetingId, LocalDateTime departureTime) {
         // 1. 출발지 데이터 조회
         Meeting meeting = meetingService.get(meetingId);
