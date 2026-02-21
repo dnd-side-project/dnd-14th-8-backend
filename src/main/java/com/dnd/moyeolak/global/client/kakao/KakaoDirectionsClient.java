@@ -15,6 +15,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.concurrent.Semaphore;
 
 @Slf4j
 @Component
@@ -22,10 +23,12 @@ import java.time.ZoneId;
 public class KakaoDirectionsClient {
 
     private static final String BASE_URL = "https://apis-navi.kakaomobility.com/v1/directions";
+    private static final int MAX_CONCURRENT_REQUESTS = 5;
 
     @Qualifier("kakaoDirectionsRestTemplate")
     private final RestTemplate kakaoDirectionsRestTemplate;
     private final KakaoDirectionsApiConfig kakaoDirectionsApiConfig;
+    private final Semaphore rateLimiter = new Semaphore(MAX_CONCURRENT_REQUESTS);
 
     public KakaoDirectionsResponse.Summary requestDrivingRoute(
             double originLat,
@@ -51,6 +54,14 @@ public class KakaoDirectionsClient {
         headers.set("Authorization", "KakaoAK " + kakaoDirectionsApiConfig.getApiKey());
 
         try {
+            rateLimiter.acquire();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.error("Kakao Directions API Semaphore 대기 중 인터럽트 발생");
+            return null;
+        }
+
+        try {
             ResponseEntity<KakaoDirectionsResponse> response = kakaoDirectionsRestTemplate.exchange(
                     builder.build().toUri(),
                     HttpMethod.GET,
@@ -67,6 +78,8 @@ public class KakaoDirectionsClient {
         } catch (Exception e) {
             log.error("Kakao Directions API 호출 실패: {}", e.getMessage());
             return null;
+        } finally {
+            rateLimiter.release();
         }
     }
 }
