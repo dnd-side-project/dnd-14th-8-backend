@@ -7,6 +7,7 @@ import com.dnd.moyeolak.global.client.odsay.dto.OdsayPathResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -67,15 +68,13 @@ public class OdsayClient {
                         return response.result().path().get(0).info();
                     }
 
-                    if (rawResponse != null && rawResponse.contains("429")) {
-                        log.warn("ODsay API 429 rate limit, 재시도 {}/{}", attempt + 1, MAX_RETRIES);
-                        long backoff = INITIAL_BACKOFF_MS * (1L << attempt);
-                        Thread.sleep(backoff);
-                        continue;
-                    }
-
                     log.warn("ODsay API 응답이 비어있습니다.");
                     return new OdsayPathInfo(999, 0, 0, 0, 0, 0, 0);
+                } catch (HttpClientErrorException.TooManyRequests e) {
+                    log.warn("ODsay API 429 rate limit, 재시도 {}/{}", attempt + 1, MAX_RETRIES);
+                    long backoff = INITIAL_BACKOFF_MS * (1L << attempt);
+                    Thread.sleep(backoff);
+                    // finally 실행 후 다음 attempt로 계속
                 } finally {
                     rateLimiter.release();
                     Thread.sleep(200);
