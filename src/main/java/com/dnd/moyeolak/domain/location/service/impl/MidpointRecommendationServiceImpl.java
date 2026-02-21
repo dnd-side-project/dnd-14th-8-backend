@@ -40,6 +40,7 @@ public class MidpointRecommendationServiceImpl implements MidpointRecommendation
     private static final int SEARCH_RADIUS_METERS = 5000;
     private static final int MAX_CANDIDATE_STATIONS = 10;
     private static final int TOP_RECOMMENDATIONS = 3;
+    private static final int MAX_ELEMENTS_PER_REQUEST = 100;
 
     @Override
     public MidpointRecommendationResponse calculateMidpointRecommendations(String meetingId, LocalDateTime departureTime) {
@@ -85,9 +86,9 @@ public class MidpointRecommendationServiceImpl implements MidpointRecommendation
                 : null;
 
         GoogleDistanceMatrixResponse transitResponse =
-                googleDistanceMatrixClient.calculateDistanceMatrix(origins, destinations, "transit", departureTimeEpoch);
+                calculateDistanceMatrixInChunks(origins, destinations, "transit", departureTimeEpoch);
         GoogleDistanceMatrixResponse drivingResponse =
-                googleDistanceMatrixClient.calculateDistanceMatrix(origins, destinations, "driving", departureTimeEpoch);
+                calculateDistanceMatrixInChunks(origins, destinations, "driving", departureTimeEpoch);
 
         if (transitResponse == null && drivingResponse == null) {
             throw new BusinessException(ErrorCode.GOOGLE_API_ERROR);
@@ -99,6 +100,40 @@ public class MidpointRecommendationServiceImpl implements MidpointRecommendation
         );
 
         return new MidpointRecommendationResponse(centerPoint, recommendations, departureTime);
+    }
+
+    /**
+     * Google Distance Matrix API의 요청당 최대 100 elements(origins × destinations) 제한을 처리하기 위해
+     * origins를 청크로 나눠 복수 호출한 뒤 rows를 병합하여 반환한다.
+     */
+    private GoogleDistanceMatrixResponse calculateDistanceMatrixInChunks(
+            List<Coordinate> origins,
+            List<Coordinate> destinations,
+            String mode,
+            Long departureTime
+    ) {
+        int chunkSize = Math.max(1, MAX_ELEMENTS_PER_REQUEST / destinations.size());
+
+        if (origins.size() <= chunkSize) {
+            return googleDistanceMatrixClient.calculateDistanceMatrix(origins, destinations, mode, departureTime);
+        }
+
+        log.info("Google Distance Matrix 청크 분할: origins={}, chunkSize={}, mode={}", origins.size(), chunkSize, mode);
+
+        List<GoogleDistanceMatrixResponse.Row> allRows = new ArrayList<>();
+        for (int i = 0; i < origins.size(); i += chunkSize) {
+            List<Coordinate> chunk = origins.subList(i, Math.min(i + chunkSize, origins.size()));
+            GoogleDistanceMatrixResponse chunkResponse =
+                    googleDistanceMatrixClient.calculateDistanceMatrix(chunk, destinations, mode, departureTime);
+            if (chunkResponse != null && chunkResponse.rows() != null) {
+                allRows.addAll(chunkResponse.rows());
+            }
+        }
+
+        if (allRows.isEmpty()) {
+            return null;
+        }
+        return new GoogleDistanceMatrixResponse(null, null, allRows, "OK");
     }
 
     private CenterPointDto calculateCentroid(List<LocationVote> votes) {
