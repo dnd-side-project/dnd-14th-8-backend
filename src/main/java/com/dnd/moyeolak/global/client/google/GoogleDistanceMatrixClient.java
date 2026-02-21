@@ -9,6 +9,7 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.List;
+import java.util.concurrent.Semaphore;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -16,9 +17,11 @@ import java.util.stream.Collectors;
 public class GoogleDistanceMatrixClient {
 
     private static final String BASE_URL = "https://maps.googleapis.com/maps/api/distancematrix/json";
+    private static final int MAX_CONCURRENT_REQUESTS = 3;
 
     private final RestTemplate restTemplate;
     private final GoogleApiConfig config;
+    private final Semaphore rateLimiter = new Semaphore(MAX_CONCURRENT_REQUESTS);
 
     public GoogleDistanceMatrixClient(
             @Qualifier("googleRestTemplate") RestTemplate restTemplate,
@@ -67,19 +70,31 @@ public class GoogleDistanceMatrixClient {
         log.debug("Google Distance Matrix API 호출: mode={}, origins={}, destinations={}",
                 mode, origins.size(), destinations.size());
 
-        GoogleDistanceMatrixResponse response = restTemplate.getForObject(
-                url, GoogleDistanceMatrixResponse.class
-        );
-
-        if (response == null || !"OK".equals(response.status())) {
-            log.warn("Google Distance Matrix API 실패: status={}",
-                    response != null ? response.status() : "null");
+        try {
+            rateLimiter.acquire();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.error("Google Distance Matrix API Semaphore 대기 중 인터럽트 발생");
             return null;
         }
 
-        log.info("Google Distance Matrix API 성공: {}x{} elements (mode={})",
-                origins.size(), destinations.size(), mode);
-        return response;
+        try {
+            GoogleDistanceMatrixResponse response = restTemplate.getForObject(
+                    url, GoogleDistanceMatrixResponse.class
+            );
+
+            if (response == null || !"OK".equals(response.status())) {
+                log.warn("Google Distance Matrix API 실패: status={}",
+                        response != null ? response.status() : "null");
+                return null;
+            }
+
+            log.info("Google Distance Matrix API 성공: {}x{} elements (mode={})",
+                    origins.size(), destinations.size(), mode);
+            return response;
+        } finally {
+            rateLimiter.release();
+        }
     }
 
     public record Coordinate(double latitude, double longitude) {}
