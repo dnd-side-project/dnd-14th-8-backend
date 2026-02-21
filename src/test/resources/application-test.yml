@@ -35,3 +35,5 @@ odsay:
 google:
   api:
     key: test-google-api-key
+  places:
+    api-key: test-google-places-api-key
