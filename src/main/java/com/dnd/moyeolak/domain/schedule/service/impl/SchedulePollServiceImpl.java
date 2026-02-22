@@ -8,6 +8,7 @@ import com.dnd.moyeolak.domain.schedule.entity.SchedulePoll;
 import com.dnd.moyeolak.domain.schedule.repository.SchedulePollRepository;
 import com.dnd.moyeolak.domain.schedule.repository.ScheduleVoteRepository;
 import com.dnd.moyeolak.domain.schedule.service.SchedulePollService;
+import com.dnd.moyeolak.domain.schedule.service.ScheduleVoteService;
 import com.dnd.moyeolak.global.enums.PollStatus;
 import com.dnd.moyeolak.global.exception.BusinessException;
 import com.dnd.moyeolak.global.response.ErrorCode;
@@ -27,6 +28,7 @@ public class SchedulePollServiceImpl implements SchedulePollService {
     private static final int MINUTE_STEP = 30;
     private static final String MIDNIGHT_STRING = "24:00";
 
+    private final ScheduleVoteService scheduleVoteService;
     private final MeetingRepository meetingRepository;
     private final SchedulePollRepository schedulePollRepository;
 
@@ -49,6 +51,8 @@ public class SchedulePollServiceImpl implements SchedulePollService {
         }
 
         schedulePoll.updateOptions(request.dateOptions(), startMinute, endMinute);
+
+        scheduleVoteService.deleteOutOfRangeVotes(schedulePoll);
     }
 
     @Override
