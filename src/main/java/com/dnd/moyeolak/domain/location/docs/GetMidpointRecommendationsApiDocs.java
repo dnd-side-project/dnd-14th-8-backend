@@ -36,13 +36,14 @@ import java.lang.annotation.Target;
                     | `test-meeting-001` | 수도권 광역 | 수원, 강남, 일산, 인천 (무게중심: 홍대~신촌) |
                     | `test-meeting-002` | 서울 시내 | 강남, 홍대, 잠실, 노원 (무게중심: 종로~을지로) |
                     | `test-meeting-003` | 경기도 내 | 수원, 성남, 용인, 안양 (무게중심: 과천~의왕) |
+                    | `test-meeting-004` | 출발지 1개 (에러) | 강남 1명만 등록 → E425 응답 |
 
                     ### 파라미터
                     - `meetingId` (필수): 모임 ID
                     - `departureTime` (선택): 출발 시간 (ISO 8601 형식, 예: `2026-02-18T10:30:00`). 미입력 시 현재 시각 기준으로 대중교통 소요시간을 계산합니다.
 
                     ### 주의사항
-                    - 출발지가 1개 이상 등록되어야 합니다
+                    - 출발지가 2개 이상 등록되어야 합니다
                     - 반경 5km 내 지하철역이 없으면 404 응답
                     - Google API 장애 시 500 응답
                     - `departureTime`은 미래 시각이어야 합니다 (Google API 제약)
@@ -67,6 +68,8 @@ import java.lang.annotation.Target;
                                                   "longitude": 126.9780
                                                 },
                                                 "departureTime": "2026-02-18T10:30:00",
+                                                "registeredCount": 4,
+                                                "totalCount": 10,
                                                 "recommendations": [
                                                   {
                                                     "rank": 1,
@@ -167,16 +170,20 @@ import java.lang.annotation.Target;
         ),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "400",
-                description = "출발지 미등록",
+                description = "출발지 2개 미만",
                 content = @Content(
                         mediaType = "application/json",
                         examples = @ExampleObject(
-                                name = "출발지 없음",
-                                summary = "출발지가 하나도 등록되지 않은 경우",
+                                name = "출발지 부족",
+                                summary = "출발지가 2개 미만인 경우 (0개 또는 1개)",
                                 value = """
                                             {
-                                              "code": "E416",
-                                              "message": "출발지가 등록되지 않았습니다."
+                                              "code": "E425",
+                                              "message": "출발지 2개 이상 등록 시 중간지점을 확인할 수 있습니다.",
+                                              "data": {
+                                                "registeredCount": 1,
+                                                "totalCount": 10
+                                              }
                                             }
                                             """
                         )

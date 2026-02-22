@@ -8,6 +8,7 @@ import com.dnd.moyeolak.domain.schedule.dto.CreateScheduleVoteRequest;
 import com.dnd.moyeolak.domain.schedule.dto.UpdateScheduleVoteRequest;
 import com.dnd.moyeolak.domain.schedule.entity.SchedulePoll;
 import com.dnd.moyeolak.domain.schedule.entity.ScheduleVote;
+import com.dnd.moyeolak.domain.schedule.repository.SchedulePollRepository;
 import com.dnd.moyeolak.domain.schedule.repository.ScheduleVoteRepository;
 import com.dnd.moyeolak.domain.schedule.service.ScheduleVoteService;
 import com.dnd.moyeolak.global.exception.BusinessException;
@@ -16,7 +17,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
@@ -65,5 +68,26 @@ public class ScheduleVoteServiceImpl implements ScheduleVoteService {
     @Override
     public List<ScheduleVote> findAllBySchedulePollId(Long schedulePollId) {
         return scheduleVoteRepository.findAllBySchedulePollId(schedulePollId);
+    }
+
+    @Override
+    @Transactional
+    public void deleteOutOfRangeVotes(SchedulePoll schedulePoll) {
+        List<LocalDate> dateOptions = schedulePoll.getDateOptions();
+        int startTime = schedulePoll.getStartTime();
+        int endTime = schedulePoll.getEndTime();
+        List<ScheduleVote> scheduleVotes = schedulePoll.getScheduleVotes();
+
+        scheduleVotes.forEach(scheduleVote -> {
+            List<LocalDateTime> votedDates = scheduleVote.getVotedDate();
+            votedDates.removeIf(votedDate -> {
+                if(!dateOptions.contains(votedDate.toLocalDate())) {
+                    return true;
+                }
+
+                int minuteOfDay = votedDate.getHour() * 60 + votedDate.getMinute();
+                return minuteOfDay < startTime || minuteOfDay >= endTime;
+            });
+        });
     }
 }

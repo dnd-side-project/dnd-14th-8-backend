@@ -4,7 +4,10 @@ import com.dnd.moyeolak.domain.meeting.dto.CreateMeetingRequest;
 import com.dnd.moyeolak.domain.meeting.entity.Meeting;
 import com.dnd.moyeolak.domain.meeting.repository.MeetingRepository;
 import com.dnd.moyeolak.domain.meeting.service.MeetingService;
+import com.dnd.moyeolak.domain.schedule.dto.CreateScheduleVoteRequest;
+import com.dnd.moyeolak.domain.schedule.dto.UpdateSchedulePollRequest;
 import com.dnd.moyeolak.domain.schedule.entity.SchedulePoll;
+import com.dnd.moyeolak.domain.schedule.entity.ScheduleVote;
 import com.dnd.moyeolak.global.enums.PollStatus;
 import com.dnd.moyeolak.global.exception.BusinessException;
 import jakarta.persistence.EntityManager;
@@ -14,6 +17,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -25,6 +32,9 @@ class SchedulePollServiceIntegrationTest {
 
     @Autowired
     private SchedulePollService schedulePollService;
+
+    @Autowired
+    private ScheduleVoteService scheduleVoteService;
 
     @Autowired
     private MeetingService meetingService;
@@ -61,6 +71,77 @@ class SchedulePollServiceIntegrationTest {
         // when & then
         assertThatThrownBy(() -> schedulePollService.confirmSchedulePoll(nonMeetingId))
                 .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    @DisplayName("updateSchedulePoll - 날짜 범위 축소 시 범위 밖 투표 항목이 제거된다")
+    void updateSchedulePoll_removesVotesOutsideDateRange() {
+        // given
+        String meetingId = createTestMeeting();
+        // defaultOf: dateOptions = today ~ today+13
+
+        LocalDate today = LocalDate.now();
+        LocalDate tomorrow = today.plusDays(1); // 새 dateOptions에서 제외될 날짜
+
+        Long voteId = scheduleVoteService.createParticipantVote(meetingId, new CreateScheduleVoteRequest(
+                "홍길동", "key-1", List.of(
+                        today.atTime(9, 0),    // 유지
+                        tomorrow.atTime(9, 0)  // 날짜 범위 밖 → 제거
+                )
+        ));
+        em.flush();
+        em.clear();
+
+        // 오늘 날짜만 허용하도록 축소
+        UpdateSchedulePollRequest request = new UpdateSchedulePollRequest(
+                List.of(today), "07:00", "24:00"
+        );
+
+        // when
+        schedulePollService.updateSchedulePoll(meetingId, request);
+        em.flush();
+        em.clear();
+
+        // then
+        ScheduleVote vote = em.find(ScheduleVote.class, voteId);
+        assertThat(vote.getVotedDate()).containsExactly(today.atTime(9, 0));
+        assertThat(vote.getVotedDate()).doesNotContain(tomorrow.atTime(9, 0));
+    }
+
+    @Test
+    @DisplayName("updateSchedulePoll - 시간 범위 축소 시 범위 밖 투표 항목이 제거된다")
+    void updateSchedulePoll_removesVotesOutsideTimeRange() {
+        // given
+        String meetingId = createTestMeeting();
+
+        LocalDate today = LocalDate.now();
+        Long voteId = scheduleVoteService.createParticipantVote(meetingId, new CreateScheduleVoteRequest(
+                "홍길동", "key-1", List.of(
+                        today.atTime(8, 0),   // 새 startTime(09:00) 이전 → 제거
+                        today.atTime(9, 0),   // 유지
+                        today.atTime(11, 30), // 유지
+                        today.atTime(12, 0)   // 새 endTime(12:00) 경계값 → 제거
+                )
+        ));
+        em.flush();
+        em.clear();
+
+        // 시간 범위를 09:00~12:00으로 축소
+        UpdateSchedulePollRequest request = new UpdateSchedulePollRequest(
+                List.of(today), "09:00", "12:00"
+        );
+
+        // when
+        schedulePollService.updateSchedulePoll(meetingId, request);
+        em.flush();
+        em.clear();
+
+        // then
+        ScheduleVote vote = em.find(ScheduleVote.class, voteId);
+        assertThat(vote.getVotedDate()).containsExactlyInAnyOrder(
+                today.atTime(9, 0),
+                today.atTime(11, 30)
+        );
     }
 
     private String createTestMeeting() {

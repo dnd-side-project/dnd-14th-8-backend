@@ -54,8 +54,11 @@ public class MidpointRecommendationServiceImpl implements MidpointRecommendation
         }
 
         List<LocationVote> votes = locationVoteRepository.findByLocationPoll_Id(locationPoll.getId());
-        if (votes.isEmpty()) {
-            throw new BusinessException(ErrorCode.NO_LOCATION_VOTES);
+        if (votes.size() < 2) {
+            throw new BusinessException(
+                    ErrorCode.INSUFFICIENT_LOCATION_VOTES,
+                    new ParticipantCountDto(votes.size(), meeting.getParticipantCount())
+            );
         }
 
         // 2. PostGIS로 무게중심 계산
@@ -101,7 +104,10 @@ public class MidpointRecommendationServiceImpl implements MidpointRecommendation
                 votes, candidateStations, transitResponse, drivingResponse, centerPoint
         );
 
-        return new MidpointRecommendationResponse(centerPoint, recommendations, departureTime);
+        return new MidpointRecommendationResponse(
+                centerPoint, recommendations, departureTime,
+                votes.size(), meeting.getParticipantCount()
+        );
     }
 
     /**
