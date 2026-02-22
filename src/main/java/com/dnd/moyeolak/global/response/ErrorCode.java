@@ -33,6 +33,7 @@ public enum ErrorCode {
     STATION_NOT_FOUND("E422", "지정한 역을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     ODSAY_API_ERROR("E423", "대중교통 경로 조회에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
     KAKAO_API_ERROR("E424", "자동차 경로 조회에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
+    INSUFFICIENT_LOCATION_VOTES("E425", "출발지 2개 이상 등록 시 중간지점을 확인할 수 있습니다.", HttpStatus.BAD_REQUEST),
 
     // 서버 오류
     SERVER_ERROR("E500", "서버 내부 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),

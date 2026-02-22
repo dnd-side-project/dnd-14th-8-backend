@@ -190,6 +190,16 @@ FROM location_poll lp JOIN participant p ON p.meeting_id = lp.meeting_id AND p.n
 WHERE lp.meeting_id = 'test-meeting-002';
 
 -- =====================================================
+-- 중간지점 추천 테스트용 더미 데이터 (test-meeting-004)
+-- 시나리오: 출발지 1개만 등록된 경우 → E425 에러 발생
+-- 테스트: GET /api/locations/midpoint-recommendations?meetingId=test-meeting-004
+-- =====================================================
+INSERT INTO location_vote (location_poll_id, participant_id, departure_name, departure_location, departure_lat, departure_lng, created_at, updated_at)
+SELECT lp.location_poll_id, p.participant_id, '최하은', '서울시 강남구 삼성동', 37.5140, 127.0575, NOW(), NOW()
+FROM location_poll lp JOIN participant p ON p.meeting_id = lp.meeting_id AND p.name = '최하은'
+WHERE lp.meeting_id = 'test-meeting-004';
+
+-- =====================================================
 -- 중간지점 추천 테스트용 더미 데이터 (test-meeting-003)
 -- 시나리오: 경기도 내 4개 지역 (수원, 성남, 용인, 안양)
 -- 무게중심이 경기 중부(과천~의왕 부근)에 잡히도록 설정

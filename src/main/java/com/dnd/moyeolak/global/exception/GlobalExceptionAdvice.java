@@ -23,8 +23,13 @@ public class GlobalExceptionAdvice {
 
     /** 비즈니스 예외 처리 */
     @ExceptionHandler(BusinessException.class)
-    public ResponseEntity<ApiResponse<Void>> handleBusinessException(BusinessException ex) {
-        log.warn("[{}] BusinessException 발생: {}", ex.getErrorCode() ,ex.getMessage());
+    public ResponseEntity<ApiResponse<?>> handleBusinessException(BusinessException ex) {
+        log.warn("[{}] BusinessException 발생: {}", ex.getErrorCode(), ex.getMessage());
+        if (ex.getData() != null) {
+            return ResponseEntity
+                    .status(ex.getErrorCode().getHttpStatus())
+                    .body(ApiResponse.error(ex.getErrorCode(), ex.getData()));
+        }
         return ResponseEntity
                 .status(ex.getErrorCode().getHttpStatus())
                 .body(ApiResponse.error(ex.getErrorCode()));
