@@ -1,6 +1,7 @@
 package com.dnd.moyeolak.domain.location.service;
 
 import com.dnd.moyeolak.domain.location.dto.MidpointRecommendationResponse;
+import com.dnd.moyeolak.domain.location.dto.ParticipantCountDto;
 import com.dnd.moyeolak.domain.location.dto.StationRecommendationDto;
 import com.dnd.moyeolak.domain.location.entity.LocationPoll;
 import com.dnd.moyeolak.domain.location.entity.LocationVote;
@@ -72,20 +73,51 @@ class MidpointRecommendationServiceImplTest {
         }
 
         @Test
-        @DisplayName("출발지 투표가 없으면 NO_LOCATION_VOTES 예외가 발생한다")
+        @DisplayName("출발지 투표가 0개이면 INSUFFICIENT_LOCATION_VOTES 예외가 발생하며 data에 참여자 수가 포함된다")
         void throwsWhenNoLocationVotes() {
             // given
             Meeting meeting = mock(Meeting.class);
             LocationPoll locationPoll = mock(LocationPoll.class);
             when(meetingService.get(MEETING_ID)).thenReturn(meeting);
             when(meeting.getLocationPoll()).thenReturn(locationPoll);
+            when(meeting.getParticipantCount()).thenReturn(5);
             when(locationPoll.getId()).thenReturn(1L);
             when(locationVoteRepository.findByLocationPoll_Id(1L)).thenReturn(Collections.emptyList());
 
             // when & then
             assertThatThrownBy(() -> midpointRecommendationService.calculateMidpointRecommendations(MEETING_ID, null))
                     .isInstanceOf(BusinessException.class)
-                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.NO_LOCATION_VOTES);
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INSUFFICIENT_LOCATION_VOTES)
+                    .satisfies(ex -> {
+                        ParticipantCountDto data = (ParticipantCountDto) ((BusinessException) ex).getData();
+                        assertThat(data.registeredCount()).isEqualTo(0);
+                        assertThat(data.totalCount()).isEqualTo(5);
+                    });
+        }
+
+        @Test
+        @DisplayName("출발지 투표가 1개이면 INSUFFICIENT_LOCATION_VOTES 예외가 발생하며 data에 참여자 수가 포함된다")
+        void throwsWhenOnlyOneLocationVote() {
+            // given
+            Meeting meeting = mock(Meeting.class);
+            LocationPoll locationPoll = mock(LocationPoll.class);
+            when(meetingService.get(MEETING_ID)).thenReturn(meeting);
+            when(meeting.getLocationPoll()).thenReturn(locationPoll);
+            when(meeting.getParticipantCount()).thenReturn(5);
+            when(locationPoll.getId()).thenReturn(1L);
+
+            LocationVote vote = createMockVote("37.5000", "127.0000", "테스터", "서울시 강남구");
+            when(locationVoteRepository.findByLocationPoll_Id(1L)).thenReturn(List.of(vote));
+
+            // when & then
+            assertThatThrownBy(() -> midpointRecommendationService.calculateMidpointRecommendations(MEETING_ID, null))
+                    .isInstanceOf(BusinessException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.INSUFFICIENT_LOCATION_VOTES)
+                    .satisfies(ex -> {
+                        ParticipantCountDto data = (ParticipantCountDto) ((BusinessException) ex).getData();
+                        assertThat(data.registeredCount()).isEqualTo(1);
+                        assertThat(data.totalCount()).isEqualTo(5);
+                    });
         }
 
         @Test
@@ -99,7 +131,8 @@ class MidpointRecommendationServiceImplTest {
             when(locationPoll.getId()).thenReturn(1L);
 
             LocationVote vote = createMockVote("37.5000", "127.0000", "테스터", "서울시 강남구");
-            when(locationVoteRepository.findByLocationPoll_Id(1L)).thenReturn(List.of(vote));
+            LocationVote vote2 = createMockVote("37.5100", "127.0100", "테스터2", "서울시 송파구");
+            when(locationVoteRepository.findByLocationPoll_Id(1L)).thenReturn(List.of(vote, vote2));
 
             // PostGIS 무게중심 계산 실패 → 산술 평균으로 대체
             lenient().when(stationRepository.calculateCentroid(any())).thenThrow(new RuntimeException("PostGIS 미지원"));
@@ -123,7 +156,8 @@ class MidpointRecommendationServiceImplTest {
             when(locationPoll.getId()).thenReturn(1L);
 
             LocationVote vote = createMockVote("37.5000", "127.0000", "테스터", "서울시 강남구");
-            when(locationVoteRepository.findByLocationPoll_Id(1L)).thenReturn(List.of(vote));
+            LocationVote vote2 = createMockVote("37.5100", "127.0100", "테스터2", "서울시 송파구");
+            when(locationVoteRepository.findByLocationPoll_Id(1L)).thenReturn(List.of(vote, vote2));
 
             lenient().when(stationRepository.calculateCentroid(any())).thenThrow(new RuntimeException("PostGIS 미지원"));
 
@@ -156,6 +190,8 @@ class MidpointRecommendationServiceImplTest {
             when(meetingService.get(MEETING_ID)).thenReturn(meeting);
             when(meeting.getLocationPoll()).thenReturn(locationPoll);
             when(locationPoll.getId()).thenReturn(1L);
+
+            when(meeting.getParticipantCount()).thenReturn(4);
 
             LocationVote vote1 = createMockVote("37.5000", "127.0000", "참가자A", "서울시 강남구");
             LocationVote vote2 = createMockVote("37.5500", "126.9500", "참가자B", "서울시 마포구");
@@ -191,6 +227,8 @@ class MidpointRecommendationServiceImplTest {
             assertThat(rec.line()).isEqualTo("2호선");
             assertThat(rec.routes()).hasSize(2);
             assertThat(rec.avgTransitDuration()).isEqualTo(30.0); // 1800s / 60 = 30min
+            assertThat(response.registeredCount()).isEqualTo(2);
+            assertThat(response.totalCount()).isEqualTo(4);
         }
 
         @Test
@@ -204,7 +242,8 @@ class MidpointRecommendationServiceImplTest {
             when(locationPoll.getId()).thenReturn(1L);
 
             LocationVote vote = createMockVote("37.5000", "127.0000", "참가자A", "서울시 강남구");
-            when(locationVoteRepository.findByLocationPoll_Id(1L)).thenReturn(List.of(vote));
+            LocationVote vote2 = createMockVote("37.5100", "127.0100", "참가자B", "서울시 강동구");
+            when(locationVoteRepository.findByLocationPoll_Id(1L)).thenReturn(List.of(vote, vote2));
 
             when(stationRepository.calculateCentroid(any())).thenThrow(new RuntimeException("PostGIS 미지원"));
 
@@ -217,10 +256,10 @@ class MidpointRecommendationServiceImplTest {
 
             // 역별로 다른 소요시간: 역1(10분) < 역2(20분) < 역3(30분) < 역4(40분)
             GoogleDistanceMatrixResponse transitResponse = createVariedDistanceMatrixResponse(
-                    1, 4, new int[]{600, 1200, 1800, 2400}, new int[]{5000, 10000, 15000, 20000}
+                    2, 4, new int[]{600, 1200, 1800, 2400}, new int[]{5000, 10000, 15000, 20000}
             );
             GoogleDistanceMatrixResponse drivingResponse = createVariedDistanceMatrixResponse(
-                    1, 4, new int[]{300, 600, 900, 1200}, new int[]{4000, 8000, 12000, 16000}
+                    2, 4, new int[]{300, 600, 900, 1200}, new int[]{4000, 8000, 12000, 16000}
             );
             when(googleDistanceMatrixClient.calculateDistanceMatrix(anyList(), anyList(), eq("transit"), isNull()))
                     .thenReturn(transitResponse);
@@ -252,7 +291,8 @@ class MidpointRecommendationServiceImplTest {
             when(locationPoll.getId()).thenReturn(1L);
 
             LocationVote vote = createMockVote("37.5000", "127.0000", "참가자A", "서울시 강남구");
-            when(locationVoteRepository.findByLocationPoll_Id(1L)).thenReturn(List.of(vote));
+            LocationVote vote2 = createMockVote("37.5100", "127.0100", "참가자B", "서울시 강동구");
+            when(locationVoteRepository.findByLocationPoll_Id(1L)).thenReturn(List.of(vote, vote2));
 
             when(stationRepository.calculateCentroid(any())).thenThrow(new RuntimeException("PostGIS 미지원"));
 
@@ -260,7 +300,7 @@ class MidpointRecommendationServiceImplTest {
             when(stationRepository.findNearbyStations(anyDouble(), anyDouble(), anyInt(), anyInt()))
                     .thenReturn(List.of(station));
 
-            GoogleDistanceMatrixResponse transitResponse = createDistanceMatrixResponse(1, 1, 2400, 15000);
+            GoogleDistanceMatrixResponse transitResponse = createDistanceMatrixResponse(2, 1, 2400, 15000);
             when(googleDistanceMatrixClient.calculateDistanceMatrix(anyList(), anyList(), eq("transit"), isNull()))
                     .thenReturn(transitResponse);
             when(googleDistanceMatrixClient.calculateDistanceMatrix(anyList(), anyList(), eq("driving"), isNull()))
@@ -295,14 +335,15 @@ class MidpointRecommendationServiceImplTest {
             when(participant.getName()).thenReturn("김참가자");
             when(vote.getParticipant()).thenReturn(participant);
 
-            when(locationVoteRepository.findByLocationPoll_Id(anyLong())).thenReturn(List.of(vote));
+            LocationVote vote2 = createMockVote("37.5100", "127.0100", "참가자B", "서울시 마포구");
+            when(locationVoteRepository.findByLocationPoll_Id(anyLong())).thenReturn(List.of(vote, vote2));
             when(stationRepository.calculateCentroid(any())).thenThrow(new RuntimeException("PostGIS 미지원"));
 
             Station station = createMockStation(6L, "역삼역", "2호선", 37.5006, 127.0366);
             when(stationRepository.findNearbyStations(anyDouble(), anyDouble(), anyInt(), anyInt()))
                     .thenReturn(List.of(station));
 
-            GoogleDistanceMatrixResponse transitResponse = createDistanceMatrixResponse(1, 1, 600, 5000);
+            GoogleDistanceMatrixResponse transitResponse = createDistanceMatrixResponse(2, 1, 600, 5000);
             when(googleDistanceMatrixClient.calculateDistanceMatrix(anyList(), anyList(), eq("transit"), isNull()))
                     .thenReturn(transitResponse);
             when(googleDistanceMatrixClient.calculateDistanceMatrix(anyList(), anyList(), eq("driving"), isNull()))
