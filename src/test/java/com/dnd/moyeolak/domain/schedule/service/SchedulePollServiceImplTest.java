@@ -4,6 +4,7 @@ import com.dnd.moyeolak.domain.meeting.entity.Meeting;
 import com.dnd.moyeolak.domain.meeting.repository.MeetingRepository;
 import com.dnd.moyeolak.domain.schedule.dto.UpdateSchedulePollRequest;
 import com.dnd.moyeolak.domain.schedule.entity.SchedulePoll;
+import com.dnd.moyeolak.domain.schedule.service.ScheduleVoteService;
 import com.dnd.moyeolak.domain.schedule.service.impl.SchedulePollServiceImpl;
 import com.dnd.moyeolak.global.exception.BusinessException;
 import com.dnd.moyeolak.global.response.ErrorCode;
@@ -26,6 +27,9 @@ class SchedulePollServiceImplTest {
 
     @Mock
     private MeetingRepository meetingRepository;
+
+    @Mock
+    private ScheduleVoteService scheduleVoteService;
 
     @InjectMocks
     private SchedulePollServiceImpl schedulePollService;
@@ -51,6 +55,7 @@ class SchedulePollServiceImplTest {
 
         // then
         verify(schedulePoll).updateOptions(eq(request.dateOptions()), eq(450), eq(1440));
+        verify(scheduleVoteService).deleteOutOfRangeVotes(schedulePoll);
     }
 
     @Test

@@ -271,4 +271,126 @@ class ScheduleVoteServiceUnitTest {
                     .isInstanceOf(BusinessException.class);
         }
     }
+
+    @Nested
+    @DisplayName("범위 밖 투표 삭제")
+    class DeleteOutOfRangeVotes {
+
+        @Test
+        @DisplayName("날짜 범위 밖의 투표 항목이 제거된다")
+        void removesVotesWithDateOutOfRange() {
+            // given
+            Meeting meeting = Meeting.ofId("test-meeting");
+            SchedulePoll schedulePoll = SchedulePoll.defaultOf(meeting);
+            // defaultOf: dateOptions = today ~ today+13, startTime=420, endTime=1440
+
+            LocalDate validDate = LocalDate.now();
+            LocalDate invalidDate = LocalDate.now().minusDays(1); // today-1은 범위 밖
+
+            ScheduleVote vote = ScheduleVote.of(schedulePoll, new ArrayList<>(List.of(
+                    validDate.atTime(9, 0),
+                    invalidDate.atTime(9, 0)
+            )));
+            schedulePoll.getScheduleVotes().add(vote);
+
+            // when
+            scheduleService.deleteOutOfRangeVotes(schedulePoll);
+
+            // then
+            assertThat(vote.getVotedDate()).containsExactly(validDate.atTime(9, 0));
+        }
+
+        @Test
+        @DisplayName("startTime 이전 시간 투표 항목이 제거되고, startTime 정각은 유지된다")
+        void removesVotesBeforeStartTime_andKeepsStartTimeBoundary() {
+            // given
+            Meeting meeting = Meeting.ofId("test-meeting");
+            SchedulePoll schedulePoll = SchedulePoll.defaultOf(meeting);
+            // default startTime = 7 * 60 = 420분
+
+            LocalDate today = LocalDate.now();
+            ScheduleVote vote = ScheduleVote.of(schedulePoll, new ArrayList<>(List.of(
+                    today.atTime(6, 30), // 390분 < 420분 → 제거
+                    today.atTime(7, 0)   // 420분 = startTime → 경계값, 유지
+            )));
+            schedulePoll.getScheduleVotes().add(vote);
+
+            // when
+            scheduleService.deleteOutOfRangeVotes(schedulePoll);
+
+            // then
+            assertThat(vote.getVotedDate()).containsExactly(today.atTime(7, 0));
+        }
+
+        @Test
+        @DisplayName("endTime 이상인 시간 투표 항목이 제거되고, endTime 직전은 유지된다")
+        void removesVotesAtOrAfterEndTime_andKeepsBeforeEndTimeBoundary() {
+            // given
+            Meeting meeting = Meeting.ofId("test-meeting");
+            SchedulePoll schedulePoll = SchedulePoll.defaultOf(meeting);
+            LocalDate today = LocalDate.now();
+            schedulePoll.updateOptions(List.of(today), 7 * 60, 10 * 60); // endTime = 600분(10:00)
+
+            ScheduleVote vote = ScheduleVote.of(schedulePoll, new ArrayList<>(List.of(
+                    today.atTime(9, 30), // 570분 < 600분 → 유지
+                    today.atTime(10, 0)  // 600분 = endTime → 경계값, 제거
+            )));
+            schedulePoll.getScheduleVotes().add(vote);
+
+            // when
+            scheduleService.deleteOutOfRangeVotes(schedulePoll);
+
+            // then
+            assertThat(vote.getVotedDate()).containsExactly(today.atTime(9, 30));
+        }
+
+        @Test
+        @DisplayName("모든 투표 항목이 범위 내이면 아무것도 제거되지 않는다")
+        void keepsAllVotesWithinRange() {
+            // given
+            Meeting meeting = Meeting.ofId("test-meeting");
+            SchedulePoll schedulePoll = SchedulePoll.defaultOf(meeting);
+            LocalDate today = LocalDate.now();
+
+            ScheduleVote vote = ScheduleVote.of(schedulePoll, new ArrayList<>(List.of(
+                    today.atTime(9, 0),
+                    today.atTime(9, 30)
+            )));
+            schedulePoll.getScheduleVotes().add(vote);
+
+            // when
+            scheduleService.deleteOutOfRangeVotes(schedulePoll);
+
+            // then
+            assertThat(vote.getVotedDate()).hasSize(2);
+        }
+
+        @Test
+        @DisplayName("여러 참가자의 투표 항목이 독립적으로 필터링된다")
+        void filtersEachVoteIndependently() {
+            // given
+            Meeting meeting = Meeting.ofId("test-meeting");
+            SchedulePoll schedulePoll = SchedulePoll.defaultOf(meeting);
+            LocalDate today = LocalDate.now();
+            LocalDate invalidDate = LocalDate.now().minusDays(1);
+
+            ScheduleVote vote1 = ScheduleVote.of(schedulePoll, new ArrayList<>(List.of(
+                    today.atTime(9, 0),      // 유지
+                    invalidDate.atTime(9, 0) // 날짜 범위 밖 → 제거
+            )));
+            ScheduleVote vote2 = ScheduleVote.of(schedulePoll, new ArrayList<>(List.of(
+                    today.atTime(9, 30), // 유지
+                    today.atTime(6, 0)   // startTime(07:00) 이전 → 제거
+            )));
+            schedulePoll.getScheduleVotes().add(vote1);
+            schedulePoll.getScheduleVotes().add(vote2);
+
+            // when
+            scheduleService.deleteOutOfRangeVotes(schedulePoll);
+
+            // then
+            assertThat(vote1.getVotedDate()).containsExactly(today.atTime(9, 0));
+            assertThat(vote2.getVotedDate()).containsExactly(today.atTime(9, 30));
+        }
+    }
 }
