@@ -16,5 +16,11 @@ public record MidpointRecommendationResponse(
 
         @Schema(description = "출발 시간 (미입력 시 null)", example = "2026-02-18T10:30:00")
         @JsonInclude(JsonInclude.Include.NON_NULL)
-        LocalDateTime departureTime
+        LocalDateTime departureTime,
+
+        @Schema(description = "출발지를 등록한 참여자 수", example = "3")
+        int registeredCount,
+
+        @Schema(description = "전체 참여자 수", example = "10")
+        int totalCount
 ) {}
