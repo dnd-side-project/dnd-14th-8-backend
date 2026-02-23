@@ -38,7 +38,7 @@ public class SchedulePoll extends BaseEntity {
     @Builder.Default
     @Column(name = "start_time", comment = "시작 시간(분 단위)", nullable = false)
     @Getter(AccessLevel.NONE)
-    private int startTime = 7 * 60;
+    private int startTime = 9 * 60;
 
     @Builder.Default
     @Column(name = "end_time", comment = "종료 시간(분 단위)", nullable = false)

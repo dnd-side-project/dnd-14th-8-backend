@@ -56,8 +56,8 @@ class ParticipantControllerTest {
         // Given
         ListParticipantResponse response = new ListParticipantResponse(
                 List.of(
-                        new ListParticipantResponse.ParticipantInfo(1L, "김철수", true),
-                        new ListParticipantResponse.ParticipantInfo(2L, "이영희", false)
+                        new ListParticipantResponse.ParticipantInfo(1L, "김철수", "session-key1", true),
+                        new ListParticipantResponse.ParticipantInfo(2L, "이영희", "session-key2",false)
                 ),
                 2
         );
@@ -72,9 +72,11 @@ class ParticipantControllerTest {
                 .andExpect(jsonPath("$.data.totalCount").value(2))
                 .andExpect(jsonPath("$.data.participants[0].participantId").value(1))
                 .andExpect(jsonPath("$.data.participants[0].name").value("김철수"))
+                .andExpect(jsonPath("$.data.participants[0].localStorageKey").value("session-key1"))
                 .andExpect(jsonPath("$.data.participants[0].isHost").value(true))
                 .andExpect(jsonPath("$.data.participants[1].participantId").value(2))
                 .andExpect(jsonPath("$.data.participants[1].name").value("이영희"))
+                .andExpect(jsonPath("$.data.participants[1].localStorageKey").value("session-key2"))
                 .andExpect(jsonPath("$.data.participants[1].isHost").value(false));
 
         verify(participantService).listParticipants(MEETING_ID);
