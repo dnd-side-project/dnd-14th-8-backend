@@ -282,7 +282,7 @@ class ScheduleVoteServiceUnitTest {
             // given
             Meeting meeting = Meeting.ofId("test-meeting");
             SchedulePoll schedulePoll = SchedulePoll.defaultOf(meeting);
-            // defaultOf: dateOptions = today ~ today+13, startTime=420, endTime=1440
+            // defaultOf: dateOptions = today ~ today+13, startTime=540, endTime=1440
 
             LocalDate validDate = LocalDate.now();
             LocalDate invalidDate = LocalDate.now().minusDays(1); // today-1은 범위 밖
@@ -306,12 +306,12 @@ class ScheduleVoteServiceUnitTest {
             // given
             Meeting meeting = Meeting.ofId("test-meeting");
             SchedulePoll schedulePoll = SchedulePoll.defaultOf(meeting);
-            // default startTime = 7 * 60 = 420분
+            // default startTime = 9 * 60 = 540분
 
             LocalDate today = LocalDate.now();
             ScheduleVote vote = ScheduleVote.of(schedulePoll, new ArrayList<>(List.of(
-                    today.atTime(6, 30), // 390분 < 420분 → 제거
-                    today.atTime(7, 0)   // 420분 = startTime → 경계값, 유지
+                    today.atTime(8, 30), // 510분 < 540분 → 제거
+                    today.atTime(9, 0)   // 540분 = startTime → 경계값, 유지
             )));
             schedulePoll.getScheduleVotes().add(vote);
 
@@ -319,7 +319,7 @@ class ScheduleVoteServiceUnitTest {
             scheduleService.deleteOutOfRangeVotes(schedulePoll);
 
             // then
-            assertThat(vote.getVotedDate()).containsExactly(today.atTime(7, 0));
+            assertThat(vote.getVotedDate()).containsExactly(today.atTime(9, 0));
         }
 
         @Test

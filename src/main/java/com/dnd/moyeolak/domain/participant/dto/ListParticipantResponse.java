@@ -21,6 +21,9 @@ public record ListParticipantResponse(
             @Schema(description = "참여자 이름", example = "김철수")
             String name,
 
+            @Schema(description = "참여자 세션키", example = "FGDNCEW@ASDDNJMC")
+            String localStorageKey,
+
             @Schema(description = "방장 여부", example = "false")
             boolean isHost
     ) {
@@ -28,6 +31,7 @@ public record ListParticipantResponse(
             return new ParticipantInfo(
                     participant.getId(),
                     participant.getName(),
+                    participant.getLocalStorageKey(),
                     participant.isHost()
             );
         }

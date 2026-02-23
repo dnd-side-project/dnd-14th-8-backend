@@ -86,7 +86,7 @@ class MeetingServiceUnitTest {
 
         // then
         assertThat(response.dateOptions()).isNotEmpty();
-        assertThat(response.startTime()).isEqualTo("07:00");
+        assertThat(response.startTime()).isEqualTo("09:00");
         assertThat(response.endTime()).isEqualTo("24:00");
     }
 
