@@ -21,6 +21,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -37,11 +38,25 @@ public class ScheduleVoteServiceImpl implements ScheduleVoteService {
         Meeting meeting = meetingRepository.findByIdWithAllAssociations(meetingId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEETING_NOT_FOUND));
 
-        participantService.validateLocalStorageKeyUnique(meeting, request.localStorageKey());
-
         SchedulePoll schedulePoll = meeting.getSchedulePoll();
         if (schedulePoll == null) {
             throw new BusinessException(ErrorCode.SCHEDULE_POLL_NOT_FOUND);
+        }
+
+        Optional<Participant> existingParticipant = meeting.getParticipants().stream()
+                .filter(p -> request.localStorageKey().equals(p.getLocalStorageKey()))
+                .findFirst();
+
+        if (existingParticipant.isPresent()) {
+            Participant host = existingParticipant.get();
+            if (!host.isHost() || !host.getScheduleVotes().isEmpty()) {
+                throw new BusinessException(ErrorCode.DUPLICATE_LOCAL_STORAGE_KEY);
+            }
+            host.updateName(request.participantName());
+            ScheduleVote scheduleVote = ScheduleVote.of(schedulePoll, request.votedDates());
+            host.addScheduleVote(scheduleVote);
+            scheduleVoteRepository.save(scheduleVote);
+            return scheduleVote.getId();
         }
 
         ScheduleVote scheduleVote = ScheduleVote.of(schedulePoll, request.votedDates());

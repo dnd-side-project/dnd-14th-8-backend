@@ -86,7 +86,7 @@ public class Participant extends BaseEntity {
         return participant;
     }
 
-    private void addScheduleVote(ScheduleVote scheduleVote) {
+    public void addScheduleVote(ScheduleVote scheduleVote) {
         this.scheduleVotes.add(scheduleVote);
         scheduleVote.assignParticipant(this);
     }
