@@ -109,5 +109,7 @@ public class ScheduleVoteServiceImpl implements ScheduleVoteService {
                 return minuteOfDay < startTime || minuteOfDay >= endTime;
             });
         });
+
+        scheduleVotes.removeIf(vote -> vote.getVotedDate().isEmpty());
     }
 }
