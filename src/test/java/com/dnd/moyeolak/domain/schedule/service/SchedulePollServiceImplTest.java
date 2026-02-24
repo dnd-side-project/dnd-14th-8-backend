@@ -99,16 +99,16 @@ class SchedulePollServiceImplTest {
         // when & then
         assertThatThrownBy(() -> schedulePollService.updateSchedulePoll(meetingId, request))
                 .isInstanceOf(BusinessException.class)
-                .hasMessageContaining(ErrorCode.INVALID_FORMAT.getMessage());
+                .hasMessageContaining(ErrorCode.INVALID_TIME_RANGE.getMessage());
     }
 
     @Test
-    @DisplayName("종료 시간보다 늦은 시작 시간을 허용한다")
-    void updateSchedulePoll_allowsOvernightWindow() {
+    @DisplayName("시작 시간이 종료 시간보다 늦으면 예외가 발생한다")
+    void updateSchedulePoll_throwsWhenStartIsAfterEnd() {
         // given
         String meetingId = "meeting-1";
         Meeting meeting = Meeting.of(5);
-        SchedulePoll schedulePoll = spy(SchedulePoll.defaultOf(meeting));
+        SchedulePoll schedulePoll = SchedulePoll.defaultOf(meeting);
         meeting.addPolls(schedulePoll, null);
         when(meetingRepository.findByIdWithAllAssociations(meetingId)).thenReturn(Optional.of(meeting));
 
@@ -118,11 +118,9 @@ class SchedulePollServiceImplTest {
                 "06:00"
         );
 
-        // when
-        schedulePollService.updateSchedulePoll(meetingId, request);
-
-        // then
-        verify(schedulePoll).updateOptions(eq(request.dateOptions()), eq(23 * 60 + 30), eq(6 * 60));
-        verify(scheduleVoteService).deleteOutOfRangeVotes(schedulePoll);
+        // when & then
+        assertThatThrownBy(() -> schedulePollService.updateSchedulePoll(meetingId, request))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining(ErrorCode.INVALID_TIME_RANGE.getMessage());
     }
 }
