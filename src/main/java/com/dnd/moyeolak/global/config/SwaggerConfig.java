@@ -1,7 +1,9 @@
 package com.dnd.moyeolak.global.config;
 
 import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.info.License;
 import io.swagger.v3.oas.models.servers.Server;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -22,8 +24,14 @@ public class SwaggerConfig {
                         new Server().url(serverUrl).description("API Server")
                 ))
                 .info(new Info()
-                        .title("MeetSpot API")
+                        .title("모여락 API")
                         .version("1.0")
-                        .description("모여락 Meeting Coordination API"));
+                        .description("모여락 Meeting Coordination API")
+                        .contact(new Contact()
+                                .name("DND 14th 8팀")
+                                .url("https://github.com/dnd-side-project/dnd-14th-8-backend"))
+                        .license(new License()
+                                .name("MIT License")
+                                .url("https://opensource.org/licenses/MIT")));
     }
 }
