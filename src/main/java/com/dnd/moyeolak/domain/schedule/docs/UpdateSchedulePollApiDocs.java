@@ -19,8 +19,8 @@ import java.lang.annotation.Target;
 
                     **제약 조건**
                     - `dateOptions`: 최소 1개 이상의 날짜 필수 (빈 배열 불가)
-                    - `startTime`: HH:mm 형식, 30분 단위만 허용, 24:00 불가 (종료 시간보다 늦을 수 있음)
-                    - `endTime`: HH:mm 또는 24:00, 30분 단위만 허용, 24:00 = 자정
+                    - `startTime`: HH:mm 형식, 30분 단위만 허용, 24:00 불가, 반드시 endTime보다 빨라야 함
+                    - `endTime`: HH:mm 또는 24:00, 30분 단위만 허용, 24:00 = 자정, 반드시 startTime보다 늦어야 함
                     - 기존 참가자의 일정 투표(ScheduleVote)는 유지됩니다
                     """
 )
@@ -31,7 +31,7 @@ import java.lang.annotation.Target;
         ),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
                 responseCode = "400",
-                description = "잘못된 요청 (dateOptions 비어있음 / startTime == endTime)",
+                description = "잘못된 요청 (dateOptions 비어있음 / startTime >= endTime)",
                 content = @Content(schema = @Schema(hidden = true))
         ),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
