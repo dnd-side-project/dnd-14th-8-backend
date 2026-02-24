@@ -1,14 +1,15 @@
 package com.dnd.moyeolak.domain.schedule.controller;
 
+import com.dnd.moyeolak.domain.schedule.docs.ConfirmSchedulePollApiDocs;
 import com.dnd.moyeolak.domain.schedule.docs.CreateScheduleVoteApiDocs;
 import com.dnd.moyeolak.domain.schedule.docs.UpdateSchedulePollApiDocs;
+import com.dnd.moyeolak.domain.schedule.docs.UpdateScheduleVoteApiDocs;
 import com.dnd.moyeolak.domain.schedule.dto.CreateScheduleVoteRequest;
 import com.dnd.moyeolak.domain.schedule.dto.UpdateSchedulePollRequest;
 import com.dnd.moyeolak.domain.schedule.dto.UpdateScheduleVoteRequest;
 import com.dnd.moyeolak.domain.schedule.service.SchedulePollService;
 import com.dnd.moyeolak.domain.schedule.service.ScheduleVoteService;
 import com.dnd.moyeolak.global.response.ApiResponse;
-import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -37,7 +38,7 @@ public class ScheduleController {
     }
 
     @PutMapping("/poll/confirm")
-    @Operation(summary = "시간 투표 확정", description = "시간 투표를 확정 짓습니다.")
+    @ConfirmSchedulePollApiDocs
     public ResponseEntity<ApiResponse<Void>> confirmSchedulePoll(
             @Parameter(description = "모임 ID", example = "abc-123", required = true)
             @RequestParam String meetingId
@@ -59,7 +60,7 @@ public class ScheduleController {
     }
 
     @PutMapping("/vote/{scheduleVoteId}")
-    @Operation(summary = "시간 투표 수정", description = "특정 시간 투표를 수정합니다.")
+    @UpdateScheduleVoteApiDocs
     public ResponseEntity<ApiResponse<Void>> updateScheduleVote(
             @PathVariable Long scheduleVoteId,
             @RequestBody UpdateScheduleVoteRequest request

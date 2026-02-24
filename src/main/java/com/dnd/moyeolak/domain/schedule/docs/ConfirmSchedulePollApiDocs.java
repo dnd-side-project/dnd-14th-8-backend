@@ -14,21 +14,19 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 @Operation(
-        summary = "일정 투표 옵션 수정",
+        summary = "시간 투표 확정",
         description = """
-                    모임의 일정 투표 옵션(날짜 목록, 시작/종료 시간)을 수정합니다.
+                    모임의 시간 투표 상태를 CONFIRMED로 변경합니다.
 
-                    **제약 조건**
-                    - `dateOptions`: 최소 1개 이상의 날짜 필수 (빈 배열 불가)
-                    - `startTime`: HH:mm 형식, 30분 단위만 허용, 24:00 불가, 종료 시간보다 빨라야 함
-                    - `endTime`: HH:mm 또는 24:00, 30분 단위만 허용, 24:00 = 자정
-                    - 범위를 벗어난 기존 참가자의 일정 투표(ScheduleVote)는 자동 삭제됩니다
+                    **주의사항**
+                    - 확정 후에는 투표 옵션 수정이 불가합니다
+                    - 모임에 일정 투표판(SchedulePoll)이 존재해야 합니다
                     """
 )
 @ApiResponses({
         @ApiResponse(
                 responseCode = "200",
-                description = "수정 성공",
+                description = "확정 성공",
                 content = @Content(
                         mediaType = "application/json",
                         examples = @ExampleObject(
@@ -40,38 +38,6 @@ import java.lang.annotation.Target;
                                         }
                                         """
                         )
-                )
-        ),
-        @ApiResponse(
-                responseCode = "400",
-                description = "잘못된 요청",
-                content = @Content(
-                        mediaType = "application/json",
-                        examples = {
-                                @ExampleObject(
-                                        name = "날짜 목록 비어있음",
-                                        summary = "dateOptions 빈 배열",
-                                        value = """
-                                                {
-                                                  "code": "E103",
-                                                  "message": "유효성 검증 실패",
-                                                  "data": {
-                                                    "dateOptions": "날짜 목록은 최소 1개 이상이어야 합니다"
-                                                  }
-                                                }
-                                                """
-                                ),
-                                @ExampleObject(
-                                        name = "시간 범위 오류",
-                                        summary = "startTime >= endTime",
-                                        value = """
-                                                {
-                                                  "code": "E426",
-                                                  "message": "시작 시간은 종료 시간보다 빨라야 합니다."
-                                                }
-                                                """
-                                )
-                        }
                 )
         ),
         @ApiResponse(
@@ -102,5 +68,5 @@ import java.lang.annotation.Target;
                 )
         )
 })
-public @interface UpdateSchedulePollApiDocs {
+public @interface ConfirmSchedulePollApiDocs {
 }
