@@ -77,9 +77,9 @@ public class LocationVote extends BaseEntity {
                 .build();
     }
 
-    public static LocationVote fromByCreateLocationVoteRequest(CreateLocationVoteRequest request) {
+    public static LocationVote fromByCreateLocationVoteRequest(LocationPoll locationPoll, CreateLocationVoteRequest request) {
         return LocationVote.builder()
-                .locationPoll(LocationPoll.ofId(Long.parseLong(request.locationPollId())))
+                .locationPoll(locationPoll)
                 .departureName(request.participantName())
                 .departureLocation(request.departureLocation())
                 .departureLat(new BigDecimal(request.departureLat()))

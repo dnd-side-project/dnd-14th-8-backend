@@ -48,7 +48,6 @@ class LocationVoteIntegrationTest {
 
         CreateLocationVoteRequest request = new CreateLocationVoteRequest(
                 meetingId,
-                locationPollId.toString(),
                 null,
                 "홍길동",
                 "서울시 강남구",
@@ -78,7 +77,6 @@ class LocationVoteIntegrationTest {
 
         CreateLocationVoteRequest request = new CreateLocationVoteRequest(
                 meetingId,
-                locationPollId.toString(),
                 "new-local-key",
                 "김철수",
                 "서울시 홍대입구",
@@ -108,7 +106,6 @@ class LocationVoteIntegrationTest {
 
         CreateLocationVoteRequest request = new CreateLocationVoteRequest(
                 meetingId,
-                locationPollId.toString(),
                 null,
                 "홍길동",
                 "서울시 강남구",
@@ -145,7 +142,6 @@ class LocationVoteIntegrationTest {
 
         CreateLocationVoteRequest request = new CreateLocationVoteRequest(
                 meetingId,
-                locationPollId.toString(),
                 "local-storage-key-new",
                 "김철수",
                 "서울시 홍대입구",
@@ -187,7 +183,6 @@ class LocationVoteIntegrationTest {
 
         CreateLocationVoteRequest request = new CreateLocationVoteRequest(
                 meetingId,
-                locationPollId.toString(),
                 "local-storage-key-cascade",
                 "이영희",
                 "서울시 왕십리",
@@ -222,7 +217,6 @@ class LocationVoteIntegrationTest {
 
         CreateLocationVoteRequest manualRequest = new CreateLocationVoteRequest(
                 meetingId,
-                locationPollId.toString(),
                 null,
                 "수동입력자",
                 "서울시 서초구",
@@ -232,7 +226,6 @@ class LocationVoteIntegrationTest {
 
         CreateLocationVoteRequest participantRequest = new CreateLocationVoteRequest(
                 meetingId,
-                locationPollId.toString(),
                 "local-storage-key-mix",
                 "박민수",
                 "서울시 부평",
@@ -265,7 +258,6 @@ class LocationVoteIntegrationTest {
 
         CreateLocationVoteRequest request = new CreateLocationVoteRequest(
                 meetingId,
-                locationPollId.toString(),
                 "local-storage-key-delete",
                 "홍길동",
                 "서울시 강남구",
@@ -305,7 +297,6 @@ class LocationVoteIntegrationTest {
 
         CreateLocationVoteRequest createRequest = new CreateLocationVoteRequest(
                 meetingId,
-                locationPollId.toString(),
                 "local-storage-key-update",
                 "홍길동",
                 "서울시 강남구",
