@@ -8,9 +8,6 @@ public record CreateLocationVoteRequest(
     @Schema(description = "모임 ID", example = "abc123")
     @NotBlank String meetingId,
 
-    @Schema(description = "위치 투표판 ID", example = "1")
-    @NotBlank String locationPollId,
-
     @Schema(description = "브라우저 로컬스토리지 키 (재참여 방지용)", example = "ls_key_abc123")
     String localStorageKey,
 
