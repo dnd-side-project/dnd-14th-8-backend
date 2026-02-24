@@ -392,5 +392,34 @@ class ScheduleVoteServiceUnitTest {
             assertThat(vote1.getVotedDate()).containsExactly(today.atTime(9, 0));
             assertThat(vote2.getVotedDate()).containsExactly(today.atTime(9, 30));
         }
+
+        @Test
+        @DisplayName("자정을 넘기는 시간대 설정 시 허용 구간만 유지된다")
+        void keepsVotesWithinOvernightWindow() {
+            // given
+            Meeting meeting = Meeting.ofId("test-meeting");
+            SchedulePoll schedulePoll = SchedulePoll.defaultOf(meeting);
+            LocalDate today = LocalDate.now();
+            schedulePoll.updateOptions(List.of(today), 18 * 60, 6 * 60);
+
+            ScheduleVote vote = ScheduleVote.of(schedulePoll, new ArrayList<>(List.of(
+                    today.atTime(17, 30), // end(06:00)~start(18:00) 사이 → 제거
+                    today.atTime(18, 0),  // start 경계 → 유지
+                    today.atTime(23, 30), // start 이후 → 유지
+                    today.atTime(1, 0),   // end 이전 (자정 이후) → 유지
+                    today.atTime(7, 0)    // 06:00 이후 & start 이전 → 제거
+            )));
+            schedulePoll.getScheduleVotes().add(vote);
+
+            // when
+            scheduleService.deleteOutOfRangeVotes(schedulePoll);
+
+            // then
+            assertThat(vote.getVotedDate()).containsExactlyInAnyOrder(
+                    today.atTime(18, 0),
+                    today.atTime(23, 30),
+                    today.atTime(1, 0)
+            );
+        }
     }
 }

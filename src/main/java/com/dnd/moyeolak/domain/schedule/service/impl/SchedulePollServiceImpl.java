@@ -46,7 +46,7 @@ public class SchedulePollServiceImpl implements SchedulePollService {
         int startMinute = parseToMinuteOfDay(request.startTime(), false);
         int endMinute = parseToMinuteOfDay(request.endTime(), true);
 
-        if (startMinute >= endMinute) {
+        if (startMinute == endMinute) {
             throw new BusinessException(ErrorCode.INVALID_FORMAT);
         }
 
