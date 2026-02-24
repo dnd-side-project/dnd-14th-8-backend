@@ -3,8 +3,10 @@ package com.dnd.moyeolak.domain.schedule.service.impl;
 import com.dnd.moyeolak.domain.meeting.entity.Meeting;
 import com.dnd.moyeolak.domain.meeting.repository.MeetingRepository;
 import com.dnd.moyeolak.domain.meeting.service.MeetingService;
+import com.dnd.moyeolak.domain.participant.entity.Participant;
 import com.dnd.moyeolak.domain.schedule.dto.UpdateSchedulePollRequest;
 import com.dnd.moyeolak.domain.schedule.entity.SchedulePoll;
+import com.dnd.moyeolak.domain.schedule.entity.ScheduleVote;
 import com.dnd.moyeolak.domain.schedule.repository.SchedulePollRepository;
 import com.dnd.moyeolak.domain.schedule.repository.ScheduleVoteRepository;
 import com.dnd.moyeolak.domain.schedule.service.SchedulePollService;
@@ -12,6 +14,9 @@ import com.dnd.moyeolak.domain.schedule.service.ScheduleVoteService;
 import com.dnd.moyeolak.global.enums.PollStatus;
 import com.dnd.moyeolak.global.exception.BusinessException;
 import com.dnd.moyeolak.global.response.ErrorCode;
+
+import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,6 +58,11 @@ public class SchedulePollServiceImpl implements SchedulePollService {
         schedulePoll.updateOptions(request.dateOptions(), startMinute, endMinute);
 
         scheduleVoteService.deleteOutOfRangeVotes(schedulePoll);
+
+        Set<Participant> remainingVoters = schedulePoll.getScheduleVotes().stream()
+                .map(ScheduleVote::getParticipant)
+                .collect(Collectors.toSet());
+        meeting.getParticipants().removeIf(p -> !p.isHost() && !remainingVoters.contains(p));
     }
 
     @Override
