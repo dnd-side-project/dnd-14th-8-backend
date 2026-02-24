@@ -7,6 +7,7 @@ import com.dnd.moyeolak.domain.location.repository.LocationVoteRepository;
 import com.dnd.moyeolak.domain.location.service.LocationVoteService;
 import com.dnd.moyeolak.domain.meeting.dto.UpdateLocationVoteRequest;
 import com.dnd.moyeolak.domain.meeting.entity.Meeting;
+import com.dnd.moyeolak.domain.meeting.service.MeetingService;
 import com.dnd.moyeolak.domain.participant.entity.Participant;
 import com.dnd.moyeolak.domain.participant.service.ParticipantService;
 import com.dnd.moyeolak.global.exception.BusinessException;
@@ -17,12 +18,14 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class LocationVoteServiceImpl implements LocationVoteService {
 
+    private final MeetingService meetingService;
     private final ParticipantService participantService;
     private final LocationVoteRepository locationVoteRepository;
 
@@ -44,14 +47,33 @@ public class LocationVoteServiceImpl implements LocationVoteService {
     @Transactional
     public Long createLocationVote(CreateLocationVoteRequest request) {
         LocationVote locationVote = LocationVote.fromByCreateLocationVoteRequest(request);
-        if (StringUtils.hasText(request.localStorageKey())) {
-            Participant participant = Participant.of(
-                    Meeting.ofId(request.meetingId()), request.localStorageKey(), request.participantName(), locationVote
-            );
-            participantService.save(participant);
-        } else {
+
+        if (!StringUtils.hasText(request.localStorageKey())) {
             locationVoteRepository.save(locationVote);
+            return locationVote.getId();
         }
+
+        Meeting meeting = meetingService.get(request.meetingId());
+
+        Optional<Participant> existingParticipant = meeting.getParticipants().stream()
+                .filter(p -> request.localStorageKey().equals(p.getLocalStorageKey()))
+                .findFirst();
+
+        if (existingParticipant.isPresent()) {
+            Participant host = existingParticipant.get();
+            if (!host.isHost() || !host.getLocationVotes().isEmpty()) {
+                throw new BusinessException(ErrorCode.DUPLICATE_LOCAL_STORAGE_KEY);
+            }
+            host.updateName(request.participantName());
+            host.addLocationVote(locationVote);
+            locationVoteRepository.save(locationVote);
+            return locationVote.getId();
+        }
+
+        Participant participant = Participant.of(
+                Meeting.ofId(request.meetingId()), request.localStorageKey(), request.participantName(), locationVote
+        );
+        participantService.save(participant);
 
         return locationVote.getId();
     }

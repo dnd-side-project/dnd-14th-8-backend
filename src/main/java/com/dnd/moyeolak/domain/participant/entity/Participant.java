@@ -91,7 +91,7 @@ public class Participant extends BaseEntity {
         scheduleVote.assignParticipant(this);
     }
 
-    private void addLocationVote(LocationVote locationVote) {
+    public void addLocationVote(LocationVote locationVote) {
         this.locationVotes.add(locationVote);
         locationVote.assignParticipant(this);
     }
