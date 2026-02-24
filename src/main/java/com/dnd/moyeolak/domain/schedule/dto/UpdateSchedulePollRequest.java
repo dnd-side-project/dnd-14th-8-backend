@@ -19,7 +19,7 @@ public record UpdateSchedulePollRequest(
         @NotEmpty List<@NotNull LocalDate> dateOptions,
 
         @Schema(
-                description = "투표 시작 시간 (HH:mm, 30분 단위만 허용, endTime보다 작아야 함)",
+                description = "투표 시작 시간 (HH:mm, 30분 단위만 허용, 24:00 불가 / 종료 시간보다 늦을 수 있음)",
                 example = "07:00",
                 pattern = "^(?:[01]\\\\d|2[0-3]):(?:00|30)$",
                 requiredMode = Schema.RequiredMode.REQUIRED
@@ -29,7 +29,7 @@ public record UpdateSchedulePollRequest(
         String startTime,
 
         @Schema(
-                description = "투표 종료 시간 (HH:mm 또는 24:00, 30분 단위만 허용, startTime보다 커야 함)",
+                description = "투표 종료 시간 (HH:mm 또는 24:00, 30분 단위만 허용, startTime과 동일 불가)",
                 example = "24:00",
                 pattern = "^(?:24:00|(?:[01]\\\\d|2[0-3]):(?:00|30))$",
                 requiredMode = Schema.RequiredMode.REQUIRED
