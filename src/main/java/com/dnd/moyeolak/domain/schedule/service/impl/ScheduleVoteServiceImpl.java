@@ -93,6 +93,8 @@ public class ScheduleVoteServiceImpl implements ScheduleVoteService {
         int endTime = schedulePoll.getEndTime();
         List<ScheduleVote> scheduleVotes = schedulePoll.getScheduleVotes();
 
+        boolean crossesMidnight = startTime > endTime;
+
         scheduleVotes.forEach(scheduleVote -> {
             List<LocalDateTime> votedDates = scheduleVote.getVotedDate();
             votedDates.removeIf(votedDate -> {
@@ -101,6 +103,9 @@ public class ScheduleVoteServiceImpl implements ScheduleVoteService {
                 }
 
                 int minuteOfDay = votedDate.getHour() * 60 + votedDate.getMinute();
+                if (crossesMidnight) {
+                    return minuteOfDay >= endTime && minuteOfDay < startTime;
+                }
                 return minuteOfDay < startTime || minuteOfDay >= endTime;
             });
         });

@@ -81,8 +81,8 @@ class SchedulePollServiceImplTest {
     }
 
     @Test
-    @DisplayName("시작 시간이 종료 시간 이상이면 예외가 발생한다")
-    void updateSchedulePoll_throwsWhenStartIsAfterEnd() {
+    @DisplayName("시작 시간과 종료 시간이 동일하면 예외가 발생한다")
+    void updateSchedulePoll_throwsWhenStartEqualsEnd() {
         // given
         String meetingId = "meeting-1";
         Meeting meeting = Meeting.of(5);
@@ -92,7 +92,7 @@ class SchedulePollServiceImplTest {
 
         UpdateSchedulePollRequest request = new UpdateSchedulePollRequest(
                 List.of(LocalDate.of(2025, 2, 10)),
-                "23:30",
+                "22:30",
                 "22:30"
         );
 
@@ -100,5 +100,29 @@ class SchedulePollServiceImplTest {
         assertThatThrownBy(() -> schedulePollService.updateSchedulePoll(meetingId, request))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining(ErrorCode.INVALID_FORMAT.getMessage());
+    }
+
+    @Test
+    @DisplayName("종료 시간보다 늦은 시작 시간을 허용한다")
+    void updateSchedulePoll_allowsOvernightWindow() {
+        // given
+        String meetingId = "meeting-1";
+        Meeting meeting = Meeting.of(5);
+        SchedulePoll schedulePoll = spy(SchedulePoll.defaultOf(meeting));
+        meeting.addPolls(schedulePoll, null);
+        when(meetingRepository.findByIdWithAllAssociations(meetingId)).thenReturn(Optional.of(meeting));
+
+        UpdateSchedulePollRequest request = new UpdateSchedulePollRequest(
+                List.of(LocalDate.of(2025, 2, 10)),
+                "23:30",
+                "06:00"
+        );
+
+        // when
+        schedulePollService.updateSchedulePoll(meetingId, request);
+
+        // then
+        verify(schedulePoll).updateOptions(eq(request.dateOptions()), eq(23 * 60 + 30), eq(6 * 60));
+        verify(scheduleVoteService).deleteOutOfRangeVotes(schedulePoll);
     }
 }
