@@ -116,16 +116,23 @@ class ScheduleVoteServiceUnitTest {
         }
 
         @Test
-        @DisplayName("localStorageKey 중복 검증이 수행된다")
-        void validatesLocalStorageKeyUniqueness() {
+        @DisplayName("모임장이 처음 투표할 때 ScheduleVote가 기존 Participant에 연결된다")
+        void createScheduleVote_hostFirstVote_savesVoteLinkedToExistingParticipant() {
             // given
             String meetingId = "test-meeting";
             Meeting meeting = Meeting.ofId(meetingId);
             SchedulePoll schedulePoll = SchedulePoll.defaultOf(meeting);
             meeting.addPolls(schedulePoll, null);
 
+            Participant host = Participant.hostOf(meeting, "host-key", "모임장");
+            meeting.addParticipant(host);
+            // 호스트는 아직 투표하지 않은 상태 (scheduleVotes 비어있음)
+
+            LocalDate today = LocalDate.now();
+            List<LocalDateTime> votedDates = List.of(today.atTime(9, 0), today.atTime(9, 30));
+
             CreateScheduleVoteRequest request = new CreateScheduleVoteRequest(
-                    "홍길동", "local-key-123", List.of(LocalDate.now().atTime(9, 0))
+                    "모임장", "host-key", votedDates
             );
 
             when(meetingRepository.findByIdWithAllAssociations(meetingId)).thenReturn(Optional.of(meeting));
@@ -134,29 +141,64 @@ class ScheduleVoteServiceUnitTest {
             scheduleService.createParticipantVote(meetingId, request);
 
             // then
-            verify(participantService).validateLocalStorageKeyUnique(meeting, "local-key-123");
+            verify(participantService, never()).save(any());
+            verify(scheduleVoteRepository).save(argThat(scheduleVote ->
+                    scheduleVote.getSchedulePoll().equals(schedulePoll) &&
+                    scheduleVote.getVotedDate().equals(votedDates)
+            ));
+            assertThat(host.getScheduleVotes()).hasSize(1);
+            assertThat(host.getScheduleVotes().get(0).getVotedDate()).isEqualTo(votedDates);
         }
 
         @Test
-        @DisplayName("중복 localStorageKey로 요청 시 예외가 발생한다")
-        void duplicateLocalStorageKey_throwsException() {
+        @DisplayName("모임장이 이미 투표했을 때 DUPLICATE_LOCAL_STORAGE_KEY 예외가 발생한다")
+        void createScheduleVote_hostAlreadyVoted_throwsDuplicateException() {
             // given
             String meetingId = "test-meeting";
             Meeting meeting = Meeting.ofId(meetingId);
             SchedulePoll schedulePoll = SchedulePoll.defaultOf(meeting);
             meeting.addPolls(schedulePoll, null);
 
+            Participant host = Participant.hostOf(meeting, "host-key", "모임장");
+            // 호스트가 이미 투표한 상태
+            ScheduleVote existingVote = ScheduleVote.of(schedulePoll, List.of(LocalDate.now().atTime(9, 0)));
+            host.addScheduleVote(existingVote);
+            meeting.addParticipant(host);
+
             CreateScheduleVoteRequest request = new CreateScheduleVoteRequest(
-                    "홍길동", "duplicate-key", List.of(LocalDate.now().atTime(9, 0))
+                    "모임장", "host-key", List.of(LocalDate.now().atTime(10, 0))
             );
 
             when(meetingRepository.findByIdWithAllAssociations(meetingId)).thenReturn(Optional.of(meeting));
-            doThrow(new BusinessException(ErrorCode.DUPLICATE_LOCAL_STORAGE_KEY))
-                    .when(participantService).validateLocalStorageKeyUnique(meeting, "duplicate-key");
 
             // when & then
             assertThatThrownBy(() -> scheduleService.createParticipantVote(meetingId, request))
-                    .isInstanceOf(BusinessException.class);
+                    .isInstanceOf(BusinessException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.DUPLICATE_LOCAL_STORAGE_KEY);
+        }
+
+        @Test
+        @DisplayName("일반 참여자가 이미 존재하는 localStorageKey로 요청 시 DUPLICATE_LOCAL_STORAGE_KEY 예외가 발생한다")
+        void createScheduleVote_duplicateKeyForNonHost_throwsDuplicateException() {
+            // given
+            String meetingId = "test-meeting";
+            Meeting meeting = Meeting.ofId(meetingId);
+            SchedulePoll schedulePoll = SchedulePoll.defaultOf(meeting);
+            meeting.addPolls(schedulePoll, null);
+
+            Participant existingParticipant = Participant.of(meeting, "duplicate-key", "기존참여자");
+            meeting.addParticipant(existingParticipant);
+
+            CreateScheduleVoteRequest request = new CreateScheduleVoteRequest(
+                    "새참여자", "duplicate-key", List.of(LocalDate.now().atTime(9, 0))
+            );
+
+            when(meetingRepository.findByIdWithAllAssociations(meetingId)).thenReturn(Optional.of(meeting));
+
+            // when & then
+            assertThatThrownBy(() -> scheduleService.createParticipantVote(meetingId, request))
+                    .isInstanceOf(BusinessException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.DUPLICATE_LOCAL_STORAGE_KEY);
         }
 
         @Test
