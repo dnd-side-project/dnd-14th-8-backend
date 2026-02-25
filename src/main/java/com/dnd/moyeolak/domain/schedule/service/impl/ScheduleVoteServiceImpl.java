@@ -48,13 +48,13 @@ public class ScheduleVoteServiceImpl implements ScheduleVoteService {
                 .findFirst();
 
         if (existingParticipant.isPresent()) {
-            Participant host = existingParticipant.get();
-            if (!host.isHost() || !host.getScheduleVotes().isEmpty()) {
+            Participant existing = existingParticipant.get();
+            if (!existing.getScheduleVotes().isEmpty()) {
                 throw new BusinessException(ErrorCode.DUPLICATE_LOCAL_STORAGE_KEY);
             }
-            host.updateName(request.participantName());
+            existing.updateName(request.participantName());
             ScheduleVote scheduleVote = ScheduleVote.of(schedulePoll, request.votedDates());
-            host.addScheduleVote(scheduleVote);
+            existing.addScheduleVote(scheduleVote);
             scheduleVoteRepository.save(scheduleVote);
             return scheduleVote.getId();
         }
