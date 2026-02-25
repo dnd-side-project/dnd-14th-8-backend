@@ -178,8 +178,8 @@ class ScheduleVoteServiceUnitTest {
         }
 
         @Test
-        @DisplayName("일반 참여자가 이미 존재하는 localStorageKey로 요청 시 DUPLICATE_LOCAL_STORAGE_KEY 예외가 발생한다")
-        void createScheduleVote_duplicateKeyForNonHost_throwsDuplicateException() {
+        @DisplayName("일반 참여자가 이미 투표한 경우 DUPLICATE_LOCAL_STORAGE_KEY 예외가 발생한다")
+        void createScheduleVote_nonHostAlreadyVoted_throwsDuplicateException() {
             // given
             String meetingId = "test-meeting";
             Meeting meeting = Meeting.ofId(meetingId);
@@ -187,6 +187,9 @@ class ScheduleVoteServiceUnitTest {
             meeting.addPolls(schedulePoll, null);
 
             Participant existingParticipant = Participant.of(meeting, "duplicate-key", "기존참여자");
+            // 이미 투표한 상태
+            ScheduleVote existingVote = ScheduleVote.of(schedulePoll, List.of(LocalDate.now().atTime(9, 0)));
+            existingParticipant.addScheduleVote(existingVote);
             meeting.addParticipant(existingParticipant);
 
             CreateScheduleVoteRequest request = new CreateScheduleVoteRequest(
@@ -199,6 +202,39 @@ class ScheduleVoteServiceUnitTest {
             assertThatThrownBy(() -> scheduleService.createParticipantVote(meetingId, request))
                     .isInstanceOf(BusinessException.class)
                     .hasFieldOrPropertyWithValue("errorCode", ErrorCode.DUPLICATE_LOCAL_STORAGE_KEY);
+        }
+
+        @Test
+        @DisplayName("투표가 무효화된 일반 참여자는 동일 localStorageKey로 재투표할 수 있다")
+        void createScheduleVote_nonHostWithInvalidatedVotes_allowsRevote() {
+            // given
+            String meetingId = "test-meeting";
+            Meeting meeting = Meeting.ofId(meetingId);
+            SchedulePoll schedulePoll = SchedulePoll.defaultOf(meeting);
+            meeting.addPolls(schedulePoll, null);
+
+            // 투표가 무효화된 비호스트 참여자 (scheduleVotes 비어있음)
+            Participant existingParticipant = Participant.of(meeting, "revote-key", "기존참여자");
+            meeting.addParticipant(existingParticipant);
+
+            LocalDate today = LocalDate.now();
+            List<LocalDateTime> votedDates = List.of(today.atTime(9, 0));
+            CreateScheduleVoteRequest request = new CreateScheduleVoteRequest(
+                    "기존참여자", "revote-key", votedDates
+            );
+
+            when(meetingRepository.findByIdWithAllAssociations(meetingId)).thenReturn(Optional.of(meeting));
+
+            // when (예외 없이 처리됨)
+            scheduleService.createParticipantVote(meetingId, request);
+
+            // then
+            verify(participantService, never()).save(any());
+            verify(scheduleVoteRepository).save(argThat(scheduleVote ->
+                    scheduleVote.getSchedulePoll().equals(schedulePoll) &&
+                    scheduleVote.getVotedDate().equals(votedDates)
+            ));
+            assertThat(existingParticipant.getScheduleVotes()).hasSize(1);
         }
 
         @Test

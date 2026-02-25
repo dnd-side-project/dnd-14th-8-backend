@@ -2,6 +2,7 @@ package com.dnd.moyeolak.domain.schedule.service;
 
 import com.dnd.moyeolak.domain.meeting.entity.Meeting;
 import com.dnd.moyeolak.domain.meeting.repository.MeetingRepository;
+import com.dnd.moyeolak.domain.participant.entity.Participant;
 import com.dnd.moyeolak.domain.schedule.dto.UpdateSchedulePollRequest;
 import com.dnd.moyeolak.domain.schedule.entity.SchedulePoll;
 import com.dnd.moyeolak.domain.schedule.service.ScheduleVoteService;
@@ -19,6 +20,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
@@ -100,6 +102,33 @@ class SchedulePollServiceImplTest {
         assertThatThrownBy(() -> schedulePollService.updateSchedulePoll(meetingId, request))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining(ErrorCode.INVALID_TIME_RANGE.getMessage());
+    }
+
+    @Test
+    @DisplayName("투표 옵션 변경 후 모든 투표가 무효화되어도 비호스트 참여자는 삭제되지 않는다")
+    void updateSchedulePoll_doesNotDeleteNonHostParticipantWhenAllVotesInvalidated() {
+        // given
+        String meetingId = "meeting-1";
+        Meeting meeting = Meeting.of(5);
+        SchedulePoll schedulePoll = spy(SchedulePoll.defaultOf(meeting));
+        meeting.addPolls(schedulePoll, null);
+
+        Participant nonHost = Participant.of(meeting, "non-host-key", "일반참여자");
+        meeting.addParticipant(nonHost);
+
+        when(meetingRepository.findByIdWithAllAssociations(meetingId)).thenReturn(Optional.of(meeting));
+
+        UpdateSchedulePollRequest request = new UpdateSchedulePollRequest(
+                List.of(LocalDate.of(2025, 2, 10)),
+                "07:30",
+                "24:00"
+        );
+
+        // when
+        schedulePollService.updateSchedulePoll(meetingId, request);
+
+        // then
+        assertThat(meeting.getParticipants()).contains(nonHost);
     }
 
     @Test
