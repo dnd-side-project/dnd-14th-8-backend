@@ -109,6 +109,43 @@ class SchedulePollServiceIntegrationTest {
     }
 
     @Test
+    @DisplayName("updateSchedulePoll - 모든 투표가 무효화되어도 비호스트 참여자는 삭제되지 않는다")
+    void updateSchedulePoll_doesNotDeleteNonHostParticipantWhenAllVotesInvalidated() {
+        // given
+        String meetingId = createTestMeeting();
+
+        LocalDate today = LocalDate.now();
+        LocalDate tomorrow = today.plusDays(1);
+
+        // 비호스트 참여자 생성 (내일 날짜로 투표)
+        scheduleVoteService.createParticipantVote(meetingId, new CreateScheduleVoteRequest(
+                "일반참여자", "participant-key", List.of(tomorrow.atTime(9, 0))
+        ));
+        em.flush();
+        em.clear();
+
+        int participantCountBefore = meetingRepository.findByIdWithAllAssociations(meetingId)
+                .orElseThrow().getParticipants().size();
+        em.clear();
+
+        // 오늘 날짜만 허용하도록 축소 → 비호스트의 모든 투표가 무효화됨
+        UpdateSchedulePollRequest request = new UpdateSchedulePollRequest(
+                List.of(today), "07:00", "24:00"
+        );
+
+        // when
+        schedulePollService.updateSchedulePoll(meetingId, request);
+        em.flush();
+        em.clear();
+
+        // then
+        Meeting meeting = meetingRepository.findByIdWithAllAssociations(meetingId).orElseThrow();
+        assertThat(meeting.getParticipants()).hasSize(participantCountBefore);
+        assertThat(meeting.getParticipants())
+                .anyMatch(p -> p.getLocalStorageKey().equals("participant-key"));
+    }
+
+    @Test
     @DisplayName("updateSchedulePoll - 시간 범위 축소 시 범위 밖 투표 항목이 제거된다")
     void updateSchedulePoll_removesVotesOutsideTimeRange() {
         // given
