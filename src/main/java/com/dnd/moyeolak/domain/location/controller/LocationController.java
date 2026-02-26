@@ -86,12 +86,12 @@ public class LocationController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-    @GetMapping("/poll/{locationPollId}/votes")
+    @GetMapping("/vote")
     @ListLocationVoteApiDocs
     public ResponseEntity<ApiResponse<?>> listLocationVote(
-            @Parameter(description = "위치 투표판 ID", example = "1", required = true)
-            @PathVariable Long locationPollId) {
-        List<LocationVoteResponse> listLocationVote = locationVoteService.listLocationVote(locationPollId);
+            @Parameter(description = "모임 ID", example = "test-meeting-001", required = true)
+            @RequestParam String meetingId) {
+        List<LocationVoteResponse> listLocationVote = locationVoteService.listLocationVote(meetingId);
         return ResponseEntity.ok(ApiResponse.success(listLocationVote));
     }
 

@@ -15,7 +15,7 @@ import java.lang.annotation.Target;
 @Operation(
         summary = "출발지 투표 조회",
         description = """
-                    장소 조율 시 등록된 출발지 투표 목록을 조회합니다.
+                    장소 조율 시 등록된 출발지 투표 목록을 조회합니다. 모임 ID를 쿼리 파라미터(`meetingId`)로 전달하면 자동으로 해당 모임의 위치 투표판을 찾아줍니다.
 
                     ### 사용 시점
                     - 장소 투표 현황 페이지에서 참가자들의 출발지를 표시할 때

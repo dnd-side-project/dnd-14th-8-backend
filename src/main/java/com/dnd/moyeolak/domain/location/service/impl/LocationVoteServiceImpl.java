@@ -9,7 +9,6 @@ import com.dnd.moyeolak.domain.location.service.LocationVoteService;
 import com.dnd.moyeolak.domain.meeting.dto.UpdateLocationVoteRequest;
 import com.dnd.moyeolak.domain.meeting.entity.Meeting;
 import com.dnd.moyeolak.domain.meeting.repository.MeetingRepository;
-import com.dnd.moyeolak.domain.meeting.service.MeetingService;
 import com.dnd.moyeolak.domain.participant.entity.Participant;
 import com.dnd.moyeolak.domain.participant.service.ParticipantService;
 import com.dnd.moyeolak.global.exception.BusinessException;
@@ -32,9 +31,19 @@ public class LocationVoteServiceImpl implements LocationVoteService {
     private final LocationVoteRepository locationVoteRepository;
 
     @Override
-    public List<LocationVoteResponse> listLocationVote(Long locationPollId) {
-        return locationVoteRepository.findByLocationPoll_Id(locationPollId)
-                .stream().map(LocationVoteResponse::from).toList();
+    public List<LocationVoteResponse> listLocationVote(String meetingId) {
+        Meeting meeting = meetingRepository.findByIdWithAllAssociations(meetingId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEETING_NOT_FOUND));
+
+        LocationPoll locationPoll = meeting.getLocationPoll();
+        if (locationPoll == null) {
+            throw new BusinessException(ErrorCode.LOCATION_POLL_NOT_FOUND);
+        }
+
+        return locationVoteRepository.findByLocationPoll_Id(locationPoll.getId())
+                .stream()
+                .map(LocationVoteResponse::from)
+                .toList();
     }
 
     @Override

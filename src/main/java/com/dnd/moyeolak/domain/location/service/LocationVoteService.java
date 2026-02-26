@@ -8,7 +8,7 @@ import java.util.List;
 
 public interface LocationVoteService {
 
-    List<LocationVoteResponse> listLocationVote(Long locationPollId);
+    List<LocationVoteResponse> listLocationVote(String meetingId);
 
     Long createLocationVote(CreateLocationVoteRequest createLocationVoteRequest);
 

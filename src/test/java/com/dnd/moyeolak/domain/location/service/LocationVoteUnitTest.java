@@ -1,6 +1,8 @@
 package com.dnd.moyeolak.domain.location.service;
 
 import com.dnd.moyeolak.domain.location.dto.CreateLocationVoteRequest;
+import com.dnd.moyeolak.domain.location.dto.LocationVoteResponse;
+import com.dnd.moyeolak.domain.location.entity.LocationPoll;
 import com.dnd.moyeolak.domain.location.entity.LocationVote;
 import com.dnd.moyeolak.domain.location.repository.LocationVoteRepository;
 import com.dnd.moyeolak.domain.location.service.impl.LocationVoteServiceImpl;
@@ -20,6 +22,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -242,6 +245,68 @@ class LocationVoteUnitTest {
             assertThatThrownBy(() -> locationService.createLocationVote(request))
                     .isInstanceOf(BusinessException.class)
                     .hasFieldOrPropertyWithValue("errorCode", ErrorCode.DUPLICATE_LOCAL_STORAGE_KEY);
+        }
+    }
+
+    @Nested
+    @DisplayName("출발지 목록 조회")
+    class ListVotes {
+
+        @Test
+        @DisplayName("meetingId로 출발지를 조회한다")
+        void listLocationVote_byMeetingId_returnsResponses() {
+            // given
+            String meetingId = "meeting-id-123";
+            Meeting meeting = Meeting.ofId(meetingId);
+            LocationPoll locationPoll = LocationPoll.ofId(1L);
+            meeting.addPolls(null, locationPoll);
+
+            when(meetingRepository.findByIdWithAllAssociations(meetingId)).thenReturn(Optional.of(meeting));
+
+            LocationVote locationVote = LocationVote.of(
+                    locationPoll,
+                    "김철수",
+                    "서울시 강남구",
+                    new BigDecimal("37.4979502"),
+                    new BigDecimal("127.0276368")
+            );
+            when(locationVoteRepository.findByLocationPoll_Id(locationPoll.getId()))
+                    .thenReturn(List.of(locationVote));
+
+            // when
+            List<LocationVoteResponse> responses = locationService.listLocationVote(meetingId);
+
+            // then
+            assertThat(responses).hasSize(1);
+            assertThat(responses.getFirst().participantName()).isEqualTo("김철수");
+            assertThat(responses.getFirst().departureLocation()).isEqualTo("서울시 강남구");
+        }
+
+        @Test
+        @DisplayName("meetingId가 존재하지 않으면 예외가 발생한다")
+        void listLocationVote_meetingNotFound_throwsException() {
+            // given
+            String meetingId = "missing-id";
+            when(meetingRepository.findByIdWithAllAssociations(meetingId)).thenReturn(Optional.empty());
+
+            // when & then
+            assertThatThrownBy(() -> locationService.listLocationVote(meetingId))
+                    .isInstanceOf(BusinessException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.MEETING_NOT_FOUND);
+        }
+
+        @Test
+        @DisplayName("meetingId는 존재하지만 locationPoll이 없으면 예외가 발생한다")
+        void listLocationVote_withoutLocationPoll_throwsException() {
+            // given
+            String meetingId = "meeting-without-poll";
+            Meeting meeting = Meeting.ofId(meetingId);
+            when(meetingRepository.findByIdWithAllAssociations(meetingId)).thenReturn(Optional.of(meeting));
+
+            // when & then
+            assertThatThrownBy(() -> locationService.listLocationVote(meetingId))
+                    .isInstanceOf(BusinessException.class)
+                    .hasFieldOrPropertyWithValue("errorCode", ErrorCode.LOCATION_POLL_NOT_FOUND);
         }
     }
 }
