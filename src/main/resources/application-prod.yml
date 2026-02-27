@@ -33,6 +33,8 @@ google:
     key: ${GOOGLE_API_KEY}
 
 logging:
+  file:
+    path: /logs
   level:
     root: warn
     com.dnd.moyeolak: info
