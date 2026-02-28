@@ -14,6 +14,7 @@ import com.dnd.moyeolak.domain.participant.service.ParticipantService;
 import com.dnd.moyeolak.global.exception.BusinessException;
 import com.dnd.moyeolak.global.response.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -48,6 +49,7 @@ public class LocationVoteServiceImpl implements LocationVoteService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "midpointRecommendations", allEntries = true)
     public void updateLocationVote(Long locationVoteId, UpdateLocationVoteRequest request) {
         LocationVote locationVote = locationVoteRepository.findById(locationVoteId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.LOCATION_VOTE_NOT_FOUND));
@@ -56,6 +58,7 @@ public class LocationVoteServiceImpl implements LocationVoteService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "midpointRecommendations", allEntries = true)
     public Long createLocationVote(CreateLocationVoteRequest request) {
         Meeting meeting = meetingRepository.findByIdWithAllAssociations(request.meetingId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEETING_NOT_FOUND));
@@ -93,6 +96,7 @@ public class LocationVoteServiceImpl implements LocationVoteService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "midpointRecommendations", allEntries = true)
     public void deleteLocationVote(Long locationVoteId) {
         LocationVote locationVote = locationVoteRepository.findById(locationVoteId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.LOCATION_VOTE_NOT_FOUND));
