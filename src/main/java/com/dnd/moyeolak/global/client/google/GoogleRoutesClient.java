@@ -50,6 +50,9 @@ public class GoogleRoutesClient {
             List<LatLng> destinations,
             LocalDateTime departureTime
     ) {
+        if (origins.isEmpty() || destinations.isEmpty()) {
+            return List.of();
+        }
         TransitRouteResult[][] grid = new TransitRouteResult[origins.size()][destinations.size()];
         for (TransitRouteResult[] row : grid) {
             Arrays.fill(row, TransitRouteResult.unreachable());

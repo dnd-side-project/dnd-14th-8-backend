@@ -19,7 +19,7 @@ public record RouteMatrixEntry(
     }
 
     public long durationSeconds() {
-        return Long.parseLong(duration.replace("s", ""));
+        return (long) Double.parseDouble(duration.replace("s", ""));
     }
 
     public int safeDistanceMeters() {
