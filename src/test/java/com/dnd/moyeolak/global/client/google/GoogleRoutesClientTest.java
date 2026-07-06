@@ -1,5 +1,6 @@
 package com.dnd.moyeolak.global.client.google;
 
+import com.dnd.moyeolak.domain.location.dto.TransitRouteDetailDto;
 import com.dnd.moyeolak.domain.location.dto.TransitRouteResult;
 import com.dnd.moyeolak.global.client.google.config.GoogleRoutesApiConfig;
 import com.dnd.moyeolak.global.client.google.dto.LatLng;
@@ -26,6 +27,8 @@ class GoogleRoutesClientTest {
 
     private static final String MATRIX_URL =
             "https://routes.googleapis.com/distanceMatrix/v2:computeRouteMatrix";
+    private static final String ROUTES_URL =
+            "https://routes.googleapis.com/directions/v2:computeRoutes";
 
     private RestTemplate restTemplate;
     private MockRestServiceServer server;
@@ -133,5 +136,60 @@ class GoogleRoutesClientTest {
 
         assertThat(matrix.get(0).get(0).durationMinutes()).isEqualTo(21); // 1234.5s -> 1234s -> 21분
         server.verify();
+    }
+
+    @Test
+    @DisplayName("단건 대중교통 경로에서 소요시간·거리·요금·환승·도보거리를 파싱한다")
+    void computesTransitRouteDetail() {
+        server.expect(requestTo(ROUTES_URL))
+                .andExpect(method(HttpMethod.POST))
+                .andExpect(header("X-Goog-Api-Key", "test-google-key"))
+                .andExpect(jsonPath("$.travelMode").value("TRANSIT"))
+                .andExpect(jsonPath("$.origin.location.latLng.latitude").value(37.55))
+                .andRespond(withSuccess("""
+                        {
+                          "routes": [
+                            {
+                              "duration": "3600s",
+                              "distanceMeters": 21400,
+                              "legs": [
+                                {
+                                  "steps": [
+                                    {"travelMode": "WALK", "distanceMeters": 300},
+                                    {"travelMode": "TRANSIT", "distanceMeters": 12000},
+                                    {"travelMode": "WALK", "distanceMeters": 100},
+                                    {"travelMode": "TRANSIT", "distanceMeters": 9000}
+                                  ]
+                                }
+                              ],
+                              "travelAdvisory": {
+                                "transitFare": {"currencyCode": "KRW", "units": "1500"}
+                              }
+                            }
+                          ]
+                        }
+                        """, MediaType.APPLICATION_JSON));
+
+        TransitRouteDetailDto detail = client.computeTransitRoute(
+                new LatLng(37.55, 126.97), new LatLng(37.56, 126.80), null);
+
+        assertThat(detail.durationMinutes()).isEqualTo(60);
+        assertThat(detail.distanceMeters()).isEqualTo(21400);
+        assertThat(detail.fare()).isEqualTo(1500);
+        assertThat(detail.transferCount()).isEqualTo(1); // TRANSIT step 2개 - 1
+        assertThat(detail.walkDistanceMeters()).isEqualTo(400);
+        server.verify();
+    }
+
+    @Test
+    @DisplayName("단건 경로 응답이 비어있으면 GOOGLE_API_ERROR 예외가 발생한다")
+    void throwsWhenRouteResponseIsEmpty() {
+        server.expect(requestTo(ROUTES_URL))
+                .andRespond(withSuccess("{\"routes\": []}", MediaType.APPLICATION_JSON));
+
+        assertThatThrownBy(() -> client.computeTransitRoute(
+                new LatLng(37.55, 126.97), new LatLng(37.56, 126.80), null))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.GOOGLE_API_ERROR);
     }
 }

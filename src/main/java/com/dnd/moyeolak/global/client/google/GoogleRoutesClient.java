@@ -1,7 +1,10 @@
 package com.dnd.moyeolak.global.client.google;
 
+import com.dnd.moyeolak.domain.location.dto.TransitRouteDetailDto;
 import com.dnd.moyeolak.domain.location.dto.TransitRouteResult;
 import com.dnd.moyeolak.global.client.google.config.GoogleRoutesApiConfig;
+import com.dnd.moyeolak.global.client.google.dto.ComputeRoutesRequest;
+import com.dnd.moyeolak.global.client.google.dto.ComputeRoutesResponse;
 import com.dnd.moyeolak.global.client.google.dto.LatLng;
 import com.dnd.moyeolak.global.client.google.dto.RouteMatrixEntry;
 import com.dnd.moyeolak.global.client.google.dto.RouteMatrixRequest;
@@ -27,11 +30,16 @@ public class GoogleRoutesClient {
 
     private static final String MATRIX_URL =
             "https://routes.googleapis.com/distanceMatrix/v2:computeRouteMatrix";
+    private static final String ROUTES_URL =
+            "https://routes.googleapis.com/directions/v2:computeRoutes";
     private static final String TRAVEL_MODE_TRANSIT = "TRANSIT";
     // Routes API TRANSIT 매트릭스는 요청당 최대 100 엘리먼트(origins x destinations)
     private static final int MAX_MATRIX_ELEMENTS = 100;
     private static final String MATRIX_FIELD_MASK =
             "originIndex,destinationIndex,duration,distanceMeters,condition";
+    private static final String ROUTE_FIELD_MASK =
+            "routes.duration,routes.distanceMeters,routes.travelAdvisory.transitFare,"
+                    + "routes.legs.steps.travelMode,routes.legs.steps.distanceMeters";
     private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     private final RestTemplate restTemplate;
@@ -74,6 +82,38 @@ public class GoogleRoutesClient {
         }
 
         return Arrays.stream(grid).map(List::of).toList();
+    }
+
+    public TransitRouteDetailDto computeTransitRoute(
+            LatLng origin,
+            LatLng destination,
+            LocalDateTime departureTime
+    ) {
+        ComputeRoutesRequest body = ComputeRoutesRequest.of(
+                origin, destination, TRAVEL_MODE_TRANSIT, toRfc3339(departureTime));
+
+        ComputeRoutesResponse response;
+        try {
+            response = restTemplate.postForObject(
+                    ROUTES_URL, new HttpEntity<>(body, headers(ROUTE_FIELD_MASK)), ComputeRoutesResponse.class);
+        } catch (RestClientException e) {
+            log.error("Google Routes 단건 경로 호출 실패: {} - {}", e.getClass().getSimpleName(), e.getMessage());
+            throw new BusinessException(ErrorCode.GOOGLE_API_ERROR);
+        }
+
+        if (response == null || response.routes() == null || response.routes().isEmpty()) {
+            log.error("Google Routes 단건 경로 응답이 비어있습니다.");
+            throw new BusinessException(ErrorCode.GOOGLE_API_ERROR);
+        }
+
+        ComputeRoutesResponse.Route route = response.routes().getFirst();
+        return new TransitRouteDetailDto(
+                route.durationMinutes(),
+                route.safeDistanceMeters(),
+                route.fareWon(),
+                route.transferCount(),
+                route.walkDistanceMeters()
+        );
     }
 
     private RouteMatrixEntry[] requestMatrix(
