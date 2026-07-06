@@ -21,6 +21,10 @@ spring:
     init:
       mode: always
 
+google:
+  api:
+    key: ${GOOGLE_API_KEY}
+
 kakao:
   api:
     key: ${KAKAO_API_KEY}

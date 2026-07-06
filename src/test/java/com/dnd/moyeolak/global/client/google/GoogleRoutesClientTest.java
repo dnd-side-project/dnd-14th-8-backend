@@ -1,0 +1,119 @@
+package com.dnd.moyeolak.global.client.google;
+
+import com.dnd.moyeolak.domain.location.dto.TransitRouteResult;
+import com.dnd.moyeolak.global.client.google.config.GoogleRoutesApiConfig;
+import com.dnd.moyeolak.global.client.google.dto.LatLng;
+import com.dnd.moyeolak.global.exception.BusinessException;
+import com.dnd.moyeolak.global.response.ErrorCode;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.List;
+import java.util.stream.IntStream;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.*;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
+
+class GoogleRoutesClientTest {
+
+    private static final String MATRIX_URL =
+            "https://routes.googleapis.com/distanceMatrix/v2:computeRouteMatrix";
+
+    private RestTemplate restTemplate;
+    private MockRestServiceServer server;
+    private GoogleRoutesClient client;
+
+    @BeforeEach
+    void setUp() {
+        restTemplate = new RestTemplate();
+        server = MockRestServiceServer.bindTo(restTemplate).build();
+        client = new GoogleRoutesClient(restTemplate, new GoogleRoutesApiConfig("test-google-key"));
+    }
+
+    @Test
+    @DisplayName("TRANSIT 매트릭스를 1회 호출하고 originIndex/destinationIndex 그리드로 파싱한다")
+    void computesTransitMatrixInSingleRequest() {
+        server.expect(requestTo(MATRIX_URL))
+                .andExpect(method(HttpMethod.POST))
+                .andExpect(header("X-Goog-Api-Key", "test-google-key"))
+                .andExpect(header("X-Goog-FieldMask",
+                        "originIndex,destinationIndex,duration,distanceMeters,condition"))
+                .andExpect(jsonPath("$.travelMode").value("TRANSIT"))
+                .andExpect(jsonPath("$.origins.length()").value(2))
+                .andExpect(jsonPath("$.destinations.length()").value(2))
+                .andExpect(jsonPath("$.origins[0].waypoint.location.latLng.latitude").value(37.5))
+                .andRespond(withSuccess("""
+                        [
+                          {"originIndex":0,"destinationIndex":0,"condition":"ROUTE_EXISTS","distanceMeters":9000,"duration":"1200s"},
+                          {"originIndex":0,"destinationIndex":1,"condition":"ROUTE_NOT_FOUND"},
+                          {"originIndex":1,"destinationIndex":0,"condition":"ROUTE_EXISTS","distanceMeters":10000,"duration":"1800s"},
+                          {"originIndex":1,"destinationIndex":1,"condition":"ROUTE_EXISTS","distanceMeters":15000,"duration":"4800s"}
+                        ]
+                        """, MediaType.APPLICATION_JSON));
+
+        List<List<TransitRouteResult>> matrix = client.computeTransitMatrix(
+                List.of(new LatLng(37.5, 127.0), new LatLng(37.55, 126.95)),
+                List.of(new LatLng(37.5495, 126.9137), new LatLng(37.4979, 127.0276)),
+                null);
+
+        assertThat(matrix).hasSize(2);
+        assertThat(matrix.get(0).get(0).durationMinutes()).isEqualTo(20);
+        assertThat(matrix.get(0).get(0).distanceMeters()).isEqualTo(9000);
+        assertThat(matrix.get(0).get(0).reachable()).isTrue();
+        assertThat(matrix.get(0).get(1).reachable()).isFalse();
+        assertThat(matrix.get(1).get(0).durationMinutes()).isEqualTo(30);
+        assertThat(matrix.get(1).get(1).durationMinutes()).isEqualTo(80);
+        server.verify();
+    }
+
+    @Test
+    @DisplayName("엘리먼트가 100개를 넘으면 origin 기준으로 분할 요청하고 인덱스를 보정한다")
+    void chunksRequestsWhenElementsExceedLimit() {
+        // 11 origins x 10 destinations = 110 elements -> 10 + 1 origin으로 2회 요청
+        server.expect(requestTo(MATRIX_URL))
+                .andExpect(jsonPath("$.origins.length()").value(10))
+                .andRespond(withSuccess("""
+                        [{"originIndex":0,"destinationIndex":0,"condition":"ROUTE_EXISTS","distanceMeters":5000,"duration":"600s"}]
+                        """, MediaType.APPLICATION_JSON));
+        server.expect(requestTo(MATRIX_URL))
+                .andExpect(jsonPath("$.origins.length()").value(1))
+                .andRespond(withSuccess("""
+                        [{"originIndex":0,"destinationIndex":9,"condition":"ROUTE_EXISTS","distanceMeters":7000,"duration":"900s"}]
+                        """, MediaType.APPLICATION_JSON));
+
+        List<LatLng> origins = IntStream.range(0, 11)
+                .mapToObj(i -> new LatLng(37.5 + i * 0.01, 127.0)).toList();
+        List<LatLng> destinations = IntStream.range(0, 10)
+                .mapToObj(i -> new LatLng(37.4 + i * 0.01, 126.9)).toList();
+
+        List<List<TransitRouteResult>> matrix = client.computeTransitMatrix(origins, destinations, null);
+
+        assertThat(matrix).hasSize(11);
+        assertThat(matrix.get(0).get(0).durationMinutes()).isEqualTo(10);
+        // 두 번째 요청의 originIndex 0은 전체 그리드에서 10번 origin이다
+        assertThat(matrix.get(10).get(9).durationMinutes()).isEqualTo(15);
+        assertThat(matrix.get(10).get(0).reachable()).isFalse(); // 응답에 없는 엘리먼트는 도달 불가
+        server.verify();
+    }
+
+    @Test
+    @DisplayName("매트릭스 요청 자체가 실패하면 GOOGLE_API_ERROR 예외가 발생한다")
+    void throwsWhenMatrixRequestFails() {
+        server.expect(requestTo(MATRIX_URL)).andRespond(withServerError());
+
+        assertThatThrownBy(() -> client.computeTransitMatrix(
+                List.of(new LatLng(37.5, 127.0)),
+                List.of(new LatLng(37.4979, 127.0276)),
+                null))
+                .isInstanceOf(BusinessException.class)
+                .hasFieldOrPropertyWithValue("errorCode", ErrorCode.GOOGLE_API_ERROR);
+    }
+}
