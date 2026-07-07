@@ -139,6 +139,24 @@ class GoogleRoutesClientTest {
     }
 
     @Test
+    @DisplayName("과거 departureTime은 요청에서 생략되어 '지금 출발'로 처리된다")
+    void omitsPastDepartureTime() {
+        server.expect(requestTo(MATRIX_URL))
+                .andExpect(jsonPath("$.departureTime").doesNotExist())
+                .andRespond(withSuccess("""
+                        [{"originIndex":0,"destinationIndex":0,"condition":"ROUTE_EXISTS","distanceMeters":5000,"duration":"600s"}]
+                        """, MediaType.APPLICATION_JSON));
+
+        List<List<TransitRouteResult>> matrix = client.computeTransitMatrix(
+                List.of(new LatLng(37.5, 127.0)),
+                List.of(new LatLng(37.4979, 127.0276)),
+                java.time.LocalDateTime.of(2020, 1, 1, 9, 0));
+
+        assertThat(matrix.get(0).get(0).reachable()).isTrue();
+        server.verify();
+    }
+
+    @Test
     @DisplayName("단건 대중교통 경로에서 소요시간·거리·요금·환승·도보거리를 파싱한다")
     void computesTransitRouteDetail() {
         server.expect(requestTo(ROUTES_URL))

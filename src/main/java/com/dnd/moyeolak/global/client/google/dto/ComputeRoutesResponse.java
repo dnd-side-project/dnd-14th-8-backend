@@ -34,7 +34,11 @@ public record ComputeRoutesResponse(List<Route> routes) {
                     || travelAdvisory.transitFare().units() == null) {
                 return 0;
             }
-            return Integer.parseInt(travelAdvisory.transitFare().units());
+            try {
+                return Integer.parseInt(travelAdvisory.transitFare().units());
+            } catch (NumberFormatException e) {
+                return 0;
+            }
         }
 
         public int transferCount() {

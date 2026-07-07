@@ -19,6 +19,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Arrays;
@@ -150,6 +151,11 @@ public class GoogleRoutesClient {
         if (departureTime == null) {
             return null;
         }
-        return departureTime.atZone(KST).toInstant().toString();
+        Instant instant = departureTime.atZone(KST).toInstant();
+        // Google TRANSIT은 과거 departureTime을 400으로 거부한다 — 과거 시각은 "지금 출발"로 처리
+        if (instant.isBefore(Instant.now())) {
+            return null;
+        }
+        return instant.toString();
     }
 }
