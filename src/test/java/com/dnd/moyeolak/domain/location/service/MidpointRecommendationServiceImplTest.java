@@ -380,6 +380,73 @@ class MidpointRecommendationServiceImplTest {
         }
 
         @Test
+        @DisplayName("출발지가 같은 역 근처에 모여 있으면 중심점에 가장 가까운 역을 우선 추천한다")
+        void prefersNearestStationToCenterWhenDeparturesAreClose() {
+            mockMeetingWithLocationPoll();
+            LocationVote vote1 = createMockVote("37.5572", "126.9245", "참가자A", "홍대입구역");
+            LocationVote vote2 = createMockVote("37.5573", "126.9246", "참가자B", "홍대입구역");
+            when(locationVoteRepository.findByLocationPoll_Id(1L)).thenReturn(List.of(vote1, vote2));
+            when(stationRepository.calculateCentroid(any())).thenThrow(new RuntimeException("PostGIS 미지원"));
+            List<Station> stations = List.of(
+                    createMockStation(1L, "신촌역", "2호선", 37.5551, 126.9368),
+                    createMockStation(2L, "합정역", "2호선", 37.5495, 126.9137),
+                    createMockStation(3L, "홍대입구역", "2호선", 37.5572, 126.9245)
+            );
+            when(stationRepository.findNearbyStations(anyDouble(), anyDouble(), anyInt(), anyInt()))
+                    .thenReturn(stations);
+            when(googleRoutesClient.computeTransitMatrix(anyList(), anyList(), any()))
+                    .thenReturn(List.of(
+                            List.of(new TransitRouteResult(4, 900, true), new TransitRouteResult(5, 1000, true),
+                                    new TransitRouteResult(12, 100, true)),
+                            List.of(new TransitRouteResult(4, 900, true), new TransitRouteResult(5, 1000, true),
+                                    new TransitRouteResult(12, 100, true))
+                    ));
+            when(kakaoDirectionsClient.requestDrivingRoute(anyDouble(), anyDouble(), anyDouble(), anyDouble(), any()))
+                    .thenReturn(new KakaoDirectionsResponse.Summary(1200, 300, null));
+
+            MidpointRecommendationResponse response =
+                    midpointRecommendationService.calculateMidpointRecommendations(MEETING_ID, null);
+
+            assertThat(response.recommendations()).extracting("stationName")
+                    .containsExactly("홍대입구역", "신촌역", "합정역");
+            assertThat(response.resultType().name()).isEqualTo("NEARBY_DEPARTURES");
+        }
+
+        @Test
+        @DisplayName("출발지가 역 바로 근처이면 대중교통 매트릭스가 누락되어도 도보 경로로 보정한다")
+        void treatsVeryCloseUnreachableTransitRoutesAsWalkable() {
+            mockMeetingWithLocationPoll();
+            LocationVote vote1 = createMockVote("37.5572", "126.9245", "참가자A", "홍대입구역");
+            LocationVote vote2 = createMockVote("37.5573", "126.9246", "참가자B", "홍대입구역");
+            when(locationVoteRepository.findByLocationPoll_Id(1L)).thenReturn(List.of(vote1, vote2));
+            when(stationRepository.calculateCentroid(any())).thenThrow(new RuntimeException("PostGIS 미지원"));
+            List<Station> stations = List.of(
+                    createMockStation(1L, "신촌역", "2호선", 37.5551, 126.9368),
+                    createMockStation(2L, "합정역", "2호선", 37.5495, 126.9137),
+                    createMockStation(3L, "홍대입구역", "2호선", 37.5572, 126.9245)
+            );
+            when(stationRepository.findNearbyStations(anyDouble(), anyDouble(), anyInt(), anyInt()))
+                    .thenReturn(stations);
+            when(googleRoutesClient.computeTransitMatrix(anyList(), anyList(), any()))
+                    .thenReturn(List.of(
+                            List.of(new TransitRouteResult(4, 900, true), new TransitRouteResult(5, 1000, true),
+                                    TransitRouteResult.unreachable()),
+                            List.of(new TransitRouteResult(4, 900, true), new TransitRouteResult(5, 1000, true),
+                                    TransitRouteResult.unreachable())
+                    ));
+            when(kakaoDirectionsClient.requestDrivingRoute(anyDouble(), anyDouble(), anyDouble(), anyDouble(), any()))
+                    .thenReturn(new KakaoDirectionsResponse.Summary(1200, 300, null));
+
+            MidpointRecommendationResponse response =
+                    midpointRecommendationService.calculateMidpointRecommendations(MEETING_ID, null);
+
+            StationRecommendationDto first = response.recommendations().getFirst();
+            assertThat(first.stationName()).isEqualTo("홍대입구역");
+            assertThat(first.routes()).extracting("transitReachable").containsExactly(true, true);
+            assertThat(first.routes()).extracting("transitDuration").containsExactly(1, 1);
+        }
+
+        @Test
         @DisplayName("출발지가 멀리 떨어져 있으면 일반 중간지점 결과 타입을 반환한다")
         void returnsNormalResultTypeWhenDeparturesAreFarApart() {
             mockMeetingWithLocationPoll();

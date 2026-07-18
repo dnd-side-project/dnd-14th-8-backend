@@ -48,6 +48,8 @@ public class MidpointRecommendationServiceImpl implements MidpointRecommendation
     private static final int TOP_RECOMMENDATIONS = 3;
     private static final int NEARBY_MAX_ROUTE_DURATION_MINUTES = 15;
     private static final int NEARBY_MAX_DEPARTURE_DISTANCE_METERS = 2000;
+    private static final int WALKABLE_STATION_DISTANCE_METERS = 700;
+    private static final int WALKING_SPEED_METERS_PER_MINUTE = 80;
     // KakaoDirectionsClient의 Semaphore 허용치(5)에 맞춘 병렬도 — 더 늘려도 세마포어에서 대기만 한다
     private static final int DRIVING_ENRICHMENT_THREADS = 5;
 
@@ -192,7 +194,9 @@ public class MidpointRecommendationServiceImpl implements MidpointRecommendation
             Station station = stations.get(stationIdx);
             List<TransitRouteResult> transitRoutes = new ArrayList<>();
             for (int voteIdx = 0; voteIdx < votes.size(); voteIdx++) {
-                transitRoutes.add(transitMatrix.get(voteIdx).get(stationIdx));
+                LocationVote vote = votes.get(voteIdx);
+                TransitRouteResult transitRoute = transitMatrix.get(voteIdx).get(stationIdx);
+                transitRoutes.add(resolveTransitRoute(vote, station, transitRoute));
             }
 
             List<TransitRouteResult> reachableRoutes = transitRoutes.stream()
@@ -224,13 +228,41 @@ public class MidpointRecommendationServiceImpl implements MidpointRecommendation
             throw new BusinessException(ErrorCode.NO_REACHABLE_STATIONS);
         }
 
+        Comparator<StationEvaluation> comparator = Comparator.comparingInt(StationEvaluation::unreachableTransitRouteCount);
+        if (areDeparturesClose(votes)) {
+            comparator = comparator
+                    .thenComparingInt(StationEvaluation::distanceFromCenter)
+                    .thenComparingDouble(StationEvaluation::avgTransitDuration);
+        } else {
+            comparator = comparator
+                    .thenComparingDouble(StationEvaluation::avgTransitDuration)
+                    .thenComparingInt(StationEvaluation::distanceFromCenter);
+        }
+
         // 도달 불가 참가자가 적은 역이 우선 — 일부만 갈 수 있는 역이 짧은 평균만으로 1위가 되지 않도록
         return evaluations.stream()
-                .sorted(Comparator.comparingInt(StationEvaluation::unreachableTransitRouteCount)
-                        .thenComparingDouble(StationEvaluation::avgTransitDuration)
-                        .thenComparingInt(StationEvaluation::distanceFromCenter))
+                .sorted(comparator)
                 .limit(TOP_RECOMMENDATIONS)
                 .toList();
+    }
+
+    private TransitRouteResult resolveTransitRoute(LocationVote vote, Station station, TransitRouteResult transitRoute) {
+        if (transitRoute.reachable()) {
+            return transitRoute;
+        }
+
+        int distanceToStation = haversineDistance(
+                vote.getDepartureLat().doubleValue(),
+                vote.getDepartureLng().doubleValue(),
+                station.getLatitude(),
+                station.getLongitude()
+        );
+        if (distanceToStation > WALKABLE_STATION_DISTANCE_METERS) {
+            return transitRoute;
+        }
+
+        int walkingDuration = Math.max(1, (int) Math.ceil(distanceToStation / (double) WALKING_SPEED_METERS_PER_MINUTE));
+        return new TransitRouteResult(walkingDuration, distanceToStation, true);
     }
 
     private List<StationRecommendationDto> buildRecommendations(
