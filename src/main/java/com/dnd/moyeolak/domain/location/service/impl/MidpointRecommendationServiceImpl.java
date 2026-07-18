@@ -247,10 +247,6 @@ public class MidpointRecommendationServiceImpl implements MidpointRecommendation
     }
 
     private TransitRouteResult resolveTransitRoute(LocationVote vote, Station station, TransitRouteResult transitRoute) {
-        if (transitRoute.reachable()) {
-            return transitRoute;
-        }
-
         int distanceToStation = haversineDistance(
                 vote.getDepartureLat().doubleValue(),
                 vote.getDepartureLng().doubleValue(),
@@ -262,6 +258,10 @@ public class MidpointRecommendationServiceImpl implements MidpointRecommendation
         }
 
         int walkingDuration = Math.max(1, (int) Math.ceil(distanceToStation / (double) WALKING_SPEED_METERS_PER_MINUTE));
+        if (transitRoute.reachable() && transitRoute.durationMinutes() <= walkingDuration) {
+            return transitRoute;
+        }
+
         return new TransitRouteResult(walkingDuration, distanceToStation, true);
     }
 
