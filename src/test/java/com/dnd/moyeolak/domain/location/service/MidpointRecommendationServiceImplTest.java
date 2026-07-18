@@ -349,8 +349,39 @@ class MidpointRecommendationServiceImplTest {
         }
 
         @Test
-        @DisplayName("추천 후보 간 평균 시간이 벌어지면 일반 중간지점 결과 타입을 반환한다")
-        void returnsNormalResultTypeWhenRecommendationDurationsDiffer() {
+        @DisplayName("출발지가 가까우면 추천 후보 간 평균 시간이 벌어져도 근거리 출발지 결과 타입을 반환한다")
+        void returnsNearbyDeparturesResultTypeWhenDeparturesAreCloseEvenIfRecommendationDurationsDiffer() {
+            mockMeetingWithLocationPoll();
+            LocationVote vote1 = createMockVote("37.5727", "127.0164", "참가자A", "동묘앞역");
+            LocationVote vote2 = createMockVote("37.5714", "127.0095", "참가자B", "동대문역");
+            when(locationVoteRepository.findByLocationPoll_Id(1L)).thenReturn(List.of(vote1, vote2));
+            when(stationRepository.calculateCentroid(any())).thenThrow(new RuntimeException("PostGIS 미지원"));
+            List<Station> stations = List.of(
+                    createMockStation(1L, "동묘앞역", "1호선", 37.5732, 127.0165),
+                    createMockStation(2L, "동대문역", "1호선", 37.5714, 127.0095),
+                    createMockStation(3L, "종로5가역", "1호선", 37.5709, 127.0019)
+            );
+            when(stationRepository.findNearbyStations(anyDouble(), anyDouble(), anyInt(), anyInt()))
+                    .thenReturn(stations);
+            when(googleRoutesClient.computeTransitMatrix(anyList(), anyList(), any()))
+                    .thenReturn(List.of(
+                            List.of(new TransitRouteResult(6, 500, true), new TransitRouteResult(8, 800, true),
+                                    new TransitRouteResult(18, 1600, true)),
+                            List.of(new TransitRouteResult(7, 600, true), new TransitRouteResult(5, 400, true),
+                                    new TransitRouteResult(20, 1800, true))
+                    ));
+            when(kakaoDirectionsClient.requestDrivingRoute(anyDouble(), anyDouble(), anyDouble(), anyDouble(), any()))
+                    .thenReturn(new KakaoDirectionsResponse.Summary(1500, 360, null));
+
+            MidpointRecommendationResponse response =
+                    midpointRecommendationService.calculateMidpointRecommendations(MEETING_ID, null);
+
+            assertThat(response.resultType().name()).isEqualTo("NEARBY_DEPARTURES");
+        }
+
+        @Test
+        @DisplayName("출발지가 멀리 떨어져 있으면 일반 중간지점 결과 타입을 반환한다")
+        void returnsNormalResultTypeWhenDeparturesAreFarApart() {
             mockMeetingWithLocationPoll();
             LocationVote vote1 = createMockVote("37.5000", "127.0000", "참가자A", "서울시 강남구");
             LocationVote vote2 = createMockVote("37.6500", "126.7700", "참가자B", "경기 고양시");

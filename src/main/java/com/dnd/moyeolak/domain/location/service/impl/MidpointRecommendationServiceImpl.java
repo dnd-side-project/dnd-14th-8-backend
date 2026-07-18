@@ -47,7 +47,7 @@ public class MidpointRecommendationServiceImpl implements MidpointRecommendation
     private static final int MAX_CANDIDATE_STATIONS = 10;
     private static final int TOP_RECOMMENDATIONS = 3;
     private static final int NEARBY_MAX_ROUTE_DURATION_MINUTES = 15;
-    private static final int NEARBY_MAX_AVG_DURATION_GAP_MINUTES = 5;
+    private static final int NEARBY_MAX_DEPARTURE_DISTANCE_METERS = 2000;
     // KakaoDirectionsClient의 Semaphore 허용치(5)에 맞춘 병렬도 — 더 늘려도 세마포어에서 대기만 한다
     private static final int DRIVING_ENRICHMENT_THREADS = 5;
 
@@ -101,7 +101,7 @@ public class MidpointRecommendationServiceImpl implements MidpointRecommendation
 
         // 6. Top 3에만 Kakao 자동차 경로 보강 후 응답 조립
         List<StationRecommendationDto> recommendations = buildRecommendations(votes, topStations, departureTime);
-        MidpointResultType resultType = resolveResultType(recommendations);
+        MidpointResultType resultType = resolveResultType(votes, recommendations);
 
         return new MidpointRecommendationResponse(
                 centerPoint, recommendations, departureTime,
@@ -109,8 +109,8 @@ public class MidpointRecommendationServiceImpl implements MidpointRecommendation
         );
     }
 
-    private MidpointResultType resolveResultType(List<StationRecommendationDto> recommendations) {
-        if (recommendations.size() < 2) {
+    private MidpointResultType resolveResultType(List<LocationVote> votes, List<StationRecommendationDto> recommendations) {
+        if (votes.size() < 2 || recommendations.isEmpty()) {
             return MidpointResultType.NORMAL;
         }
 
@@ -119,22 +119,34 @@ public class MidpointRecommendationServiceImpl implements MidpointRecommendation
                 .allMatch(RouteDto::transitReachable);
         boolean allRoutesShort = topStation.routes().stream()
                 .allMatch(route -> route.transitDuration() <= NEARBY_MAX_ROUTE_DURATION_MINUTES);
-        double minAvgDuration = recommendations.stream()
-                .mapToDouble(StationRecommendationDto::avgTransitDuration)
-                .min()
-                .orElse(Double.MAX_VALUE);
-        double maxAvgDuration = recommendations.stream()
-                .mapToDouble(StationRecommendationDto::avgTransitDuration)
-                .max()
-                .orElse(Double.MAX_VALUE);
+        boolean departuresClose = areDeparturesClose(votes);
 
         if (allRoutesReachable
                 && allRoutesShort
-                && maxAvgDuration - minAvgDuration <= NEARBY_MAX_AVG_DURATION_GAP_MINUTES) {
+                && departuresClose) {
             return MidpointResultType.NEARBY_DEPARTURES;
         }
 
         return MidpointResultType.NORMAL;
+    }
+
+    private boolean areDeparturesClose(List<LocationVote> votes) {
+        for (int i = 0; i < votes.size(); i++) {
+            LocationVote source = votes.get(i);
+            for (int j = i + 1; j < votes.size(); j++) {
+                LocationVote target = votes.get(j);
+                int distance = haversineDistance(
+                        source.getDepartureLat().doubleValue(),
+                        source.getDepartureLng().doubleValue(),
+                        target.getDepartureLat().doubleValue(),
+                        target.getDepartureLng().doubleValue()
+                );
+                if (distance > NEARBY_MAX_DEPARTURE_DISTANCE_METERS) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     private CenterPointDto calculateCentroid(List<LocationVote> votes) {
