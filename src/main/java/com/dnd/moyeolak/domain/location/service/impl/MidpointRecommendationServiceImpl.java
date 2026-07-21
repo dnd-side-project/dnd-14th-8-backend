@@ -12,6 +12,7 @@ import com.dnd.moyeolak.global.client.google.dto.LatLng;
 import com.dnd.moyeolak.global.client.kakao.KakaoDirectionsClient;
 import com.dnd.moyeolak.global.client.kakao.dto.KakaoDirectionsResponse;
 import com.dnd.moyeolak.global.exception.BusinessException;
+import com.dnd.moyeolak.global.ratelimit.MidpointRecommendationUsageLimiter;
 import com.dnd.moyeolak.global.response.ErrorCode;
 import com.dnd.moyeolak.global.station.entity.Station;
 import com.dnd.moyeolak.global.station.repository.StationRepository;
@@ -41,6 +42,7 @@ public class MidpointRecommendationServiceImpl implements MidpointRecommendation
     private final StationRepository stationRepository;
     private final GoogleRoutesClient googleRoutesClient;
     private final KakaoDirectionsClient kakaoDirectionsClient;
+    private final MidpointRecommendationUsageLimiter usageLimiter;
 
     private static final int SEARCH_RADIUS_METERS = 5000;
     private static final int MAX_CANDIDATE_STATIONS = 10;
@@ -50,7 +52,11 @@ public class MidpointRecommendationServiceImpl implements MidpointRecommendation
 
     @Override
     @Cacheable(value = "midpointRecommendations", key = "#meetingId + '_' + #departureTime")
-    public MidpointRecommendationResponse calculateMidpointRecommendations(String meetingId, LocalDateTime departureTime) {
+    public MidpointRecommendationResponse calculateMidpointRecommendations(
+            String meetingId,
+            LocalDateTime departureTime,
+            String clientIp
+    ) {
         // 1. 출발지 데이터 조회
         Meeting meeting = meetingService.get(meetingId);
         LocationPoll locationPoll = meeting.getLocationPoll();
@@ -81,6 +87,8 @@ public class MidpointRecommendationServiceImpl implements MidpointRecommendation
             throw new BusinessException(ErrorCode.NO_NEARBY_STATIONS);
         }
         log.info("후보 지하철역 {}개 검색 완료", candidateStations.size());
+
+        usageLimiter.checkAndIncrease(meetingId, clientIp);
 
         // 4. Google 매트릭스 1회로 전 후보역의 대중교통 시간 계산
         List<List<TransitRouteResult>> transitMatrix = googleRoutesClient.computeTransitMatrix(
