@@ -1,5 +1,6 @@
 package com.dnd.moyeolak.global.metrics;
 
+import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.micrometer.core.instrument.distribution.ValueAtPercentile;
@@ -81,9 +82,8 @@ public class MetricsSnapshotReader {
     }
 
     private long counter(String name, String... tags) {
-        return Math.round(registry.find(name).tags(tags).counter() == null
-                ? 0.0
-                : registry.find(name).tags(tags).counter().count());
+        Counter counter = registry.find(name).tags(tags).counter();
+        return counter == null ? 0L : Math.round(counter.count());
     }
 
     private TimerValues timerValues(ExternalApi api) {
