@@ -254,6 +254,35 @@ class MeetingServiceUnitTest {
         assertThat(responses.getFirst().isHost()).isFalse();
     }
 
+    @Test
+    @DisplayName("내 모임 조회 시 최대 5개까지만 반환한다")
+    void findMyMeetings_returnsUpToFiveMeetings() {
+        // given
+        String localStorageKey = "my-session-key";
+        List<Participant> participants = new ArrayList<>();
+
+        for (int i = 1; i <= 6; i++) {
+            Meeting meeting = Meeting.of(4);
+            ReflectionTestUtils.setField(meeting, "id", "meeting-id-" + i);
+            ReflectionTestUtils.setField(meeting, "createdAt", LocalDateTime.of(2026, 7, 24 - i, 14, 10));
+
+            Participant host = Participant.hostOf(meeting, localStorageKey, "호스트" + i);
+            meeting.addParticipant(host);
+            participants.add(host);
+        }
+
+        when(participantRepository.findAllByLocalStorageKeyWithMeetingAndParticipants(localStorageKey))
+                .thenReturn(participants);
+
+        // when
+        List<MyMeetingResponse> responses = meetingService.findMyMeetings(localStorageKey);
+
+        // then
+        assertThat(responses).hasSize(5);
+        assertThat(responses).extracting(MyMeetingResponse::meetingId)
+                .containsExactly("meeting-id-1", "meeting-id-2", "meeting-id-3", "meeting-id-4", "meeting-id-5");
+    }
+
     private Meeting createMeetingWithAllAssociations() {
         // Meeting 생성
         Meeting meeting = Meeting.of(10);
