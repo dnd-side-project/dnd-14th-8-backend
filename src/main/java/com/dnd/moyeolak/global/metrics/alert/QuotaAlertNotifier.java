@@ -45,11 +45,11 @@ public class QuotaAlertNotifier {
             if (remainingPercent >= properties.getThresholdPercent()) {
                 continue;
             }
-            if (today.equals(lastAlertedDate.get(summary.api()))) {
-                continue;
+            LocalDate previousAlertDate = lastAlertedDate.put(summary.api(), today);
+            if (today.equals(previousAlertDate)) {
+                continue; // 오늘 이미 알림을 보냈거나(또는 경쟁 스레드가 방금 기록함) - put은 어느 쪽이든 오늘 날짜로 기록됨
             }
             slackWebhookClient.send(alertMessage(summary, remainingPercent));
-            lastAlertedDate.put(summary.api(), today);
         }
     }
 

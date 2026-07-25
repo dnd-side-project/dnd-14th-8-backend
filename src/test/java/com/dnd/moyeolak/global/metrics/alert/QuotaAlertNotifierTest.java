@@ -7,6 +7,7 @@ import com.dnd.moyeolak.global.metrics.stats.dto.ExternalApiSummaryResponse.ApiS
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -95,9 +96,8 @@ class QuotaAlertNotifierTest {
         notifier.checkAndNotify();
 
         Clock nextDay = Clock.fixed(Instant.parse("2026-07-27T01:00:00Z"), KST);
-        QuotaAlertNotifier notifierNextDay =
-                new QuotaAlertNotifier(statsService, slackWebhookClient, properties, nextDay);
-        notifierNextDay.checkAndNotify();
+        ReflectionTestUtils.setField(notifier, "clock", nextDay);
+        notifier.checkAndNotify();
 
         verify(slackWebhookClient, times(2)).send(anyString());
     }
