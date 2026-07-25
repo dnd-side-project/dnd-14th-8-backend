@@ -131,7 +131,6 @@ public class MeetingServiceImpl implements MeetingService {
         }
 
         return participantRepository.findAllByLocalStorageKeyWithMeetingAndParticipants(localStorageKey).stream()
-                .limit(RECENT_MEETING_LIMIT)
                 .map(participant -> {
                     Meeting meeting = participant.getMeeting();
                     String hostName = meeting.getParticipants().stream()
