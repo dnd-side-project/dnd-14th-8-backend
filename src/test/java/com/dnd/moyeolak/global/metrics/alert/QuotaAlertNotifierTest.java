@@ -37,6 +37,7 @@ class QuotaAlertNotifierTest {
         properties.setThresholdPercent(20.0);
         clock = Clock.fixed(Instant.parse("2026-07-26T01:00:00Z"), KST);
         notifier = new QuotaAlertNotifier(statsService, slackWebhookClient, properties, clock);
+        when(slackWebhookClient.send(anyString())).thenReturn(true);
     }
 
     private ApiSummary summary(String api, Long dailyQuota, Long quotaRemaining) {
@@ -97,6 +98,19 @@ class QuotaAlertNotifierTest {
 
         Clock nextDay = Clock.fixed(Instant.parse("2026-07-27T01:00:00Z"), KST);
         ReflectionTestUtils.setField(notifier, "clock", nextDay);
+        notifier.checkAndNotify();
+
+        verify(slackWebhookClient, times(2)).send(anyString());
+    }
+
+    @Test
+    @DisplayName("Slack 전송이 실패하면 같은 날에도 다음 주기에 재시도한다")
+    void retriesWithinSameDayWhenSendFails() {
+        when(statsService.summary()).thenReturn(new ExternalApiSummaryResponse(
+                LocalDateTime.now(clock), List.of(summary("odsay", 1000L, 100L))));
+        when(slackWebhookClient.send(anyString())).thenReturn(false);
+
+        notifier.checkAndNotify();
         notifier.checkAndNotify();
 
         verify(slackWebhookClient, times(2)).send(anyString());

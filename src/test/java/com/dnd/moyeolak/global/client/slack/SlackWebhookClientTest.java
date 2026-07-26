@@ -9,9 +9,11 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestTemplate;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.content;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.http.HttpMethod.POST;
@@ -42,9 +44,10 @@ class SlackWebhookClientTest {
                 .andExpect(content().string(containsString("hello slack")))
                 .andRespond(withSuccess("ok", MediaType.TEXT_PLAIN));
 
-        client.send("hello slack");
+        boolean sent = client.send("hello slack");
 
         server.verify();
+        assertThat(sent).isTrue();
     }
 
     @Test
@@ -52,8 +55,22 @@ class SlackWebhookClientTest {
     void doesNothingWhenWebhookUrlBlank() {
         ReflectionTestUtils.setField(config, "webhookUrl", "");
 
-        client.send("hello slack");
+        boolean sent = client.send("hello slack");
 
         server.verify();
+        assertThat(sent).isTrue();
+    }
+
+    @Test
+    @DisplayName("Slack 서버가 오류를 응답하면 예외를 던지지 않고 false를 반환한다")
+    void returnsFalseWhenServerRespondsWithError() {
+        server.expect(requestTo(WEBHOOK_URL))
+                .andExpect(method(POST))
+                .andRespond(withServerError());
+
+        boolean sent = client.send("hello slack");
+
+        server.verify();
+        assertThat(sent).isFalse();
     }
 }

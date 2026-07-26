@@ -49,7 +49,10 @@ public class QuotaAlertNotifier {
             if (today.equals(previousAlertDate)) {
                 continue; // 오늘 이미 알림을 보냈거나(또는 경쟁 스레드가 방금 기록함) - put은 어느 쪽이든 오늘 날짜로 기록됨
             }
-            slackWebhookClient.send(alertMessage(summary, remainingPercent));
+            boolean sent = slackWebhookClient.send(alertMessage(summary, remainingPercent));
+            if (!sent) {
+                lastAlertedDate.remove(summary.api());
+            }
         }
     }
 

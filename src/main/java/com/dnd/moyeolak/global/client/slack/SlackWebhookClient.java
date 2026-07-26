@@ -7,7 +7,6 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Map;
@@ -27,19 +26,21 @@ public class SlackWebhookClient {
         this.slackApiConfig = slackApiConfig;
     }
 
-    public void send(String message) {
+    public boolean send(String message) {
         String webhookUrl = slackApiConfig.getWebhookUrl();
         if (webhookUrl == null || webhookUrl.isBlank()) {
             log.warn("SLACK_WEBHOOK_URL 미설정 - 알림 전송 생략: {}", message);
-            return;
+            return true;
         }
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<Map<String, String>> entity = new HttpEntity<>(Map.of("text", message), headers);
             slackRestTemplate.postForEntity(webhookUrl, entity, String.class);
-        } catch (RestClientException e) {
-            log.error("Slack 알림 전송 실패: {}", e.getMessage());
+            return true;
+        } catch (Exception e) {
+            log.error("Slack 알림 전송 실패: {}", e.getClass().getName());
+            return false;
         }
     }
 }
