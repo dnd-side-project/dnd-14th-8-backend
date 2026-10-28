@@ -5,6 +5,7 @@ import com.dnd.moyeolak.global.metrics.entity.ExternalApiMetricSnapshot;
 import com.dnd.moyeolak.global.metrics.repository.ExternalApiMetricSnapshotRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -18,6 +19,7 @@ import java.util.List;
  */
 @Slf4j
 @Component
+@ConditionalOnProperty(prefix = "external-api.metrics", name = "enabled", havingValue = "true", matchIfMissing = true)
 public class MetricsSnapshotJob {
 
     private final MetricsSnapshotReader reader;

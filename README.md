@@ -52,6 +52,8 @@
 
 - 이전 MySQL+PostGIS 분리 구성 문서: [`docs/README-legacy-db-separation.md`](docs/README-legacy-db-separation.md)
 - 운영 DB 일원화 전환 절차: [`docs/db-consolidation-runbook.md`](docs/db-consolidation-runbook.md)
+- Render + Neon 무료 배포: [`docs/render-neon-deployment.md`](docs/render-neon-deployment.md)
+- Neon 연결·실제 DB 검증 결과: [`docs/neon-setup-verification.md`](docs/neon-setup-verification.md)
 
 ### 주요 변경 사항
 
@@ -261,8 +263,8 @@ erDiagram
 | 분류 | 기술 |
 |------|------|
 | Container | Docker, Docker Compose |
-| CI/CD | GitHub Actions → Naver Cloud Platform |
-| Registry | NCP Container Registry |
+| CI/CD | GitHub Actions → AWS EC2 (기존) / Render Blueprint (무료 배포 구성) |
+| Registry | AWS ECR (기존) / Render Docker 빌드 |
 | Monitoring | Prometheus + Grafana + Loki |
 
 ### External API
@@ -296,8 +298,8 @@ flowchart TD
     subgraph DEPLOY["GitHub Actions — Deploy"]
         direction TB
         d1["Gradle 빌드\n(테스트 제외)"] --> d2["Docker 이미지 빌드"]
-        d2 --> d3["NCP Container Registry Push"]
-        d3 --> d4["NCP 서버 SSH 접속"]
+        d2 --> d3["AWS ECR Push"]
+        d3 --> d4["EC2 SSH 접속"]
         d4 --> d5["docker pull latest\ndocker-compose up -d backend"]
         d5 --> d6["모니터링 스택 갱신"]
     end

@@ -1,0 +1,21 @@
+.git
+.gradle
+node_modules
+.neon
+.idea
+.vscode
+.env
+.env.*
+**/.env
+**/.env.*
+**/*.pem
+**/*.key
+.aws
+.codex
+.agents
+.claude
+.worktrees
+infra/terraform/.terraform
+**/*.tfstate*
+**/*.tfvars
+# Dockerfile.prod는 CI에서 빌드한 build/libs/*.jar를 복사하므로 build는 제외하지 않는다.

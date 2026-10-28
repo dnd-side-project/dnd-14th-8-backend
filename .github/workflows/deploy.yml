@@ -1,6 +1,7 @@
 name: Deploy to AWS
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -12,6 +13,8 @@ env:
 
 jobs:
   build-and-deploy:
+    # Render 전환 후에는 AWS 배포를 자동 실행하지 않는다. 필요할 때 수동 실행하거나 변수로 재활성화한다.
+    if: github.event_name == 'workflow_dispatch' || vars.ENABLE_AWS_DEPLOY == 'true'
     runs-on: ubuntu-latest
 
     steps:
