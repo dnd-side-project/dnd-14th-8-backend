@@ -53,6 +53,7 @@
 - 이전 MySQL+PostGIS 분리 구성 문서: [`docs/README-legacy-db-separation.md`](docs/README-legacy-db-separation.md)
 - 운영 DB 일원화 전환 절차: [`docs/db-consolidation-runbook.md`](docs/db-consolidation-runbook.md)
 - Render + Neon 무료 배포: [`docs/render-neon-deployment.md`](docs/render-neon-deployment.md)
+- Render 공개 서버 배포 검증: [`docs/render-deployment-verification.md`](docs/render-deployment-verification.md)
 - Neon 연결·실제 DB 검증 결과: [`docs/neon-setup-verification.md`](docs/neon-setup-verification.md)
 
 ### 주요 변경 사항

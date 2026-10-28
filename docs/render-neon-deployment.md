@@ -4,6 +4,12 @@
 데이터는 Neon PostgreSQL/PostGIS에 저장한다. AWS 계정이나 ECR은 필요하지 않다.
 아래 절차는 새 DB로 복구하는 방법이다. 기존 모임 데이터는 이전 DB의 백업이 있어야 복원할 수 있다.
 
+2026-10-29 현재 Render 웹 서비스 직접 생성과 운영 프론트 재배포를 완료했다.
+공개 주소는 https://moyeorak.site 이며, API는 https://moyeorak-backend.onrender.com 을 사용한다.
+현재 서비스는 Blueprint 관리 대상이 아니므로 기존 서비스를 다시 만들지 않는다.
+배포 상태, 검증 결과와 Google API 키 IP 허용 설정은
+[실제 배포 기록](render-deployment-verification.md)을 참고한다.
+
 ## 1. Neon DB 만들기
 
 1. [Neon](https://console.neon.tech/)에 가입하고 Free 프로젝트를 만든다.
@@ -151,7 +157,9 @@ AWS 배포가 다시 필요하면 GitHub Actions의 `Deploy to AWS`를 수동 �
 이는 로컬에서 CPU를 엄격히 제한한 결과다. 실제 Render의 CPU 배분과 Neon 네트워크에 따라
 시간은 달라질 수 있다. Neon production 연결과 실제 DB 검증은 이후 완료했으며
 [Neon 연결 검증 기록](neon-setup-verification.md)에 결과를 정리했다.
-Render 계정 연결과 공개 서버 배포, 외부 지도·경로 API를 포함한 전체 사용자 흐름 검증은 남아 있다.
+Render 계정 연결과 공개 서버 배포는 이후 완료했다.
+공개 서버의 모임·일정·출발지 흐름은 통과했고, 중간 장소 추천은 Google API 키의 IP 제한으로
+차단돼 키 관리자 설정 후 재검증이 필요하다. 상세 내용은 [실제 배포 기록](render-deployment-verification.md)에 정리했다.
 로컬 프론트 빌드에는 지도 키가 없어 경고가 나지만,
 기존 GitHub 배포에서는 프론트 Secrets의 지도 키를 주입한다.
 
