@@ -31,6 +31,8 @@ google:
 odsay:
   api:
     key: ${ODSAY_API_KEY}
+    # 고정 IP 프록시 URL(Fixie). 비어 있으면 프록시 없이 직접 호출
+    proxy-url: ${FIXIE_URL:}
 
 kakao:
   api:
