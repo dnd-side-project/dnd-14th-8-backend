@@ -20,7 +20,7 @@ external-api:
     cleanup-cron: "0 30 4 * * *"      # 매일 04:30 오래된 스냅샷 정리
   stats:
     # 일일 한도 (2026-07 기준 조사값, 계정 상태에 맞게 조정)
-    odsay-daily-quota: 1000           # ODsay Basic(무료)
+    odsay-daily-quota: 30             # ODsay Basic(무료), 2026-10 기준 일 30건
     kakao-local-daily-quota: 100000
     kakao-directions-daily-quota: 100000
     # Google 과금 단가 (Basic 티어, USD). FieldMask가 Advanced 이상이면 상향 필요

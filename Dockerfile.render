@@ -15,4 +15,5 @@ ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=50.0 -XX:InitialRAMPercentage=10.0 -
 COPY --from=builder --chown=10001:10001 /app/build/libs/*.jar app.jar
 USER 10001:10001
 EXPOSE 10000
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# ODsay 고정 IP 프록시(HTTPS 터널)의 Basic 인증을 허용한다. JAVA_TOOL_OPTIONS는 Render에서 바뀔 수 있어 여기에 둔다.
+ENTRYPOINT ["java", "-Djdk.http.auth.tunneling.disabledSchemes=", "-jar", "app.jar"]
