@@ -7,9 +7,9 @@
 - 프론트: https://moyeorak.site
 - 백엔드: https://moyeorak-backend.onrender.com
 - 상태 확인: https://moyeorak-backend.onrender.com/actuator/health/readiness
-- Render Dashboard: https://dashboard.render.com/web/srv-dbh1p2t9fdbs73daie9g
+- Render Dashboard: https://dashboard.render.com/web/<render-service-id>
 - Render workspace: My Workspace (`tea-d29g5sqdbo4c73bg31f0`)
-- 서비스: `srv-dbh1p2t9fdbs73daie9g`, Docker / Free / Singapore
+- 서비스: `<render-service-id>`, Docker / Free / Singapore
 - DB: 기존 Neon production / moyeorak
 - 프로필: `prod,render`
 
@@ -31,8 +31,8 @@ Render 연동으로 웹 서비스 하나를 직접 생성했다. Blueprint 관�
 
 ## 배포와 검증 결과
 
-첫 배포 `dep-dbh1p3l9fdbs73daig5g`: live, 3분 35초.
-readiness 경로 저장 후 자동 배포 `dep-dbh1psbvvlss73bc50s0`: live, 2분 5초.
+첫 배포: live, 3분 35초.
+readiness 경로 저장 후 자동 배포: live, 2분 5초.
 두 번째 인스턴스 Spring Boot 기동 로그: 97.997초.
 Render 메모리 관측값: 약 249MiB / 512MiB (초기 관측이며 장기 부하 검증은 아님).
 
@@ -63,17 +63,13 @@ GitHub CI:
 기존 Google API 키의 허용 IP에 포함되지 않았다. 사용자는 해당 Google Cloud 프로젝트에
 접근 권한이 없어 여기서 수정하지 못했다.
 
-Render Dashboard의 Connect → Outbound IP Addresses에서 확인한 범위:
-
-```text
-74.220.52.0/24
-74.220.60.0/24
-```
+Render Dashboard의 Connect → Outbound IP Addresses에서 범위를 확인한다.
+공개 저장소라 실제 값은 기록하지 않는다. Render 무료 서버의 outbound IP는 같은 리전의 다른 서비스와 공유한다.
 
 키 관리자에게 전달할 내용:
 
 > 모여락 백엔드를 Render Singapore 무료 서버로 이전했습니다. 기존 Google Routes API 키의
-> IP 주소 제한에 `74.220.52.0/24`, `74.220.60.0/24`를 추가해 주세요.
+> IP 주소 제한에 Render outbound IP 범위(`<render-outbound-ip-ranges>`)를 추가해 주세요.
 > 현재 중간 장소 추천에서 `403 API_KEY_IP_ADDRESS_BLOCKED`가 발생합니다.
 > 기존 허용 IP와 Routes API 제한은 유지하고 새 범위만 추가하면 됩니다.
 

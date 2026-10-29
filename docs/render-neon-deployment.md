@@ -38,7 +38,7 @@ Node 22.20 이상과 Java 25가 필요하다. 현재 프로젝트 연결은 로�
 ```bash
 npm install
 neon login
-neon init -y --org-id org-little-cell-42661468 --project-id damp-cell-53014586 --branch production --services postgres
+neon init -y --org-id <neon-org-id> --project-id <neon-project-id> --branch production --services postgres
 npm run neon:deploy
 npm run build
 npm start

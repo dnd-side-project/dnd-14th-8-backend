@@ -4,8 +4,8 @@
 
 ## 연결 대상과 적용 결과
 
-- 조직: `org-little-cell-42661468`
-- 프로젝트: `damp-cell-53014586`
+- 조직: `<neon-org-id>`
+- 프로젝트: `<neon-project-id>`
 - 운영 브랜치: `production`
 - DB: `moyeorak`, PostgreSQL 15
 - 활성 서비스: Postgres
@@ -42,7 +42,7 @@ added 161 packages
 $ neon --version
 8.13.1
 
-$ neon init -y --org-id org-little-cell-42661468 --project-id damp-cell-53014586 --branch production --services postgres
+$ neon init -y --org-id <neon-org-id> --project-id <neon-project-id> --branch production --services postgres
 Linked .neon
 neon.ts created
 
