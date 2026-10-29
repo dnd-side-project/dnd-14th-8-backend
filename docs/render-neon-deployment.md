@@ -102,7 +102,9 @@ AWS 배포가 다시 필요하면 GitHub Actions의 `Deploy to AWS`를 수동 �
 같은 프로젝트의 `dnd-14th-8-frontend`에도 다음 변경이 함께 필요하다.
 
 - `backend-readiness.ts`: 동시에 발생한 요청이 준비 상태 확인 한 번을 공유한다.
-- `BackendConnectionProvider`: 연결에 1초 이상 걸리면 안내 화면을 보여 주고 최대 5분 기다린다.
+- `BackendConnectionProvider`: 앱을 열면 화면을 막지 않고 서버를 미리 깨운다.
+  API 요청이 서버 준비를 1초 이상 기다릴 때만 안내 화면을 보여 주고 최대 5분 기다린다
+  (dnd-side-project/dnd-14th-8-frontend#180).
 - 일반/관리자 Axios: 준비 확인 후 실제 API 요청을 한 번 보낸다. 생성·투표 요청은 자동 재전송하지 않는다.
 - 프론트 배포 워크플로: 저장소 변수 `VITE_API_READINESS_CHECK`를 빌드에 전달한다.
 
@@ -114,7 +116,7 @@ AWS 배포가 다시 필요하면 GitHub Actions의 `Deploy to AWS`를 수동 �
 대기 중에는 읽기 전용 `/actuator/health/readiness`만 재확인한다.
 연결 실패 시 화면의 **다시 연결하기** 버튼으로 새로 시도한다.
 브라우저를 15분 이상 방치했다가 돌아와도 다음 API 요청 전에 준비 상태를 다시 확인한다.
-주기적으로 서버를 깨우는 ping은 사용하지 않는다.
+프론트는 주기적인 ping을 보내지 않는다. 서버 절전은 아래 [외부 모니터로 절전 방지](#외부-모니터로-절전-방지)로 막는다.
 
 ## 5. 배포 후 확인
 
@@ -136,10 +138,57 @@ AWS 배포가 다시 필요하면 GitHub Actions의 `Deploy to AWS`를 수동 �
 - 외부 API 지표 스냅샷 잡과 Slack 일일 요약 스케줄은 Render 프로필에서 비활성화한다.
   관리자 통계의 과거 스냅샷·재시작 간 누적 사용량과 quota Slack 알림은 이 구성에서 제공하지 않는다.
   외부 API의 실제 쿼터는 각 제공사 콘솔에서 확인한다.
-- Render 상태 확인은 DB를 조회하지 않는 readiness 경로를 사용한다.
+- Render 상태 확인과 외부 모니터는 DB를 조회하지 않는 readiness 경로를 사용한다.
   `/actuator/health`는 수동 DB 상태 진단에만 사용한다. 주기적인 외부 모니터 대상으로 등록하지 않는다.
 - 로그는 표준 출력으로 확인하며 DB나 로그를 Render 로컬 파일에 저장하지 않는다.
 - 프로필은 기존 API 사용량 제한을 유지한다. 서버 무료 한도와 지도·경로 API 과금은 별개다.
+
+## 외부 모니터로 절전 방지
+
+Render 무료 서버는 15분 동안 요청이 없으면 절전하고, 다음 요청에서 다시 기동한다.
+기동에는 약 98~130초가 걸려(2026-10-29 실측) 초대 링크로 처음 들어온 참여자도 그만큼 기다린다.
+유료 플랜을 쓰지 않는 조건에서 외부 모니터가 readiness에 주기적으로 요청을 보내 절전을 막는다
+(dnd-side-project/dnd-14th-8-backend#173).
+
+| 항목 | 설정 |
+| --- | --- |
+| 서비스 | Better Stack Uptime 무료 플랜 (팀 담당자 개인 계정) |
+| 대상 | `GET https://moyeorak-backend.onrender.com/actuator/health/readiness` |
+| 장애 기준 | URL becomes unavailable (무료 플랜은 키워드 확인 불가) |
+| 확인 간격 | 3분 |
+| 확인 위치 | Europe, North America, Asia, Australia |
+| IP 버전 | IPv4 only (Render 주소에 IPv6가 없음) |
+| Request timeout | 30초 |
+| Confirmation period | 5분. 배포·재시작 중 잠깐의 무응답으로 알림이 가지 않게 한다 |
+| Recovery period | 3분 |
+| 알림 | 담당자 이메일만 |
+
+- 대상은 반드시 readiness다. `/actuator/health`는 DB를 조회해 Neon이 절전하지 못한다.
+- 요청 로그 필터는 `/actuator/health`로 시작하는 경로를 기록하지 않아 모니터 요청이 Render 로그에 남지 않는다.
+- Better Stack Uptime을 고른 이유: 무료로 3분 간격과 이메일·Slack 알림, 상태 페이지를 제공한다.
+  UptimeRobot 무료 플랜은 5분 간격이고 Slack 알림 포함 여부가 확인되지 않았다.
+  GitHub Actions 예약 실행은 수십 분씩 지연될 수 있고, 60일 동안 저장소 활동이 없으면 비활성화돼 제외했다.
+
+### 무료 한도 검토
+
+Render 무료 한도는 워크스페이스 단위로 매달 초기화된다.
+한도를 넘으면 과금되지 않고 다음 달까지 무료 서비스가 정지된다. 대역폭과 빌드 시간 초과는 과금 대상이다.
+
+| 항목 | 한도 | 절전 방지 후 월 사용량 |
+| --- | --- | --- |
+| Free Instance Hours | 750시간 | 최대 744시간 (31일 × 24시간) |
+| 무료 서비스 | - | 1개 (`moyeorak-backend`) |
+| Bandwidth | 5GB | 모니터 요청 약 60MB (4개 지역 × 3분 간격) |
+
+- 여유가 월 약 6시간뿐이다. 이 워크스페이스에 무료 서비스나 PR 미리보기(Previews)를 추가하지 않는다.
+- 매달 초 Billing의 Free Instance Hours가 750시간 안에서 마감됐는지 확인한다.
+
+### 한계
+
+- Render는 무료 서비스를 언제든 재시작할 수 있고, 배포 직후에도 기동 시간이 생긴다.
+  이 경우를 대비해 프론트의 readiness 대기 화면을 유지한다.
+- 외부 모니터 서비스의 가용성에 의존한다. 모니터가 멈추면 다시 15분 유휴 후 절전한다.
+- 모니터를 끄려면 Better Stack에서 Pause한다. 유료 플랜으로 바꾸면 모니터는 장애 알림 용도로만 남길 수 있다.
 
 정책과 할당량은 서비스 콘솔에서 확인한다. 무료 서버의 첫 기동 시간과 실제 메모리 사용량은
 실제 Render 배포 후에도 확인해야 한다. 로컬 Docker 512MB 검증만으로 Render 운영을 보장하지 않는다.

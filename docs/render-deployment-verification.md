@@ -18,10 +18,10 @@ Render 연동으로 웹 서비스 하나를 직접 생성했다. Blueprint 관�
 새 Blueprint를 만들 때 사용할 참고 구성이다. 현재 서비스와 별도로 Blueprint를 적용하면
 중복 서비스가 생길 수 있으므로 기존 서비스를 재사용한다.
 
-배포 소스는 백엔드 `codex/render-neon-free` 브랜치의 `3227d3ad5fff4e3ff882cbf7355cbb02f328b49c`.
-코드 변경 시 자동 배포한다. 백엔드 PR은 https://github.com/dnd-side-project/dnd-14th-8-backend/pull/172
-이며, 추후 dev로 통합한 뒤 Render의 연결 브랜치도 dev로 바꿀 수 있다.
-연결 브랜치를 삭제하면 이후 배포에 영향을 주므로 서비스의 소스 설정을 먼저 변경한다.
+첫 배포 소스는 백엔드 `codex/render-neon-free` 브랜치의 `3227d3ad5fff4e3ff882cbf7355cbb02f328b49c`였다.
+이 브랜치를 PR #172로 dev에 통합한 뒤 Render의 연결 브랜치를 `dev`로 바꿨다(2026-10-29).
+이후 dev에 코드가 반영되면 CI 통과 후 자동 배포한다.
+연결 브랜치를 바꾸거나 삭제할 때는 서비스의 소스 설정을 먼저 변경한다.
 
 프론트 PR https://github.com/dnd-side-project/dnd-14th-8-frontend/pull/170 은 main으로 반영했다.
 운영 커밋은 `b674badf113a60a9303ea49c26d51f3431b4b11f`.
@@ -79,7 +79,10 @@ IP 등록 후 중간 장소 추천과 ODsay/Kakao를 포함한 개인 경로 흐
 
 ## 운영 메모
 
-무료 서버는 유휴 후 절전하며 첫 접속에서 기동 대기 시간이 발생한다. 프론트는 최대 5분 동안
-readiness를 확인하고 연결 안내를 표시한다. 주기적인 서버 깨우기 요청은 추가하지 않았다.
+무료 서버는 15분 동안 요청이 없으면 절전하고, 다음 요청에서 다시 기동한다.
+2026-10-29 실측으로 절전 후 첫 `UP` 응답까지 129.5초, 배포 시 Spring Boot 기동 로그는 98.5초였다.
+Better Stack Uptime이 3분마다 readiness를 확인해 절전을 막는다.
+설정과 무료 한도 검토는 [외부 모니터로 절전 방지](render-neon-deployment.md#외부-모니터로-절전-방지)에 정리했다.
+재시작이나 배포 직후의 기동 대기는 프론트가 최대 5분 동안 readiness를 확인하고 연결 안내를 표시해 대비한다.
 데이터는 Neon에 저장되며 Render의 로컬 파일에 의존하지 않는다.
 비밀번호·전체 DB URL·API 키·ADMIN_TOKEN 값은 이 문서나 Git에 포함하지 않는다.
