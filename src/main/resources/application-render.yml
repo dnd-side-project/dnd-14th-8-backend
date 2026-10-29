@@ -1,0 +1,62 @@
+# SPRING_PROFILES_ACTIVE=prod,render 순서로 활성화해 prod 설정을 덮어쓴다.
+server:
+  address: 0.0.0.0
+  port: ${PORT:10000}
+  forward-headers-strategy: framework
+
+spring:
+  docker:
+    compose:
+      enabled: false
+  datasource:
+    # Neon의 Java/JDBC URL. 사용자명과 비밀번호는 별도 환경변수로 전달한다.
+    url: ${DB_JDBC_URL}
+    hikari:
+      maximum-pool-size: 4
+      minimum-idle: 0
+      idle-timeout: 30000
+      keepalive-time: 0
+      max-lifetime: 600000
+      connection-timeout: 30000
+      validation-timeout: 5000
+  sql:
+    init:
+      mode: never
+
+# 백그라운드 DB 쓰기와 일일 요약 조회로 Neon이 계속 깨어 있지 않도록 한다.
+external-api:
+  metrics:
+    enabled: false
+  alert:
+    daily-summary-cron: "-"
+
+aws:
+  cost:
+    enabled: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info
+      cors:
+        allowed-origins:
+          - https://moyeorak.site
+          - https://dnd-14th-8-frontend.pages.dev
+          - http://localhost:5173
+          - http://127.0.0.1:5173
+        allowed-origin-patterns:
+          - https://*.dnd-14th-8-frontend.pages.dev
+        allowed-methods: GET
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      group:
+        readiness:
+          # Render의 수시 상태 확인은 DB 쿼리를 실행하지 않는다.
+          include: readinessState
+  prometheus:
+    metrics:
+      export:
+        enabled: false

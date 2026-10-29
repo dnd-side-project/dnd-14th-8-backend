@@ -1,0 +1,18 @@
+{
+  "name": "moyeorak-neon-tooling",
+  "private": true,
+  "scripts": {
+    "build": "./gradlew build",
+    "start": "node scripts/start-neon.mjs",
+    "neon:env": "node scripts/neon-env.mjs",
+    "neon:deploy": "neon deploy && npm run neon:env",
+    "test:neon": "node --test scripts/neon-env.test.mjs"
+  },
+  "engines": {
+    "node": ">=22.20.0"
+  },
+  "dependencies": {
+    "@neon/config": "^1.9.5",
+    "@neon/env": "^1.6.6"
+  }
+}
