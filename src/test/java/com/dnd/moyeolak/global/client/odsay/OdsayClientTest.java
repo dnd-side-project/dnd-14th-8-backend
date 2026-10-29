@@ -58,6 +58,20 @@ class OdsayClientTest {
     }
 
     @Test
+    @DisplayName("API 키의 '+', '/', '='는 퍼센트 인코딩해 전달한다")
+    void encodesReservedCharactersInApiKey() {
+        OdsayApiConfig config = new OdsayApiConfig();
+        ReflectionTestUtils.setField(config, "odsayApiKey", "ab+cd/ef=");
+        OdsayClient keyClient = new OdsayClient(restTemplate, config, new ExternalApiMetrics(registry));
+        server.expect(requestTo(containsString("apiKey=ab%2Bcd%2Fef%3D")))
+                .andRespond(withSuccess("{\"result\":{\"path\":[]}}", MediaType.APPLICATION_JSON));
+
+        keyClient.searchRoute(37.5, 127.0, 37.4979, 127.0276);
+
+        server.verify();
+    }
+
+    @Test
     @DisplayName("빈 경로 응답 시 body_error 실패로 기록되고 999 센티넬을 반환한다")
     void recordsBodyErrorOnEmptyResponse() {
         server.expect(requestTo(containsString("searchPubTransPathT")))

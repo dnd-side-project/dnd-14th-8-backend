@@ -14,6 +14,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+import java.net.URI;
 import java.time.Duration;
 import java.util.concurrent.Semaphore;
 
@@ -48,16 +49,19 @@ public class OdsayClient {
         double endLat,
         double endLng
     ) {
-        String url = UriComponentsBuilder.fromUriString(ODSAY_PATH_API_URL)
+        // API 키의 '+'가 공백으로 해석되지 않도록 템플릿 변수로 엄격하게 인코딩하고,
+        // RestTemplate이 다시 인코딩하지 않게 URI 객체로 전달한다.
+        URI uri = UriComponentsBuilder.fromUriString(ODSAY_PATH_API_URL)
             .queryParam("lang", 0)
             .queryParam("SX", startLng)
             .queryParam("SY", startLat)
             .queryParam("EX", endLng)
             .queryParam("EY", endLat)
             .queryParam("SearchType", 0)
-            .queryParam("apiKey", odsayApiConfig.getOdsayApiKey())
-            .build()
-            .toUriString();
+            .queryParam("apiKey", "{apiKey}")
+            .encode()
+            .buildAndExpand(odsayApiConfig.getOdsayApiKey())
+            .toUri();
 
         log.debug("ODsay API 요청: startLat={}, startLng={}, endLat={}, endLng={}",
             startLat, startLng, endLat, endLng);
@@ -67,7 +71,7 @@ public class OdsayClient {
             try {
                 rateLimiter.acquire();
                 try {
-                    String rawResponse = odsayRestTemplate.getForObject(url, String.class);
+                    String rawResponse = odsayRestTemplate.getForObject(uri, String.class);
                     log.info("ODsay API raw 응답 (길이: {})", rawResponse != null ? rawResponse.length() : 0);
 
                     ObjectMapper mapper = new ObjectMapper();
