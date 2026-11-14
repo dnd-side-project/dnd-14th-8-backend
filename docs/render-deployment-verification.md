@@ -20,8 +20,36 @@ Render 연동으로 웹 서비스 하나를 직접 생성했다. Blueprint 관�
 
 첫 배포 소스는 백엔드 `codex/render-neon-free` 브랜치의 `3227d3ad5fff4e3ff882cbf7355cbb02f328b49c`였다.
 이 브랜치를 PR #172로 dev에 통합한 뒤 Render의 연결 브랜치를 `dev`로 바꿨다(2026-10-29).
-이후 dev에 코드가 반영되면 CI 통과 후 자동 배포한다.
 연결 브랜치를 바꾸거나 삭제할 때는 서비스의 소스 설정을 먼저 변경한다.
+
+### 배포는 수동이다 (#182)
+
+이 서비스는 GitHub 연동이 아니라 공개 저장소 주소(Public Git Repository)로 연결돼 있다(2026-11-14 확인).
+
+- Account Settings → Git Deployment Credentials의 GitHub 자격 증명(`meteorqz6`)을 펼치면 "No repositories found."다.
+  Render GitHub 앱이 dnd-side-project 조직 저장소에 접근하지 못한다.
+- 그래서 서비스 Settings → Source → Edit의 Git Provider 탭에도 저장소 목록 없이 연결 버튼만 보인다.
+- 이 워크스페이스의 자격 증명으로는 이 저장소를 GitHub 연동할 수 없으므로, 서비스는 공개 저장소 주소로 만들어졌다.
+
+Render는 공개 저장소 주소로 연결한 서비스를 자동 배포하지 않는다("Services that use a prebuilt
+Docker image or a public Git repository URL must be deployed manually.", Render Deploys 문서).
+그래서 Auto-Deploy 설정이 "On Commit"이어도 dev에 커밋이 들어와 배포되지 않는다.
+
+이전에는 "dev에 코드가 반영되면 CI 통과 후 자동 배포한다"고 적었지만 실제와 달랐다.
+10-29의 `f124bdd` 배포는 연결 브랜치를 dev로 바꾼 설정 변경("Branch updated")으로 일어났고,
+그 뒤 dev 커밋(#176, #178, #181)은 자동으로 배포되지 않았다.
+
+dev에 머지한 뒤에는 다음을 한다.
+
+1. Render Dashboard → moyeorak-backend → **Manual Deploy → Deploy latest commit**
+2. Events에서 "Deploy live for <커밋>"을 확인한다(기록상 2~4분).
+3. `https://moyeorak-backend.onrender.com/actuator/health/readiness`가 UP인지 확인한다.
+   API가 바뀐 경우 `/v3/api-docs`에 바뀐 필드가 보이는지 확인한다.
+
+자동 배포로 바꾸려면 Render GitHub 앱을 dnd-side-project 조직에 설치하고 `dnd-14th-8-backend` 접근을 허용해야 한다.
+조직 관리자 승인이 필요하다. 승인되면 Git Deployment Credentials의 `meteorqz6`에 이 저장소가 보이고,
+Settings → Source → Edit → Git Provider에서 `dnd-14th-8-backend`를 고른 뒤 Auto-Deploy를 "After CI Checks Pass"로 둔다.
+서비스 주소와 환경변수는 그대로 유지된다.
 
 프론트 PR https://github.com/dnd-side-project/dnd-14th-8-frontend/pull/170 은 main으로 반영했다.
 운영 커밋은 `b674badf113a60a9303ea49c26d51f3431b4b11f`.
