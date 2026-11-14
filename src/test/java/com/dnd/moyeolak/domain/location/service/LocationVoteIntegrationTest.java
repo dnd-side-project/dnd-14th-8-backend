@@ -1,6 +1,7 @@
 package com.dnd.moyeolak.domain.location.service;
 
 import com.dnd.moyeolak.domain.location.dto.CreateLocationVoteRequest;
+import com.dnd.moyeolak.domain.location.dto.LocationVoteResponse;
 import com.dnd.moyeolak.domain.location.entity.LocationVote;
 import com.dnd.moyeolak.domain.meeting.dto.CreateMeetingRequest;
 import com.dnd.moyeolak.domain.meeting.dto.UpdateLocationVoteRequest;
@@ -20,6 +21,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -52,6 +54,7 @@ class LocationVoteIntegrationTest {
                 null,
                 "홍길동",
                 "서울시 강남구",
+                null,
                 "37.4979502",
                 "127.0276368"
         );
@@ -82,6 +85,7 @@ class LocationVoteIntegrationTest {
                 null,
                 "김철수",
                 "서울시 홍대입구",
+                null,
                 "37.5571010",
                 "126.9236450"
         );
@@ -112,6 +116,7 @@ class LocationVoteIntegrationTest {
                 null,
                 "홍길동",
                 "서울시 강남구",
+                null,
                 "37.4979502",
                 "127.0276368"
         );
@@ -149,6 +154,7 @@ class LocationVoteIntegrationTest {
                 null,
                 "김철수",
                 "서울시 홍대입구",
+                null,
                 "37.5571010",
                 "126.9236450"
         );
@@ -191,6 +197,7 @@ class LocationVoteIntegrationTest {
                 null,
                 "이영희",
                 "서울시 왕십리",
+                null,
                 "37.5614080",
                 "127.0379670"
         );
@@ -226,6 +233,7 @@ class LocationVoteIntegrationTest {
                 null,
                 "수동입력자",
                 "서울시 서초구",
+                null,
                 "37.4837121",
                 "127.0324112"
         );
@@ -236,6 +244,7 @@ class LocationVoteIntegrationTest {
                 null,
                 "박민수",
                 "서울시 부평",
+                null,
                 "37.5074100",
                 "126.7218400"
         );
@@ -273,6 +282,7 @@ class LocationVoteIntegrationTest {
                 friendId,
                 "친구",
                 "서울시 송파구",
+                null,
                 "37.5145430",
                 "127.1058860"
         );
@@ -308,6 +318,7 @@ class LocationVoteIntegrationTest {
                 null,
                 "일반참여자",
                 "서울시 성동구",
+                null,
                 "37.5633450",
                 "127.0371250"
         );
@@ -345,6 +356,7 @@ class LocationVoteIntegrationTest {
                 null,
                 "홍길동",
                 "서울시 강남구",
+                null,
                 "37.4979502",
                 "127.0276368"
         );
@@ -385,6 +397,7 @@ class LocationVoteIntegrationTest {
                 null,
                 "홍길동",
                 "서울시 강남구",
+                null,
                 "37.4979502",
                 "127.0276368"
         );
@@ -403,6 +416,7 @@ class LocationVoteIntegrationTest {
         UpdateLocationVoteRequest updateRequest = new UpdateLocationVoteRequest(
                 "김철수",
                 "서울시 홍대입구",
+                null,
                 "37.5571010",
                 "126.9236450"
         );
@@ -416,6 +430,72 @@ class LocationVoteIntegrationTest {
         assertThat(updated.getDepartureLocation()).isEqualTo("서울시 홍대입구");
         assertThat(updated.getDepartureLat()).isEqualByComparingTo(new BigDecimal("37.5571010"));
         assertThat(updated.getDepartureLng()).isEqualByComparingTo(new BigDecimal("126.9236450"));
+    }
+
+    @Test
+    @DisplayName("출발지로 고를 때 본 주소를 저장하고 목록에 내려주며, 수정하면 바뀌고 생략하면 NULL이 된다")
+    void departureAddress_savedListedAndOverwrittenOnUpdate() {
+        // given - 장소 이름으로 고른 출발지와 주소로 고른 출발지
+        String meetingId = createTestMeeting();
+
+        Long placeVoteId = locationVoteService.createLocationVote(new CreateLocationVoteRequest(
+                meetingId,
+                "local-storage-key-place",
+                null,
+                "홍길동",
+                "서대문역 5호선",
+                "서울 종로구 통일로 지하 126",
+                "37.5657",
+                "126.9666"
+        ));
+        Long addressVoteId = locationVoteService.createLocationVote(new CreateLocationVoteRequest(
+                meetingId,
+                "local-storage-key-address",
+                null,
+                "김철수",
+                "서울 강남구 역삼동",
+                null,
+                "37.5007",
+                "127.0365"
+        ));
+        em.flush();
+        em.clear();
+
+        // then - DB에 저장되고 목록에 내려준다
+        assertThat(em.find(LocationVote.class, placeVoteId).getDepartureAddress()).isEqualTo("서울 종로구 통일로 지하 126");
+        assertThat(em.find(LocationVote.class, addressVoteId).getDepartureAddress()).isNull();
+        em.clear();
+
+        List<LocationVoteResponse> responses = locationVoteService.listLocationVote(meetingId);
+        assertThat(responses)
+                .extracting(LocationVoteResponse::locationVoteId, LocationVoteResponse::departureAddress)
+                .contains(
+                        tuple(placeVoteId, "서울 종로구 통일로 지하 126"),
+                        tuple(addressVoteId, null)
+                );
+
+        // when - 다른 장소로 수정
+        locationVoteService.updateLocationVote(placeVoteId, new UpdateLocationVoteRequest(
+                "홍길동", "판교역 신분당선", "경기 성남시 분당구 판교역로 지하 160", "37.3948", "127.1112"
+        ));
+        em.flush();
+        em.clear();
+
+        // then - 새 주소로 바뀐다
+        assertThat(em.find(LocationVote.class, placeVoteId).getDepartureAddress()).isEqualTo("경기 성남시 분당구 판교역로 지하 160");
+        em.clear();
+
+        // when - 주소 없이 수정 (현 위치나 주소로 다시 고른 경우)
+        locationVoteService.updateLocationVote(placeVoteId, new UpdateLocationVoteRequest(
+                "홍길동", "서울 마포구 합정동", null, "37.5495", "126.9139"
+        ));
+        em.flush();
+        em.clear();
+
+        // then - NULL로 덮어쓴다
+        LocationVote updated = em.find(LocationVote.class, placeVoteId);
+        assertThat(updated.getDepartureLocation()).isEqualTo("서울 마포구 합정동");
+        assertThat(updated.getDepartureAddress()).isNull();
     }
 
     private String createTestMeeting() {

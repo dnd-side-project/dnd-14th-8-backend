@@ -20,6 +20,10 @@ import java.lang.annotation.Target;
                     ### 사용 시점
                     - 참가자가 출발지를 잘못 입력하여 수정할 때
                     - 출발 장소가 변경되었을 때
+
+                    ### 덮어쓰기
+                    - 요청에 담긴 값으로 출발지 정보를 모두 새로 덮어씁니다.
+                    - `departureAddress`를 생략하면 저장된 주소도 `null`이 됩니다. 장소 이름으로 고른 경우에는 고를 때 본 주소를 함께 전달합니다.
                     """)
 @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(

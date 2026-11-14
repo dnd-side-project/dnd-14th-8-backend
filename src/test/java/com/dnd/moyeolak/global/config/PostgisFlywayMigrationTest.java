@@ -2,6 +2,8 @@ package com.dnd.moyeolak.global.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Map;
+
 import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,9 +52,21 @@ class PostgisFlywayMigrationTest {
         Integer stationCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM stations", Integer.class);
         String postgisVersion = jdbcTemplate.queryForObject("SELECT PostGIS_Version()", String.class);
 
-        assertThat(appliedMigrationCount).isEqualTo(5);
+        assertThat(appliedMigrationCount).isEqualTo(6);
         assertThat(stationCount).isPositive();
         assertThat(postgisVersion).isNotBlank();
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("5");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("6");
+    }
+
+    @Test
+    void shouldAddNullableDepartureAddressToLocationVote() {
+        Map<String, Object> column = jdbcTemplate.queryForMap(
+                "SELECT data_type, character_maximum_length, is_nullable FROM information_schema.columns "
+                        + "WHERE table_name = 'location_vote' AND column_name = 'departure_address'"
+        );
+
+        assertThat(column.get("data_type")).isEqualTo("character varying");
+        assertThat(((Number) column.get("character_maximum_length")).intValue()).isEqualTo(255);
+        assertThat(column.get("is_nullable")).isEqualTo("YES");
     }
 }

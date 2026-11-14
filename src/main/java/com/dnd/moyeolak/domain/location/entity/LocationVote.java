@@ -35,6 +35,9 @@ public class LocationVote extends BaseEntity {
     @Column(comment = "출발지 주소", nullable = false)
     private String departureLocation;
 
+    @Column(comment = "출발지로 장소를 고를 때 본 주소. 장소 이름으로 고른 경우에만 값이 있음")
+    private String departureAddress;
+
     @Column(comment = "출발지 위도", nullable = false, precision = 10, scale = 7)
     private BigDecimal departureLat;
 
@@ -48,6 +51,7 @@ public class LocationVote extends BaseEntity {
     public void update(UpdateLocationVoteRequest request) {
         this.departureName = request.participantName();
         this.departureLocation = request.departureLocation();
+        this.departureAddress = request.departureAddress();
         this.departureLat = new BigDecimal(request.departureLat());
         this.departureLng = new BigDecimal(request.departureLng());
     }
@@ -82,6 +86,7 @@ public class LocationVote extends BaseEntity {
                 .locationPoll(locationPoll)
                 .departureName(request.participantName())
                 .departureLocation(request.departureLocation())
+                .departureAddress(request.departureAddress())
                 .departureLat(new BigDecimal(request.departureLat()))
                 .departureLng(new BigDecimal(request.departureLng()))
                 .build();
