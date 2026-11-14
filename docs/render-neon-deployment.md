@@ -83,6 +83,9 @@ Render에서는 Node를 실행하지 않는다. `.env`에 동기화한 JDBC 변�
    `{"status":"UP"}`을 반환하는지 확인한다. 서비스 이름이 이미 사용 중이면 다른 이름을 선택한다.
 
 Blueprint는 연결한 브랜치의 CI가 통과하면 자동 배포한다. 첫 배포는 Blueprint 생성 시 실행된다.
+지금 운영 서비스는 `render.yaml`을 읽지 않고(대시보드에서 직접 만든 서비스), GitHub 알림 없이 주소로만 연결돼 있어서,
+dev에 머지해도 저절로 배포되지 않는다.
+머지 뒤 수동 배포 절차는 `docs/render-deployment-verification.md`의 "배포는 수동이다"를 따른다(#182).
 AWS 배포가 다시 필요하면 GitHub Actions의 `Deploy to AWS`를 수동 실행하거나
 저장소 변수 `ENABLE_AWS_DEPLOY=true`를 설정한다.
 
