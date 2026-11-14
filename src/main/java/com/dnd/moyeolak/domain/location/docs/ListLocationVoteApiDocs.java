@@ -20,6 +20,10 @@ import java.lang.annotation.Target;
                     ### 사용 시점
                     - 장소 투표 현황 페이지에서 참가자들의 출발지를 표시할 때
                     - 중간지점 추천 전 등록된 출발지를 확인할 때
+
+                    ### 출발지 주소
+                    - `departureLocation`: 검색으로 고르면 장소 이름, 현 위치나 주소로 고르면 주소
+                    - `departureAddress`: 장소 이름으로 고른 경우 고를 때 본 주소. 그 밖의 경우와 이 값이 생기기 전에 등록된 출발지는 `null`
                     """)
 @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -39,15 +43,17 @@ import java.lang.annotation.Target;
                                                   "locationVoteId": 1,
                                                   "participantName": "김철수",
                                                   "departureLocation": "수원시 장안구 영화동",
+                                                  "departureAddress": null,
                                                   "departureLat": 37.2994,
                                                   "departureLng": 127.0085
                                                 },
                                                 {
                                                   "locationVoteId": 2,
                                                   "participantName": "이영희",
-                                                  "departureLocation": "서울시 강남구 역삼동",
-                                                  "departureLat": 37.5007,
-                                                  "departureLng": 127.0365
+                                                  "departureLocation": "서대문역 5호선",
+                                                  "departureAddress": "서울 종로구 통일로 지하 126",
+                                                  "departureLat": 37.5657,
+                                                  "departureLng": 126.9666
                                                 }
                                               ]
                                             }

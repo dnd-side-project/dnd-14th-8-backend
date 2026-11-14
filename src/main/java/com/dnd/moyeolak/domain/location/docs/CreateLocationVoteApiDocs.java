@@ -24,6 +24,10 @@ import java.lang.annotation.Target;
                     ### 좌표 입력
                     - 프론트에서 Kakao/Google Maps API로 좌표 획득
                     - `departureLat`, `departureLng`는 문자열로 전달
+
+                    ### 출발지 주소
+                    - `departureLocation`: 검색으로 고르면 장소 이름, 현 위치나 주소로 고르면 주소
+                    - `departureAddress`: 장소 이름으로 고른 경우에만 고를 때 본 주소를 함께 전달 (선택). 그 밖에는 생략
                     """)
 @ApiResponses({
         @io.swagger.v3.oas.annotations.responses.ApiResponse(

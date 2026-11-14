@@ -72,6 +72,7 @@ class LocationVoteUnitTest {
                     null,
                     "홍길동",
                     "서울시 강남구",
+                    null,
                     "37.4979502",
                     "127.0276368"
             );
@@ -105,6 +106,7 @@ class LocationVoteUnitTest {
                     null,
                     "김철수",
                     "서울시 홍대입구",
+                    null,
                     "37.5571010",
                     "126.9236450"
             );
@@ -136,6 +138,7 @@ class LocationVoteUnitTest {
                     null,
                     "이영희",
                     "서울시 왕십리",
+                    null,
                     "37.5614080",
                     "127.0379670"
             );
@@ -175,6 +178,7 @@ class LocationVoteUnitTest {
                     null,
                     "박민수",
                     "서울시 서초구",
+                    null,
                     "37.4837121",
                     "127.0324112"
             );
@@ -213,6 +217,7 @@ class LocationVoteUnitTest {
                     null,
                     "모임장",
                     "서울시 마포구",
+                    null,
                     "37.5549340",
                     "126.9137540"
             );
@@ -246,6 +251,7 @@ class LocationVoteUnitTest {
                     null,
                     "다른사람이름",
                     "서울시 마포구",
+                    null,
                     "37.5549340",
                     "126.9137540"
             );
@@ -280,6 +286,7 @@ class LocationVoteUnitTest {
                     null,
                     "일반참여자",
                     "서울시 성동구",
+                    null,
                     "37.5633450",
                     "127.0371250"
             );
@@ -319,6 +326,7 @@ class LocationVoteUnitTest {
                     10L,
                     "친구",
                     "서울시 송파구",
+                    null,
                     "37.5145430",
                     "127.1058860"
             );
@@ -359,6 +367,7 @@ class LocationVoteUnitTest {
                     10L,
                     "친구",
                     "서울시 송파구",
+                    null,
                     "37.5145430",
                     "127.1058860"
             );
@@ -384,6 +393,7 @@ class LocationVoteUnitTest {
                     999L,
                     "친구",
                     "서울시 송파구",
+                    null,
                     "37.5145430",
                     "127.1058860"
             );
@@ -410,6 +420,7 @@ class LocationVoteUnitTest {
                     null,
                     "홍길동",
                     "경북 울릉군 독도",
+                    null,
                     "37.2426",
                     "131.8597"
             );
@@ -431,6 +442,7 @@ class LocationVoteUnitTest {
                     null,
                     "홍길동",
                     "제주특별자치도 제주시",
+                    null,
                     "33.4996",
                     "126.5312"
             );
@@ -449,6 +461,7 @@ class LocationVoteUnitTest {
                     null,
                     "홍길동",
                     "서울시 강남구",
+                    null,
                     "abc",
                     "127.0276368"
             );
@@ -465,6 +478,7 @@ class LocationVoteUnitTest {
                     new com.dnd.moyeolak.domain.meeting.dto.UpdateLocationVoteRequest(
                             "홍길동",
                             "경북 울릉군 독도",
+                            null,
                             "37.2426",
                             "131.8597"
                     );
@@ -500,6 +514,7 @@ class LocationVoteUnitTest {
                     null,
                     "새참여자",
                     "서울시 강남구",
+                    null,
                     "37.4979502",
                     "127.0276368"
             );
@@ -606,7 +621,7 @@ class LocationVoteUnitTest {
                     .thenReturn(Optional.of(Meeting.ofId("meeting-A")));
 
             CreateLocationVoteRequest request = new CreateLocationVoteRequest(
-                    "meeting-A", null, null, "홍길동", "서울시 강남구", "37.4979502", "127.0276368"
+                    "meeting-A", null, null, "홍길동", "서울시 강남구", null, "37.4979502", "127.0276368"
             );
 
             // when
@@ -634,7 +649,7 @@ class LocationVoteUnitTest {
             when(locationVoteRepository.findById(1L)).thenReturn(Optional.of(voteA));
 
             UpdateLocationVoteRequest request = new UpdateLocationVoteRequest(
-                    "참가자", "서울시 홍대입구", "37.5571010", "126.9236450"
+                    "참가자", "서울시 홍대입구", null, "37.5571010", "126.9236450"
             );
 
             // when
@@ -667,6 +682,123 @@ class LocationVoteUnitTest {
             // then
             assertThat(cache.get("meeting-A_now")).isNull();
             assertThat(cache.get("meeting-B_now").get()).isEqualTo("cached-B");
+        }
+    }
+
+    @Nested
+    @DisplayName("출발지로 고를 때 본 주소 (departureAddress)")
+    class DepartureAddress {
+
+        private static final String MEETING_ID = "meeting-id-123";
+        private static final String PLACE_NAME = "서대문역 5호선";
+        private static final String PLACE_ADDRESS = "서울 종로구 통일로 지하 126";
+
+        private CreateLocationVoteRequest createRequest(String departureLocation, String departureAddress) {
+            return new CreateLocationVoteRequest(
+                    MEETING_ID,
+                    null,
+                    null,
+                    "홍길동",
+                    departureLocation,
+                    departureAddress,
+                    "37.5657",
+                    "126.9666"
+            );
+        }
+
+        @Test
+        @DisplayName("생성 요청에 주소가 있으면 함께 저장된다")
+        void createLocationVote_withDepartureAddress_savesAddress() {
+            // given
+            when(meetingRepository.findByIdWithAllAssociations(MEETING_ID)).thenReturn(Optional.of(Meeting.ofId(MEETING_ID)));
+
+            // when
+            locationService.createLocationVote(createRequest(PLACE_NAME, PLACE_ADDRESS));
+
+            // then
+            ArgumentCaptor<LocationVote> captor = ArgumentCaptor.forClass(LocationVote.class);
+            verify(locationVoteRepository).save(captor.capture());
+            assertThat(captor.getValue().getDepartureLocation()).isEqualTo(PLACE_NAME);
+            assertThat(captor.getValue().getDepartureAddress()).isEqualTo(PLACE_ADDRESS);
+        }
+
+        @Test
+        @DisplayName("생성 요청에 주소가 없으면 NULL로 저장된다")
+        void createLocationVote_withoutDepartureAddress_savesNull() {
+            // given
+            when(meetingRepository.findByIdWithAllAssociations(MEETING_ID)).thenReturn(Optional.of(Meeting.ofId(MEETING_ID)));
+
+            // when
+            locationService.createLocationVote(createRequest("서울 종로구 통일로 지하 126", null));
+
+            // then
+            ArgumentCaptor<LocationVote> captor = ArgumentCaptor.forClass(LocationVote.class);
+            verify(locationVoteRepository).save(captor.capture());
+            assertThat(captor.getValue().getDepartureAddress()).isNull();
+        }
+
+        @Test
+        @DisplayName("수정 요청의 주소로 덮어쓴다")
+        void updateLocationVote_withDepartureAddress_overwritesAddress() {
+            // given
+            LocationPoll locationPoll = LocationPoll.defaultOf(Meeting.ofId(MEETING_ID));
+            LocationVote vote = LocationVote.fromByCreateLocationVoteRequest(locationPoll, createRequest(PLACE_NAME, PLACE_ADDRESS));
+            when(locationVoteRepository.findById(1L)).thenReturn(Optional.of(vote));
+
+            UpdateLocationVoteRequest request = new UpdateLocationVoteRequest(
+                    "홍길동", "판교역 신분당선", "경기 성남시 분당구 판교역로 지하 160", "37.3948", "127.1112"
+            );
+
+            // when
+            locationService.updateLocationVote(1L, request);
+
+            // then
+            assertThat(vote.getDepartureLocation()).isEqualTo("판교역 신분당선");
+            assertThat(vote.getDepartureAddress()).isEqualTo("경기 성남시 분당구 판교역로 지하 160");
+        }
+
+        @Test
+        @DisplayName("수정 요청에 주소가 없으면 저장된 주소가 NULL로 바뀐다")
+        void updateLocationVote_withoutDepartureAddress_overwritesWithNull() {
+            // given
+            LocationPoll locationPoll = LocationPoll.defaultOf(Meeting.ofId(MEETING_ID));
+            LocationVote vote = LocationVote.fromByCreateLocationVoteRequest(locationPoll, createRequest(PLACE_NAME, PLACE_ADDRESS));
+            when(locationVoteRepository.findById(1L)).thenReturn(Optional.of(vote));
+
+            UpdateLocationVoteRequest request = new UpdateLocationVoteRequest(
+                    "홍길동", "서울 마포구 합정동", null, "37.5495", "126.9139"
+            );
+
+            // when
+            locationService.updateLocationVote(1L, request);
+
+            // then
+            assertThat(vote.getDepartureLocation()).isEqualTo("서울 마포구 합정동");
+            assertThat(vote.getDepartureAddress()).isNull();
+        }
+
+        @Test
+        @DisplayName("목록 응답에 저장된 주소를 내려주고, 없으면 null을 내려준다")
+        void listLocationVote_returnsDepartureAddress() {
+            // given
+            Meeting meeting = Meeting.ofId(MEETING_ID);
+            LocationPoll locationPoll = LocationPoll.ofId(1L);
+            meeting.addPolls(null, locationPoll);
+            when(meetingRepository.findByIdWithAllAssociations(MEETING_ID)).thenReturn(Optional.of(meeting));
+
+            LocationVote withAddress = LocationVote.fromByCreateLocationVoteRequest(locationPoll, createRequest(PLACE_NAME, PLACE_ADDRESS));
+            LocationVote withoutAddress = LocationVote.fromByCreateLocationVoteRequest(locationPoll, createRequest("서울 강남구 역삼동", null));
+            when(locationVoteRepository.findByLocationPoll_Id(locationPoll.getId()))
+                    .thenReturn(List.of(withAddress, withoutAddress));
+
+            // when
+            List<LocationVoteResponse> responses = locationService.listLocationVote(MEETING_ID);
+
+            // then
+            assertThat(responses).hasSize(2);
+            assertThat(responses.get(0).departureLocation()).isEqualTo(PLACE_NAME);
+            assertThat(responses.get(0).departureAddress()).isEqualTo(PLACE_ADDRESS);
+            assertThat(responses.get(1).departureAddress()).isNull();
         }
     }
 }
