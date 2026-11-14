@@ -31,6 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -158,5 +159,44 @@ class LocationControllerTest {
         ArgumentCaptor<UpdateLocationVoteRequest> captor = ArgumentCaptor.forClass(UpdateLocationVoteRequest.class);
         verify(locationVoteService).updateLocationVote(eq(1L), captor.capture());
         assertThat(captor.getValue().departureAddress()).isNull();
+    }
+
+    @Test
+    @DisplayName("출발지 추가 API는 255자를 넘는 departureAddress를 400으로 거절한다")
+    void createLocationVote_rejectsTooLongDepartureAddress() throws Exception {
+        mockMvc.perform(post("/api/locations/vote")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "meetingId": "%s",
+                                  "participantName": "홍길동",
+                                  "departureLocation": "서대문역 5호선",
+                                  "departureAddress": "%s",
+                                  "departureLat": "37.5657",
+                                  "departureLng": "126.9666"
+                                }
+                                """.formatted(MEETING_ID, "가".repeat(256))))
+                .andExpect(status().isBadRequest());
+
+        verify(locationVoteService, never()).createLocationVote(any());
+    }
+
+    @Test
+    @DisplayName("출발지 수정 API는 255자를 넘는 departureAddress를 400으로 거절한다")
+    void updateLocationVote_rejectsTooLongDepartureAddress() throws Exception {
+        mockMvc.perform(put("/api/locations/vote/{locationVoteId}", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "participantName": "홍길동",
+                                  "departureLocation": "서대문역 5호선",
+                                  "departureAddress": "%s",
+                                  "departureLat": "37.5657",
+                                  "departureLng": "126.9666"
+                                }
+                                """.formatted("가".repeat(256))))
+                .andExpect(status().isBadRequest());
+
+        verify(locationVoteService, never()).updateLocationVote(any(), any());
     }
 }

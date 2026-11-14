@@ -2,6 +2,7 @@ package com.dnd.moyeolak.domain.location.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 @Schema(description = "출발지 추가 요청")
 public record CreateLocationVoteRequest(
@@ -21,7 +22,7 @@ public record CreateLocationVoteRequest(
     @NotBlank String departureLocation,
 
     @Schema(description = "출발지로 고른 장소의 주소 (장소 이름으로 고른 경우에만 전달, 현 위치나 주소로 고르면 생략)", example = "서울 종로구 통일로 지하 126")
-    String departureAddress,
+    @Size(max = 255) String departureAddress,
 
     @Schema(description = "출발지 위도", example = "37.5657519")
     @NotBlank String departureLat,
