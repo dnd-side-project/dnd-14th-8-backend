@@ -54,10 +54,10 @@ class PostgisFlywayMigrationTest {
         Integer stationCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM stations", Integer.class);
         String postgisVersion = jdbcTemplate.queryForObject("SELECT PostGIS_Version()", String.class);
 
-        assertThat(appliedMigrationCount).isEqualTo(8);
+        assertThat(appliedMigrationCount).isEqualTo(9);
         assertThat(stationCount).isPositive();
         assertThat(postgisVersion).isNotBlank();
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("8");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("9");
     }
 
     @Test
@@ -85,17 +85,17 @@ class PostgisFlywayMigrationTest {
     }
 
     @Test
-    void shouldFillStationAddressesExceptStationsMissingFromSource() {
+    void shouldFillEveryStationAddress() {
         Integer stationCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM stations", Integer.class);
         List<String> withoutAddress = jdbcTemplate.queryForList(
                 "SELECT name || ' ' || line FROM stations WHERE address IS NULL", String.class);
         String euljiro3ga = jdbcTemplate.queryForObject(
                 "SELECT address FROM stations WHERE name = '을지로3가' AND line = '2호선'", String.class);
 
-        // V2의 654행에서 V8이 노선이 틀린 4행을 지웠다.
-        assertThat(stationCount).isEqualTo(650);
-        // 출처 데이터에 없는 킨텍스만 주소가 비어 있다. V7에서 비어 있던 행주는 V8에서 한국항공대로 고치며 주소를 넣었다.
-        assertThat(withoutAddress).containsExactly("킨텍스 GTX-A");
+        // V2의 654행에서 V8이 노선이 틀린 4행을 지웠고, V9가 빠져 있던 149행을 넣었다.
+        assertThat(stationCount).isEqualTo(799);
+        // V7에서 비어 있던 행주는 V8에서 한국항공대로 고치며, 킨텍스는 V9에서 주소를 넣었다.
+        assertThat(withoutAddress).isEmpty();
         assertThat(euljiro3ga).isEqualTo("서울특별시 중구 을지로 지하106(을지로3가)");
     }
 
@@ -105,7 +105,7 @@ class PostgisFlywayMigrationTest {
         Integer oldIncheonDistricts = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM stations WHERE address ~ '^인천(광역시|시) (남구|중구|동구|서구) '", Integer.class);
         Integer hwaseongWithoutDistrict = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM stations WHERE address ~ '^경기도 화성시 ' AND address !~ '^경기도 화성시 \\S+구 '",
+                "SELECT COUNT(*) FROM stations WHERE address ~ '^경기도 화성시' AND address !~ '^경기도 화성시 \\S+구( |$)'",
                 Integer.class);
         List<String> sample = jdbcTemplate.queryForList(
                 "SELECT address FROM stations WHERE (name, line) IN (('검단오류', '인천2호선'), ('인천공항1터미널', '공항철도'), "
@@ -127,15 +127,16 @@ class PostgisFlywayMigrationTest {
         List<String> currentNames = jdbcTemplate.queryForList(
                 "SELECT name || ' ' || line FROM stations "
                         + "WHERE name IN ('평택지제', '불암산', '자양', '서해구청', '한국항공대', '신길온천')", String.class);
-        // 같은 역의 맞는 노선 행은 남아 있다.
-        Integer keptGimpoAirport = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM stations WHERE name = '김포공항'", Integer.class);
+        // 같은 역의 맞는 노선 행은 남아 있다. 김포골드라인과 서해선은 V9에서 넣었다.
+        List<String> gimpoAirportLines = jdbcTemplate.queryForList(
+                "SELECT line FROM stations WHERE name = '김포공항'", String.class);
 
         assertThat(removed).isEmpty();
         assertThat(oldNames).isEmpty();
         assertThat(currentNames).containsExactlyInAnyOrder(
-                "평택지제 1호선", "불암산 4호선", "자양 7호선", "서해구청 인천2호선", "한국항공대 경의중앙선", "신길온천 4호선");
-        assertThat(keptGimpoAirport).isEqualTo(3);
+                "평택지제 1호선", "불암산 4호선", "자양 7호선", "서해구청 인천2호선", "한국항공대 경의중앙선",
+                "신길온천 4호선", "신길온천 수인분당선");
+        assertThat(gimpoAirportLines).containsExactlyInAnyOrder("5호선", "9호선", "공항철도", "김포골드라인", "서해선");
     }
 
     @Test
@@ -148,15 +149,45 @@ class PostgisFlywayMigrationTest {
         List<String> westToEast = jdbcTemplate.queryForList(
                 "SELECT name FROM stations WHERE line = '2호선' "
                         + "AND name IN ('을지로3가', '을지로4가', '동대문역사문화공원') ORDER BY ST_X(geom)", String.class);
-        // 서울, 경기, 인천, 강원(춘천), 충남(천안, 아산) 범위를 벗어난 좌표가 없다.
+        // 서울, 경기(연천까지), 인천, 강원(춘천), 충남(천안, 아산) 범위를 벗어난 좌표가 없다.
         Integer outOfArea = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM stations WHERE ST_Y(geom) NOT BETWEEN 36.7 AND 38.0 "
+                "SELECT COUNT(*) FROM stations WHERE ST_Y(geom) NOT BETWEEN 36.7 AND 38.2 "
                         + "OR ST_X(geom) NOT BETWEEN 126.3 AND 127.8", Integer.class);
 
         assertThat(songtanMeters).isLessThan(100.0);
         assertThat(yangwonMeters).isLessThan(1.0);
         assertThat(westToEast).containsExactly("을지로3가", "을지로4가", "동대문역사문화공원");
         assertThat(outOfArea).isZero();
+    }
+
+    @Test
+    void shouldAddStationsMissingFromSeed() {
+        // V9가 넣은 노선. 시드(V2)에는 이 노선들이 통째로 없었다.
+        Map<String, Long> newLineCounts = new java.util.TreeMap<>();
+        jdbcTemplate.query(
+                "SELECT line, COUNT(*) FROM stations WHERE line IN ('서해선', '에버라인', '의정부경전철', '우이신설선', "
+                        + "'신림선', '김포골드라인') GROUP BY line",
+                rs -> { newLineCounts.put(rs.getString(1), rs.getLong(2)); });
+        List<String> gtxA = jdbcTemplate.queryForList(
+                "SELECT name FROM stations WHERE line = 'GTX-A'", String.class);
+        // 있던 노선에서 빠져 있던 역의 표본: 2호선 지선, 1호선 연천 연장, 8호선 별내 연장
+        List<String> sample = jdbcTemplate.queryForList(
+                "SELECT name || ' ' || line FROM stations WHERE (name, line) IN (('까치산', '2호선'), ('신설동', '2호선'), "
+                        + "('연천', '1호선'), ('별내', '8호선'), ('시청.용인대', '에버라인'))", String.class);
+        // 같은 역이 같은 노선으로 두 번 들어가지 않았다.
+        Integer duplicated = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM (SELECT name, line FROM stations GROUP BY name, line HAVING COUNT(*) > 1) t",
+                Integer.class);
+        // 운정중앙은 공공데이터에 없어 위키데이터 좌표(Q125895818)를 넣었다.
+        Double unjeongJungangMeters = distanceMeters("운정중앙", "GTX-A", 37.716610, 126.728354);
+
+        assertThat(newLineCounts).containsExactlyInAnyOrderEntriesOf(Map.of(
+                "서해선", 21L, "에버라인", 15L, "의정부경전철", 15L, "우이신설선", 13L, "신림선", 11L, "김포골드라인", 10L));
+        assertThat(gtxA).containsExactlyInAnyOrder(
+                "운정중앙", "킨텍스", "대곡", "연신내", "서울역", "수서", "성남", "구성", "동탄");
+        assertThat(sample).hasSize(5);
+        assertThat(duplicated).isZero();
+        assertThat(unjeongJungangMeters).isLessThan(1.0);
     }
 
     @Test
@@ -195,7 +226,7 @@ class PostgisFlywayMigrationTest {
 
         // 저장한 주소는 모두 "시도 줄임 + 구까지"로 줄일 수 있어야 한다. 줄이지 못하면 화면에 주소 줄이 빠진다.
         assertThat(addresses)
-                .hasSize(649)
+                .hasSize(799)
                 .allSatisfy(address -> assertThat(StationAddressUtil.shorten(address))
                         .as(address)
                         .matches("(서울|경기|인천|강원|충남) \\S+[시군구]( \\S+구)?"));
