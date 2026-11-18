@@ -338,6 +338,75 @@ class MidpointRecommendationServiceImplTest {
         }
 
         @Test
+        @DisplayName("같은 역의 다른 노선 행은 순위가 가장 높은 하나만 추천하고, 그 자리에 다음 순위의 다른 역을 올린다")
+        void recommendsOnlyBestLineOfSamePhysicalStation() {
+            mockMeetingWithLocationPoll();
+            // 출발지가 2km보다 멀어야 평균 이동시간 순으로 순위를 매긴다.
+            LocationVote vote1 = createMockVote("37.4500", "126.8500", "참가자A", "서울시 구로구");
+            LocationVote vote2 = createMockVote("37.5300", "126.9500", "참가자B", "서울시 영등포구");
+            when(locationVoteRepository.findByLocationPoll_Id(1L)).thenReturn(List.of(vote1, vote2));
+            when(stationRepository.calculateCentroid(any())).thenThrow(new RuntimeException("PostGIS 미지원"));
+            // 대림 2호선과 7호선은 같은 역의 승강장이고 180m쯤 떨어져 있다.
+            List<Station> stations = List.of(
+                    createMockStation(1L, "대림", "7호선", 37.4930, 126.8970),
+                    createMockStation(2L, "대림", "2호선", 37.4933, 126.8950),
+                    createMockStation(3L, "가산디지털단지", "7호선", 37.4804, 126.8827),
+                    createMockStation(4L, "구로디지털단지", "2호선", 37.4853, 126.9015)
+            );
+            when(stationRepository.findNearbyStations(anyDouble(), anyDouble(), anyInt(), anyInt()))
+                    .thenReturn(stations);
+            // 평균: 대림 7호선 22분, 대림 2호선 20분, 가산디지털단지 30분, 구로디지털단지 40분
+            when(googleRoutesClient.computeTransitMatrix(anyList(), anyList(), any()))
+                    .thenReturn(List.of(
+                            List.of(new TransitRouteResult(22, 5000, true), new TransitRouteResult(20, 5000, true),
+                                    new TransitRouteResult(30, 5000, true), new TransitRouteResult(40, 5000, true)),
+                            List.of(new TransitRouteResult(22, 5000, true), new TransitRouteResult(20, 5000, true),
+                                    new TransitRouteResult(30, 5000, true), new TransitRouteResult(40, 5000, true))
+                    ));
+            when(kakaoDirectionsClient.requestDrivingRoute(anyDouble(), anyDouble(), anyDouble(), anyDouble(), any()))
+                    .thenReturn(null);
+
+            MidpointRecommendationResponse response =
+                    midpointRecommendationService.calculateMidpointRecommendations(MEETING_ID, null, "unknown");
+
+            assertThat(response.recommendations()).extracting("rank", "stationName", "line")
+                    .containsExactly(
+                            tuple(1, "대림", "2호선"),
+                            tuple(2, "가산디지털단지", "7호선"),
+                            tuple(3, "구로디지털단지", "2호선"));
+        }
+
+        @Test
+        @DisplayName("이름이 같아도 500m보다 멀리 떨어진 역은 다른 역으로 보고 함께 추천한다")
+        void keepsDifferentStationsThatShareName() {
+            mockMeetingWithLocationPoll();
+            LocationVote vote1 = createMockVote("37.5000", "126.9000", "참가자A", "서울시 영등포구");
+            LocationVote vote2 = createMockVote("37.6100", "126.9800", "참가자B", "서울시 성북구");
+            when(locationVoteRepository.findByLocationPoll_Id(1L)).thenReturn(List.of(vote1, vote2));
+            when(stationRepository.calculateCentroid(any())).thenThrow(new RuntimeException("PostGIS 미지원"));
+            // 신촌(2호선)과 신촌(경의중앙선)은 이름만 같은 다른 역이고 700m쯤 떨어져 있다.
+            List<Station> stations = List.of(
+                    createMockStation(1L, "신촌", "2호선", 37.5552, 126.9369),
+                    createMockStation(2L, "신촌", "경의중앙선", 37.5598, 126.9425)
+            );
+            when(stationRepository.findNearbyStations(anyDouble(), anyDouble(), anyInt(), anyInt()))
+                    .thenReturn(stations);
+            when(googleRoutesClient.computeTransitMatrix(anyList(), anyList(), any()))
+                    .thenReturn(List.of(
+                            List.of(new TransitRouteResult(10, 2000, true), new TransitRouteResult(12, 2000, true)),
+                            List.of(new TransitRouteResult(10, 2000, true), new TransitRouteResult(12, 2000, true))
+                    ));
+            when(kakaoDirectionsClient.requestDrivingRoute(anyDouble(), anyDouble(), anyDouble(), anyDouble(), any()))
+                    .thenReturn(null);
+
+            MidpointRecommendationResponse response =
+                    midpointRecommendationService.calculateMidpointRecommendations(MEETING_ID, null, "unknown");
+
+            assertThat(response.recommendations()).extracting("stationName", "line")
+                    .containsExactly(tuple("신촌", "2호선"), tuple("신촌", "경의중앙선"));
+        }
+
+        @Test
         @DisplayName("도달 불가 참가자가 있는 역보다 전원 도달 가능한 역이 우선 추천된다")
         void prefersFullyReachableStationOverPartiallyReachableOne() {
             mockMeetingWithLocationPoll();

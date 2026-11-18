@@ -50,6 +50,9 @@ public class MidpointRecommendationServiceImpl implements MidpointRecommendation
     private static final int SEARCH_RADIUS_METERS = 5000;
     private static final int MAX_CANDIDATE_STATIONS = 10;
     private static final int TOP_RECOMMENDATIONS = 3;
+    // 이름이 같고 이 거리 안이면 같은 역의 다른 노선 행으로 본다.
+    // stations에서 같은 역의 행끼리 가장 먼 것은 서울역(434m), 이름만 같은 다른 역끼리 가장 가까운 것은 신촌(701m)이다(V8 기준).
+    private static final int SAME_STATION_MAX_DISTANCE_METERS = 500;
     private static final int NEARBY_MAX_ROUTE_DURATION_MINUTES = 15;
     private static final int NEARBY_MAX_DEPARTURE_DISTANCE_METERS = 2000;
     private static final int WALKABLE_STATION_DISTANCE_METERS = 700;
@@ -285,10 +288,35 @@ public class MidpointRecommendationServiceImpl implements MidpointRecommendation
         }
 
         // 도달 불가 참가자가 적은 역이 우선 — 일부만 갈 수 있는 역이 짧은 평균만으로 1위가 되지 않도록
-        return evaluations.stream()
-                .sorted(comparator)
-                .limit(TOP_RECOMMENDATIONS)
-                .toList();
+        return pickDistinctStations(evaluations.stream().sorted(comparator).toList());
+    }
+
+    /**
+     * 순위대로 고르되, 이미 고른 역과 같은 역의 다른 노선 행은 건너뛴다.
+     * 환승역은 노선마다 행이 따로 있고 좌표도 승강장마다 다르다. 그대로 두면 상위 추천이 한 역의 노선들로 채워져
+     * 화면에 같은 이름의 역이 겹쳐 나온다. 같은 역에서는 순위가 가장 높은 노선의 행이 남는다.
+     */
+    private List<StationEvaluation> pickDistinctStations(List<StationEvaluation> rankedEvaluations) {
+        List<StationEvaluation> picked = new ArrayList<>();
+        for (StationEvaluation candidate : rankedEvaluations) {
+            if (picked.size() == TOP_RECOMMENDATIONS) {
+                break;
+            }
+            boolean alreadyPicked = picked.stream()
+                    .anyMatch(evaluation -> isSamePhysicalStation(evaluation.station(), candidate.station()));
+            if (!alreadyPicked) {
+                picked.add(candidate);
+            }
+        }
+        return picked;
+    }
+
+    private boolean isSamePhysicalStation(Station station, Station other) {
+        return station.getName().equals(other.getName())
+                && haversineDistance(
+                        station.getLatitude(), station.getLongitude(),
+                        other.getLatitude(), other.getLongitude()
+                ) <= SAME_STATION_MAX_DISTANCE_METERS;
     }
 
     private TransitRouteResult resolveTransitRoute(LocationVote vote, Station station, TransitRouteResult transitRoute) {
