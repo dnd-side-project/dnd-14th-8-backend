@@ -17,6 +17,7 @@ import com.dnd.moyeolak.global.ratelimit.MidpointRecommendationUsageLimiter;
 import com.dnd.moyeolak.global.response.ErrorCode;
 import com.dnd.moyeolak.global.station.entity.Station;
 import com.dnd.moyeolak.global.station.repository.StationRepository;
+import com.dnd.moyeolak.global.utils.StationAddressUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
@@ -345,6 +346,7 @@ public class MidpointRecommendationServiceImpl implements MidpointRecommendation
                             .rank(rank + 1)
                             .stationId(station.getId())
                             .stationName(station.getName())
+                            .stationAddress(StationAddressUtil.shorten(station.getAddress()))
                             .line(station.getLine())
                             .latitude(station.getLatitude())
                             .longitude(station.getLongitude())
