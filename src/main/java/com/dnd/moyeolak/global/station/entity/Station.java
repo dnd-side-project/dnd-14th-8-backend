@@ -22,6 +22,10 @@ public class Station {
     @Column(length = 50)
     private String line;
 
+    /** 역사 도로명주소 원본. 데이터에 없는 역은 null이다. 화면에는 StationAddressUtil.shorten으로 줄여 내려준다. */
+    @Column(length = 255)
+    private String address;
+
     @Column(nullable = false, columnDefinition = "geometry(Point, 4326)")
     private Point geom;
 

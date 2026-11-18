@@ -37,6 +37,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -306,6 +307,34 @@ class MidpointRecommendationServiceImplTest {
             assertThat(response.recommendations()).hasSize(1);
             assertThat(response.recommendations().getFirst().routes())
                     .extracting("drivingDuration").containsExactly(999, 999);
+        }
+
+        @Test
+        @DisplayName("역 주소는 시도 이름을 줄이고 구까지 잘라 내려주고, 주소가 없는 역은 null로 내려준다")
+        void returnsShortenedStationAddress() {
+            mockMeetingWithLocationPoll();
+            LocationVote vote1 = createMockVote("37.5000", "127.0000", "참가자A", "서울시 강남구");
+            LocationVote vote2 = createMockVote("37.5100", "127.0100", "참가자B", "서울시 강동구");
+            when(locationVoteRepository.findByLocationPoll_Id(1L)).thenReturn(List.of(vote1, vote2));
+            when(stationRepository.calculateCentroid(any())).thenThrow(new RuntimeException("PostGIS 미지원"));
+            Station withAddress = createMockStation(1L, "을지로3가", "2호선", 37.5663, 126.9926);
+            when(withAddress.getAddress()).thenReturn("서울특별시 중구 을지로 지하106(을지로3가)");
+            Station withoutAddress = createMockStation(2L, "킨텍스", "GTX-A", 37.6700, 126.7500);
+            when(stationRepository.findNearbyStations(anyDouble(), anyDouble(), anyInt(), anyInt()))
+                    .thenReturn(List.of(withAddress, withoutAddress));
+            when(googleRoutesClient.computeTransitMatrix(anyList(), anyList(), any()))
+                    .thenReturn(List.of(
+                            List.of(new TransitRouteResult(10, 5000, true), new TransitRouteResult(40, 20000, true)),
+                            List.of(new TransitRouteResult(15, 6000, true), new TransitRouteResult(45, 21000, true))
+                    ));
+            when(kakaoDirectionsClient.requestDrivingRoute(anyDouble(), anyDouble(), anyDouble(), anyDouble(), any()))
+                    .thenReturn(null);
+
+            MidpointRecommendationResponse response =
+                    midpointRecommendationService.calculateMidpointRecommendations(MEETING_ID, null, "unknown");
+
+            assertThat(response.recommendations()).extracting("stationName", "stationAddress")
+                    .containsExactly(tuple("을지로3가", "서울 중구"), tuple("킨텍스", null));
         }
 
         @Test

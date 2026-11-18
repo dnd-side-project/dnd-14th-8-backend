@@ -4,6 +4,7 @@ import com.dnd.moyeolak.domain.location.dto.CenterPointDto;
 import com.dnd.moyeolak.domain.location.dto.CreateLocationVoteRequest;
 import com.dnd.moyeolak.domain.location.dto.LocationVoteResponse;
 import com.dnd.moyeolak.domain.location.dto.MidpointRecommendationResponse;
+import com.dnd.moyeolak.domain.location.dto.StationRecommendationDto;
 import com.dnd.moyeolak.domain.location.enums.MidpointResultType;
 import com.dnd.moyeolak.domain.location.service.LocationVoteService;
 import com.dnd.moyeolak.domain.location.service.MidpointRecommendationService;
@@ -98,6 +99,34 @@ class LocationControllerTest {
 
         verify(midpointRecommendationService)
                 .calculateMidpointRecommendations(MEETING_ID, null, "203.0.113.10");
+    }
+
+    @Test
+    @DisplayName("중간지점 추천 API는 추천역마다 stationAddress를 내려주고, 없으면 null로 내려준다")
+    void getMidpointRecommendations_includesStationAddress() throws Exception {
+        MidpointRecommendationResponse response = new MidpointRecommendationResponse(
+                new CenterPointDto(37.5, 127.0),
+                List.of(
+                        StationRecommendationDto.builder()
+                                .rank(1).stationId(1L).stationName("을지로3가").stationAddress("서울 중구")
+                                .line("2호선").routes(List.of()).build(),
+                        StationRecommendationDto.builder()
+                                .rank(2).stationId(2L).stationName("킨텍스")
+                                .line("GTX-A").routes(List.of()).build()
+                ),
+                null,
+                2,
+                5,
+                MidpointResultType.NORMAL
+        );
+        when(midpointRecommendationService.calculateMidpointRecommendations(eq(MEETING_ID), eq(null), any()))
+                .thenReturn(response);
+
+        mockMvc.perform(get("/api/locations/midpoint-recommendations").param("meetingId", MEETING_ID))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.recommendations[0].stationName").value("을지로3가"))
+                .andExpect(jsonPath("$.data.recommendations[0].stationAddress").value("서울 중구"))
+                .andExpect(jsonPath("$.data.recommendations[1].stationAddress").value(nullValue()));
     }
 
     @Test
