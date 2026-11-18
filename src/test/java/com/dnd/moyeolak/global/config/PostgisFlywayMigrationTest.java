@@ -99,6 +99,24 @@ class PostgisFlywayMigrationTest {
     }
 
     @Test
+    void shouldUseCurrentDistrictNamesInStationAddresses() {
+        // 출처 데이터에 옛 행정구역 이름으로 남아 있던 곳이다. 인천은 2026-07-01 개편, 화성시는 2026-02-01 구 설치.
+        Integer oldIncheonDistricts = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM stations WHERE address ~ '^인천(광역시|시) (남구|중구|동구|서구) '", Integer.class);
+        Integer hwaseongWithoutDistrict = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM stations WHERE address ~ '^경기도 화성시 ' AND address !~ '^경기도 화성시 \\S+구 '",
+                Integer.class);
+        List<String> sample = jdbcTemplate.queryForList(
+                "SELECT address FROM stations WHERE (name, line) IN (('검단오류', '인천2호선'), ('인천공항1터미널', '공항철도'), "
+                        + "('동인천', '1호선'), ('서구청', '인천2호선'), ('병점', '1호선'), ('주안', '1호선'))", String.class);
+
+        assertThat(oldIncheonDistricts).isZero();
+        assertThat(hwaseongWithoutDistrict).isZero();
+        assertThat(sample).extracting(StationAddressUtil::shorten).containsExactlyInAnyOrder(
+                "인천 검단구", "인천 영종구", "인천 제물포구", "인천 서해구", "경기 화성시 병점구", "인천 미추홀구");
+    }
+
+    @Test
     void shouldShortenEveryStoredStationAddress() {
         List<String> addresses = jdbcTemplate.queryForList(
                 "SELECT address FROM stations WHERE address IS NOT NULL", String.class);

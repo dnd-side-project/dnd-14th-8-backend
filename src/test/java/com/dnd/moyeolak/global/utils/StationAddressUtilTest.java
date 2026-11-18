@@ -18,6 +18,7 @@ class StationAddressUtilTest {
             "서울시 도봉구 도봉로 170길 2 | 서울 도봉구",
             "인천광역시 계양구 다남로 24 | 인천 계양구",
             "인천시 미추홀구 주안로 95-19 | 인천 미추홀구",
+            "인천광역시 서해구 서곶로 294 | 인천 서해구",
     })
     void shortensMetropolitanAddress(String address, String expected) {
         assertThat(StationAddressUtil.shorten(address)).isEqualTo(expected);
@@ -29,6 +30,7 @@ class StationAddressUtilTest {
             "경기도 성남시 분당구 판교역로 지하 160 | 경기 성남시 분당구",
             "충남 천안시 서북구 두정로 289(두정동 84-1) | 충남 천안시 서북구",
             "충청남도 천안시 서북구 쌍용19로 20 | 충남 천안시 서북구",
+            "경기도 화성시 병점구 떡전골로 97 | 경기 화성시 병점구",
     })
     void keepsDistrictOfCity(String address, String expected) {
         assertThat(StationAddressUtil.shorten(address)).isEqualTo(expected);
@@ -50,7 +52,7 @@ class StationAddressUtilTest {
     @DisplayName("띄어쓰기가 겹치거나 줄바꿈 없는 공백(NBSP)이 섞여도 같은 결과를 낸다")
     void normalizesWhitespace() {
         assertThat(StationAddressUtil.shorten("  경기도  용인시 기흥구  용구대로 2560 ")).isEqualTo("경기 용인시 기흥구");
-        assertThat(StationAddressUtil.shorten("인천광역시 중구 백운로414번길 75")).isEqualTo("인천 중구");
+        assertThat(StationAddressUtil.shorten("인천광역시 영종구 백운로414번길 75")).isEqualTo("인천 영종구");
     }
 
     @ParameterizedTest
