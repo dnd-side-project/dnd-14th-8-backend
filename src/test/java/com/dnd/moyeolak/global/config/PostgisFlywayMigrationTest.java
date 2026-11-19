@@ -249,7 +249,9 @@ class PostgisFlywayMigrationTest {
                         + "WHERE ST_Distance(a.geom::geography, b.geom::geography) <= 300 "
                         + "GROUP BY 1 ORDER BY 1", String.class);
 
-        // 총신대입구와 이수는 같은 환승역이다(예외 표에 있음). 나머지 둘은 가까이 있는 다른 역이다.
+        // 근거는 레일포털 "전체_도시철도역사정보"(2026-06 기준)의 환승역구분과 환승노선명이다.
+        // 총신대입구(4호선)와 이수(7호선)는 서로를 환승 노선으로 적은 같은 환승역이다(예외 표에 있음).
+        // 의정부(1호선)와 경전철의정부, 신용산(4호선)은 일반역이고, 용산의 환승(경의중앙선)은 용산 자기 행에서 이뤄진다. 둘 다 다른 역이다.
         assertThat(nearbyPairs).containsExactlyInAnyOrder("경전철의정부 / 의정부", "신용산 / 용산", "이수 / 총신대입구");
         assertThat(StationNameUtil.sharedName("총신대입구")).isEqualTo(StationNameUtil.sharedName("이수"));
         assertThat(StationNameUtil.sharedName("의정부")).isNotEqualTo(StationNameUtil.sharedName("경전철의정부"));
