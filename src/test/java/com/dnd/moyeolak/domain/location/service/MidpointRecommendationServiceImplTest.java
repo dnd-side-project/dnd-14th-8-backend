@@ -39,7 +39,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.ArgumentMatchers.anyDouble;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -369,11 +371,12 @@ class MidpointRecommendationServiceImplTest {
             MidpointRecommendationResponse response =
                     midpointRecommendationService.calculateMidpointRecommendations(MEETING_ID, null, "unknown");
 
-            assertThat(response.recommendations()).extracting("rank", "stationName", "line")
+            // 대림은 평균이 짧은 2호선 행(id 2)이 남는다.
+            assertThat(response.recommendations()).extracting("rank", "stationName", "stationId")
                     .containsExactly(
-                            tuple(1, "대림", "2호선"),
-                            tuple(2, "가산디지털단지", "7호선"),
-                            tuple(3, "구로디지털단지", "2호선"));
+                            tuple(1, "대림", 2L),
+                            tuple(2, "가산디지털단지", 3L),
+                            tuple(3, "구로디지털단지", 4L));
         }
 
         @Test
@@ -402,8 +405,106 @@ class MidpointRecommendationServiceImplTest {
             MidpointRecommendationResponse response =
                     midpointRecommendationService.calculateMidpointRecommendations(MEETING_ID, null, "unknown");
 
-            assertThat(response.recommendations()).extracting("stationName", "line")
-                    .containsExactly(tuple("신촌", "2호선"), tuple("신촌", "경의중앙선"));
+            assertThat(response.recommendations()).extracting("stationName", "stationId")
+                    .containsExactly(tuple("신촌", 1L), tuple("신촌", 2L));
+        }
+
+        @Test
+        @DisplayName("추천역마다 같은 역의 노선을 모두 lines에 담는다. 후보 10행에 없는 노선 행도 이름으로 찾아 넣는다")
+        void collectsAllLinesOfSamePhysicalStation() {
+            mockMeetingWithLocationPoll();
+            LocationVote vote1 = createMockVote("37.4500", "126.8500", "참가자A", "서울시 구로구");
+            LocationVote vote2 = createMockVote("37.5300", "126.9500", "참가자B", "서울시 영등포구");
+            when(locationVoteRepository.findByLocationPoll_Id(1L)).thenReturn(List.of(vote1, vote2));
+            when(stationRepository.calculateCentroid(any())).thenThrow(new RuntimeException("PostGIS 미지원"));
+            Station daerim7 = createMockStation(1L, "대림", "7호선", 37.4930, 126.8970);
+            Station daerim2 = createMockStation(2L, "대림", "2호선", 37.4933, 126.8950);
+            Station gasan7 = createMockStation(3L, "가산디지털단지", "7호선", 37.4804, 126.8827);
+            Station guro2 = createMockStation(4L, "구로디지털단지", "2호선", 37.4853, 126.9015);
+            when(stationRepository.findNearbyStations(anyDouble(), anyDouble(), anyInt(), anyInt()))
+                    .thenReturn(List.of(daerim7, daerim2, gasan7, guro2));
+            // 가산디지털단지 1호선은 후보 10행에 들지 않았지만 같은 역이다(7호선 승강장과 90m쯤).
+            Station gasan1 = createMockStation(5L, "가산디지털단지", "1호선", 37.4812, 126.8826);
+            when(stationRepository.findByNameIn(argThat(names -> names != null
+                    && names.size() == 3
+                    && names.containsAll(List.of("대림", "가산디지털단지", "구로디지털단지")))))
+                    .thenReturn(List.of(daerim7, daerim2, gasan7, gasan1, guro2));
+            when(googleRoutesClient.computeTransitMatrix(anyList(), anyList(), any()))
+                    .thenReturn(List.of(
+                            List.of(new TransitRouteResult(22, 5000, true), new TransitRouteResult(20, 5000, true),
+                                    new TransitRouteResult(30, 5000, true), new TransitRouteResult(40, 5000, true)),
+                            List.of(new TransitRouteResult(22, 5000, true), new TransitRouteResult(20, 5000, true),
+                                    new TransitRouteResult(30, 5000, true), new TransitRouteResult(40, 5000, true))
+                    ));
+            when(kakaoDirectionsClient.requestDrivingRoute(anyDouble(), anyDouble(), anyDouble(), anyDouble(), any()))
+                    .thenReturn(null);
+
+            MidpointRecommendationResponse response =
+                    midpointRecommendationService.calculateMidpointRecommendations(MEETING_ID, null, "unknown");
+
+            assertThat(response.recommendations()).extracting("stationName", "lines")
+                    .containsExactly(
+                            tuple("대림", List.of("2호선", "7호선")),
+                            tuple("가산디지털단지", List.of("1호선", "7호선")),
+                            tuple("구로디지털단지", List.of("2호선")));
+        }
+
+        @Test
+        @DisplayName("이름만 같은 다른 역의 노선은 lines에 섞지 않는다")
+        void doesNotMixLinesOfDifferentStationsThatShareName() {
+            mockMeetingWithLocationPoll();
+            LocationVote vote1 = createMockVote("37.5000", "126.9000", "참가자A", "서울시 영등포구");
+            LocationVote vote2 = createMockVote("37.6100", "126.9800", "참가자B", "서울시 성북구");
+            when(locationVoteRepository.findByLocationPoll_Id(1L)).thenReturn(List.of(vote1, vote2));
+            when(stationRepository.calculateCentroid(any())).thenThrow(new RuntimeException("PostGIS 미지원"));
+            List<Station> stations = List.of(
+                    createMockStation(1L, "신촌", "2호선", 37.5552, 126.9369),
+                    createMockStation(2L, "신촌", "경의중앙선", 37.5598, 126.9425)
+            );
+            when(stationRepository.findNearbyStations(anyDouble(), anyDouble(), anyInt(), anyInt()))
+                    .thenReturn(stations);
+            when(stationRepository.findByNameIn(anyCollection())).thenReturn(stations);
+            when(googleRoutesClient.computeTransitMatrix(anyList(), anyList(), any()))
+                    .thenReturn(List.of(
+                            List.of(new TransitRouteResult(10, 2000, true), new TransitRouteResult(12, 2000, true)),
+                            List.of(new TransitRouteResult(10, 2000, true), new TransitRouteResult(12, 2000, true))
+                    ));
+            when(kakaoDirectionsClient.requestDrivingRoute(anyDouble(), anyDouble(), anyDouble(), anyDouble(), any()))
+                    .thenReturn(null);
+
+            MidpointRecommendationResponse response =
+                    midpointRecommendationService.calculateMidpointRecommendations(MEETING_ID, null, "unknown");
+
+            assertThat(response.recommendations()).extracting("stationId", "lines")
+                    .containsExactly(
+                            tuple(1L, List.of("2호선")),
+                            tuple(2L, List.of("경의중앙선")));
+        }
+
+        @Test
+        @DisplayName("같은 이름의 행을 찾지 못해도 고른 행의 노선은 lines에 넣는다")
+        void keepsOwnLineWhenNoSameNamedRowsAreFound() {
+            mockMeetingWithLocationPoll();
+            LocationVote vote1 = createMockVote("37.5000", "127.0000", "참가자A", "서울시 강남구");
+            LocationVote vote2 = createMockVote("37.5500", "126.9500", "참가자B", "서울시 마포구");
+            when(locationVoteRepository.findByLocationPoll_Id(1L)).thenReturn(List.of(vote1, vote2));
+            when(stationRepository.calculateCentroid(any())).thenThrow(new RuntimeException("PostGIS 미지원"));
+            Station station = createMockStation(1L, "합정", "2호선", 37.5495, 126.9137);
+            when(stationRepository.findNearbyStations(anyDouble(), anyDouble(), anyInt(), anyInt()))
+                    .thenReturn(List.of(station));
+            when(stationRepository.findByNameIn(anyCollection())).thenReturn(Collections.emptyList());
+            when(googleRoutesClient.computeTransitMatrix(anyList(), anyList(), any()))
+                    .thenReturn(List.of(
+                            List.of(new TransitRouteResult(20, 9000, true)),
+                            List.of(new TransitRouteResult(30, 10000, true))
+                    ));
+            when(kakaoDirectionsClient.requestDrivingRoute(anyDouble(), anyDouble(), anyDouble(), anyDouble(), any()))
+                    .thenReturn(null);
+
+            MidpointRecommendationResponse response =
+                    midpointRecommendationService.calculateMidpointRecommendations(MEETING_ID, null, "unknown");
+
+            assertThat(response.recommendations().getFirst().lines()).containsExactly("2호선");
         }
 
         @Test

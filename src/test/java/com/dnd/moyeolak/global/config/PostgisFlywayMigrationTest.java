@@ -4,8 +4,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+import com.dnd.moyeolak.global.station.entity.Station;
+import com.dnd.moyeolak.global.station.repository.StationRepository;
 import com.dnd.moyeolak.global.utils.StationAddressUtil;
+import com.dnd.moyeolak.global.utils.StationLineUtil;
 import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +48,9 @@ class PostgisFlywayMigrationTest {
 
     @Autowired
     private Flyway flyway;
+
+    @Autowired
+    private StationRepository stationRepository;
 
     @Test
     void shouldApplyFlywayMigrationsAndValidatePostgisSchema() {
@@ -210,6 +217,25 @@ class PostgisFlywayMigrationTest {
         assertThat(seoulStationSpread).isLessThan(500.0);
         // 신촌(2호선)과 신촌(경의중앙선)은 이름만 같은 다른 역이다.
         assertThat(sinchonDistance).isGreaterThan(500.0);
+    }
+
+    @Test
+    void shouldFindEveryLineRowOfStationByName() {
+        // 추천역의 노선(lines)은 이름으로 찾은 행에서 모은다(#190). 후보 10행에 없는 노선 행도 여기서 나와야 한다.
+        Map<String, List<String>> linesByName = stationRepository.findByNameIn(List.of("서울역", "김포공항", "신촌", "양평")).stream()
+                .collect(Collectors.groupingBy(Station::getName,
+                        Collectors.collectingAndThen(Collectors.mapping(Station::getLine, Collectors.toList()),
+                                StationLineUtil::sort)));
+
+        assertThat(linesByName.get("서울역")).containsExactly("1호선", "4호선", "경의중앙선", "공항철도", "GTX-A");
+        assertThat(linesByName.get("김포공항")).containsExactly("5호선", "9호선", "공항철도", "김포골드라인", "서해선");
+        // 신촌과 양평은 이름만 같은 다른 역 두 곳이 함께 나온다. 같은 역인지는 추천 쪽에서 거리(500m)로 거른다.
+        assertThat(linesByName.get("신촌")).containsExactly("2호선", "경의중앙선");
+        assertThat(linesByName.get("양평")).containsExactly("5호선", "경의중앙선");
+        Double yangpyeongDistance = jdbcTemplate.queryForObject(
+                "SELECT ST_Distance(a.geom::geography, b.geom::geography) FROM stations a JOIN stations b "
+                        + "ON a.name = b.name AND a.id < b.id WHERE a.name = '양평'", Double.class);
+        assertThat(yangpyeongDistance).isGreaterThan(500.0);
     }
 
     private Double distanceMeters(String name, String line, double latitude, double longitude) {

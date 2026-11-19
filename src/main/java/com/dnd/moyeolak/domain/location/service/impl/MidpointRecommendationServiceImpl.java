@@ -18,6 +18,7 @@ import com.dnd.moyeolak.global.response.ErrorCode;
 import com.dnd.moyeolak.global.station.entity.Station;
 import com.dnd.moyeolak.global.station.repository.StationRepository;
 import com.dnd.moyeolak.global.utils.StationAddressUtil;
+import com.dnd.moyeolak.global.utils.StationLineUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
@@ -344,6 +345,9 @@ public class MidpointRecommendationServiceImpl implements MidpointRecommendation
             LocalDateTime departureTime
     ) {
         List<List<DrivingRouteResult>> drivingRoutes = calculateDrivingRoutes(votes, topStations, departureTime);
+        List<Station> sameNamedStations = stationRepository.findByNameIn(
+                topStations.stream().map(evaluation -> evaluation.station().getName()).distinct().toList()
+        );
 
         return IntStream.range(0, topStations.size())
                 .mapToObj(rank -> {
@@ -375,7 +379,7 @@ public class MidpointRecommendationServiceImpl implements MidpointRecommendation
                             .stationId(station.getId())
                             .stationName(station.getName())
                             .stationAddress(StationAddressUtil.shorten(station.getAddress()))
-                            .line(station.getLine())
+                            .lines(collectLines(station, sameNamedStations))
                             .latitude(station.getLatitude())
                             .longitude(station.getLongitude())
                             .distanceFromCenter(evaluation.distanceFromCenter())
@@ -384,6 +388,21 @@ public class MidpointRecommendationServiceImpl implements MidpointRecommendation
                             .build();
                 })
                 .toList();
+    }
+
+    /**
+     * 추천역과 같은 역(이름이 같고 500m 안)의 노선을 모두 모은다(#190).
+     * 후보는 무게중심에서 가까운 10행뿐이라 같은 역의 노선 행이 다 들어온다는 보장이 없어, stations에서 이름으로 따로 찾은 행에서 모은다.
+     * 고른 행의 노선은 조회 결과와 관계없이 넣는다.
+     */
+    private List<String> collectLines(Station station, List<Station> sameNamedStations) {
+        List<String> lines = new ArrayList<>();
+        lines.add(station.getLine());
+        sameNamedStations.stream()
+                .filter(other -> isSamePhysicalStation(station, other))
+                .map(Station::getLine)
+                .forEach(lines::add);
+        return StationLineUtil.sort(lines);
     }
 
     private List<List<DrivingRouteResult>> calculateDrivingRoutes(

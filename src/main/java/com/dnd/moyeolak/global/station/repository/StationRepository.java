@@ -5,9 +5,16 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
 
 public interface StationRepository extends JpaRepository<Station, Long> {
+
+    /**
+     * 이름이 같은 역의 행을 모두 찾는다. 환승역은 노선마다 행이 따로 있어 추천역의 노선을 모을 때 쓴다(#190).
+     * 이름만 같은 다른 역(신촌 2호선과 신촌 경의중앙선)도 함께 나오므로 부르는 쪽에서 거리로 거른다.
+     */
+    List<Station> findByNameIn(Collection<String> names);
 
     /**
      * 무게중심 좌표에서 반경 내 가장 가까운 지하철역 검색 (PostGIS)
