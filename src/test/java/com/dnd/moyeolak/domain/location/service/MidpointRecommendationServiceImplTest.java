@@ -482,6 +482,45 @@ class MidpointRecommendationServiceImplTest {
         }
 
         @Test
+        @DisplayName("노선마다 이름이 다른 총신대입구(4호선)와 이수(7호선)는 한 역으로 묶어 합친 이름과 두 노선으로 내려준다")
+        void mergesTransferStationWithDifferentNamesPerLine() {
+            mockMeetingWithLocationPoll();
+            LocationVote vote1 = createMockVote("37.4500", "126.9500", "참가자A", "서울시 관악구");
+            LocationVote vote2 = createMockVote("37.5300", "127.0200", "참가자B", "서울시 용산구");
+            when(locationVoteRepository.findByLocationPoll_Id(1L)).thenReturn(List.of(vote1, vote2));
+            when(stationRepository.calculateCentroid(any())).thenThrow(new RuntimeException("PostGIS 미지원"));
+            // 같은 환승역의 4호선 쪽과 7호선 쪽이고 250m쯤 떨어져 있다.
+            Station isu7 = createMockStation(1L, "이수", "7호선", 37.48526, 126.98177);
+            Station chongshin4 = createMockStation(2L, "총신대입구", "4호선", 37.48752, 126.98231);
+            Station sadang2 = createMockStation(3L, "사당", "2호선", 37.47653, 126.98163);
+            when(stationRepository.findNearbyStations(anyDouble(), anyDouble(), anyInt(), anyInt()))
+                    .thenReturn(List.of(isu7, chongshin4, sadang2));
+            when(stationRepository.findByNameIn(argThat(names -> names != null
+                    && names.size() == 3
+                    && names.containsAll(List.of("이수", "총신대입구", "사당")))))
+                    .thenReturn(List.of(isu7, chongshin4, sadang2));
+            // 평균: 이수 20분, 총신대입구 21분, 사당 25분
+            when(googleRoutesClient.computeTransitMatrix(anyList(), anyList(), any()))
+                    .thenReturn(List.of(
+                            List.of(new TransitRouteResult(20, 5000, true), new TransitRouteResult(21, 5000, true),
+                                    new TransitRouteResult(25, 5000, true)),
+                            List.of(new TransitRouteResult(20, 5000, true), new TransitRouteResult(21, 5000, true),
+                                    new TransitRouteResult(25, 5000, true))
+                    ));
+            when(kakaoDirectionsClient.requestDrivingRoute(anyDouble(), anyDouble(), anyDouble(), anyDouble(), any()))
+                    .thenReturn(null);
+
+            MidpointRecommendationResponse response =
+                    midpointRecommendationService.calculateMidpointRecommendations(MEETING_ID, null, "unknown");
+
+            // 총신대입구 행은 같은 역이라 따로 추천하지 않고, 이수 행(id 1)에 4호선을 함께 담는다.
+            assertThat(response.recommendations()).extracting("rank", "stationId", "stationName", "lines")
+                    .containsExactly(
+                            tuple(1, 1L, "총신대입구(이수)", List.of("4호선", "7호선")),
+                            tuple(2, 3L, "사당", List.of("2호선")));
+        }
+
+        @Test
         @DisplayName("같은 이름의 행을 찾지 못해도 고른 행의 노선은 lines에 넣는다")
         void keepsOwnLineWhenNoSameNamedRowsAreFound() {
             mockMeetingWithLocationPoll();

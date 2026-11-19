@@ -10,6 +10,7 @@ import com.dnd.moyeolak.global.station.entity.Station;
 import com.dnd.moyeolak.global.station.repository.StationRepository;
 import com.dnd.moyeolak.global.utils.StationAddressUtil;
 import com.dnd.moyeolak.global.utils.StationLineUtil;
+import com.dnd.moyeolak.global.utils.StationNameUtil;
 import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -236,6 +237,28 @@ class PostgisFlywayMigrationTest {
                 "SELECT ST_Distance(a.geom::geography, b.geom::geography) FROM stations a JOIN stations b "
                         + "ON a.name = b.name AND a.id < b.id WHERE a.name = '양평'", Double.class);
         assertThat(yangpyeongDistance).isGreaterThan(500.0);
+    }
+
+    @Test
+    void shouldReviewNearbyStationsWithDifferentNames() {
+        // 노선마다 이름이 다른 같은 환승역은 StationNameUtil의 예외 표로 묶는다(#190).
+        // 이름이 다르고 300m 안인 행 쌍이 새로 생기면 같은 역인지 확인하고, 같은 역이면 예외 표에 넣는다.
+        List<String> nearbyPairs = jdbcTemplate.queryForList(
+                "SELECT least(a.name COLLATE \"C\", b.name COLLATE \"C\") || ' / ' || greatest(a.name COLLATE \"C\", b.name COLLATE \"C\") "
+                        + "FROM stations a JOIN stations b ON a.name <> b.name AND a.id < b.id "
+                        + "WHERE ST_Distance(a.geom::geography, b.geom::geography) <= 300 "
+                        + "GROUP BY 1 ORDER BY 1", String.class);
+
+        // 총신대입구와 이수는 같은 환승역이다(예외 표에 있음). 나머지 둘은 가까이 있는 다른 역이다.
+        assertThat(nearbyPairs).containsExactlyInAnyOrder("경전철의정부 / 의정부", "신용산 / 용산", "이수 / 총신대입구");
+        assertThat(StationNameUtil.sharedName("총신대입구")).isEqualTo(StationNameUtil.sharedName("이수"));
+        assertThat(StationNameUtil.sharedName("의정부")).isNotEqualTo(StationNameUtil.sharedName("경전철의정부"));
+        assertThat(StationNameUtil.sharedName("용산")).isNotEqualTo(StationNameUtil.sharedName("신용산"));
+        // 같은 역으로 묶으려면 두 행이 500m 안이어야 한다.
+        Double chongshinIsuDistance = jdbcTemplate.queryForObject(
+                "SELECT ST_Distance(a.geom::geography, b.geom::geography) FROM stations a, stations b "
+                        + "WHERE a.name = '총신대입구' AND b.name = '이수'", Double.class);
+        assertThat(chongshinIsuDistance).isLessThan(500.0);
     }
 
     private Double distanceMeters(String name, String line, double latitude, double longitude) {

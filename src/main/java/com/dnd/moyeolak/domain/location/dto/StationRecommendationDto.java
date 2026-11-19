@@ -14,7 +14,7 @@ public record StationRecommendationDto(
         @Schema(description = "역 ID", example = "321")
         Long stationId,
 
-        @Schema(description = "지하철역 이름", example = "디지털미디어시티역")
+        @Schema(description = "지하철역 이름. 노선마다 이름이 다른 환승역은 합친 이름(\"총신대입구(이수)\")으로 내려준다", example = "디지털미디어시티역")
         String stationName,
 
         @Schema(description = "역 주소. 시도 이름을 줄이고 구까지만 내려준다. 주소가 없는 역은 null", example = "서울 은평구")
