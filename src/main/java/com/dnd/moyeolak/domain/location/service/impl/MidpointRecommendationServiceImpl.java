@@ -18,6 +18,8 @@ import com.dnd.moyeolak.global.response.ErrorCode;
 import com.dnd.moyeolak.global.station.entity.Station;
 import com.dnd.moyeolak.global.station.repository.StationRepository;
 import com.dnd.moyeolak.global.utils.StationAddressUtil;
+import com.dnd.moyeolak.global.utils.StationLineUtil;
+import com.dnd.moyeolak.global.utils.StationNameUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
@@ -50,7 +52,7 @@ public class MidpointRecommendationServiceImpl implements MidpointRecommendation
     private static final int SEARCH_RADIUS_METERS = 5000;
     private static final int MAX_CANDIDATE_STATIONS = 10;
     private static final int TOP_RECOMMENDATIONS = 3;
-    // 이름이 같고 이 거리 안이면 같은 역의 다른 노선 행으로 본다.
+    // 이름이 같고 이 거리 안이면 같은 역의 다른 노선 행으로 본다. 노선마다 이름이 다른 역은 StationNameUtil의 합친 이름으로 비교한다.
     // stations에서 같은 역의 행끼리 가장 먼 것은 서울역(434m), 이름만 같은 다른 역끼리 가장 가까운 것은 신촌(701m)이다(V8 기준).
     private static final int SAME_STATION_MAX_DISTANCE_METERS = 500;
     private static final int NEARBY_MAX_ROUTE_DURATION_MINUTES = 15;
@@ -311,8 +313,11 @@ public class MidpointRecommendationServiceImpl implements MidpointRecommendation
         return picked;
     }
 
+    /**
+     * 이름이 같고 500m 안이면 같은 역이다. 노선마다 이름이 다른 환승역(총신대입구와 이수)은 StationNameUtil의 합친 이름으로 비교한다.
+     */
     private boolean isSamePhysicalStation(Station station, Station other) {
-        return station.getName().equals(other.getName())
+        return StationNameUtil.sharedName(station.getName()).equals(StationNameUtil.sharedName(other.getName()))
                 && haversineDistance(
                         station.getLatitude(), station.getLongitude(),
                         other.getLatitude(), other.getLongitude()
@@ -344,6 +349,12 @@ public class MidpointRecommendationServiceImpl implements MidpointRecommendation
             LocalDateTime departureTime
     ) {
         List<List<DrivingRouteResult>> drivingRoutes = calculateDrivingRoutes(votes, topStations, departureTime);
+        List<Station> sameNamedStations = stationRepository.findByNameIn(
+                topStations.stream()
+                        .flatMap(evaluation -> StationNameUtil.lineNamesOf(evaluation.station().getName()).stream())
+                        .distinct()
+                        .toList()
+        );
 
         return IntStream.range(0, topStations.size())
                 .mapToObj(rank -> {
@@ -373,9 +384,9 @@ public class MidpointRecommendationServiceImpl implements MidpointRecommendation
                     return StationRecommendationDto.builder()
                             .rank(rank + 1)
                             .stationId(station.getId())
-                            .stationName(station.getName())
+                            .stationName(StationNameUtil.sharedName(station.getName()))
                             .stationAddress(StationAddressUtil.shorten(station.getAddress()))
-                            .line(station.getLine())
+                            .lines(collectLines(station, sameNamedStations))
                             .latitude(station.getLatitude())
                             .longitude(station.getLongitude())
                             .distanceFromCenter(evaluation.distanceFromCenter())
@@ -384,6 +395,21 @@ public class MidpointRecommendationServiceImpl implements MidpointRecommendation
                             .build();
                 })
                 .toList();
+    }
+
+    /**
+     * 추천역과 같은 역(이름이 같고 500m 안)의 노선을 모두 모은다(#190).
+     * 후보는 무게중심에서 가까운 10행뿐이라 같은 역의 노선 행이 다 들어온다는 보장이 없어, stations에서 이름으로 따로 찾은 행에서 모은다.
+     * 고른 행의 노선은 조회 결과와 관계없이 넣는다.
+     */
+    private List<String> collectLines(Station station, List<Station> sameNamedStations) {
+        List<String> lines = new ArrayList<>();
+        lines.add(station.getLine());
+        sameNamedStations.stream()
+                .filter(other -> isSamePhysicalStation(station, other))
+                .map(Station::getLine)
+                .forEach(lines::add);
+        return StationLineUtil.sort(lines);
     }
 
     private List<List<DrivingRouteResult>> calculateDrivingRoutes(

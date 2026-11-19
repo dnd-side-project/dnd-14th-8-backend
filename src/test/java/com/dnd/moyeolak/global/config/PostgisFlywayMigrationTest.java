@@ -4,8 +4,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+import com.dnd.moyeolak.global.station.entity.Station;
+import com.dnd.moyeolak.global.station.repository.StationRepository;
 import com.dnd.moyeolak.global.utils.StationAddressUtil;
+import com.dnd.moyeolak.global.utils.StationLineUtil;
+import com.dnd.moyeolak.global.utils.StationNameUtil;
 import org.flywaydb.core.Flyway;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +49,9 @@ class PostgisFlywayMigrationTest {
 
     @Autowired
     private Flyway flyway;
+
+    @Autowired
+    private StationRepository stationRepository;
 
     @Test
     void shouldApplyFlywayMigrationsAndValidatePostgisSchema() {
@@ -210,6 +218,49 @@ class PostgisFlywayMigrationTest {
         assertThat(seoulStationSpread).isLessThan(500.0);
         // 신촌(2호선)과 신촌(경의중앙선)은 이름만 같은 다른 역이다.
         assertThat(sinchonDistance).isGreaterThan(500.0);
+    }
+
+    @Test
+    void shouldFindEveryLineRowOfStationByName() {
+        // 추천역의 노선(lines)은 이름으로 찾은 행에서 모은다(#190). 후보 10행에 없는 노선 행도 여기서 나와야 한다.
+        Map<String, List<String>> linesByName = stationRepository.findByNameIn(List.of("서울역", "김포공항", "신촌", "양평")).stream()
+                .collect(Collectors.groupingBy(Station::getName,
+                        Collectors.collectingAndThen(Collectors.mapping(Station::getLine, Collectors.toList()),
+                                StationLineUtil::sort)));
+
+        assertThat(linesByName.get("서울역")).containsExactly("1호선", "4호선", "경의중앙선", "공항철도", "GTX-A");
+        assertThat(linesByName.get("김포공항")).containsExactly("5호선", "9호선", "공항철도", "김포골드라인", "서해선");
+        // 신촌과 양평은 이름만 같은 다른 역 두 곳이 함께 나온다. 같은 역인지는 추천 쪽에서 거리(500m)로 거른다.
+        assertThat(linesByName.get("신촌")).containsExactly("2호선", "경의중앙선");
+        assertThat(linesByName.get("양평")).containsExactly("5호선", "경의중앙선");
+        Double yangpyeongDistance = jdbcTemplate.queryForObject(
+                "SELECT ST_Distance(a.geom::geography, b.geom::geography) FROM stations a JOIN stations b "
+                        + "ON a.name = b.name AND a.id < b.id WHERE a.name = '양평'", Double.class);
+        assertThat(yangpyeongDistance).isGreaterThan(500.0);
+    }
+
+    @Test
+    void shouldReviewNearbyStationsWithDifferentNames() {
+        // 노선마다 이름이 다른 같은 환승역은 StationNameUtil의 예외 표로 묶는다(#190).
+        // 이름이 다르고 300m 안인 행 쌍이 새로 생기면 같은 역인지 확인하고, 같은 역이면 예외 표에 넣는다.
+        List<String> nearbyPairs = jdbcTemplate.queryForList(
+                "SELECT least(a.name COLLATE \"C\", b.name COLLATE \"C\") || ' / ' || greatest(a.name COLLATE \"C\", b.name COLLATE \"C\") "
+                        + "FROM stations a JOIN stations b ON a.name <> b.name AND a.id < b.id "
+                        + "WHERE ST_Distance(a.geom::geography, b.geom::geography) <= 300 "
+                        + "GROUP BY 1 ORDER BY 1", String.class);
+
+        // 근거는 레일포털 "전체_도시철도역사정보"(2026-06 기준)의 환승역구분과 환승노선명이다.
+        // 총신대입구(4호선)와 이수(7호선)는 서로를 환승 노선으로 적은 같은 환승역이다(예외 표에 있음).
+        // 의정부(1호선)와 경전철의정부, 신용산(4호선)은 일반역이고, 용산의 환승(경의중앙선)은 용산 자기 행에서 이뤄진다. 둘 다 다른 역이다.
+        assertThat(nearbyPairs).containsExactlyInAnyOrder("경전철의정부 / 의정부", "신용산 / 용산", "이수 / 총신대입구");
+        assertThat(StationNameUtil.sharedName("총신대입구")).isEqualTo(StationNameUtil.sharedName("이수"));
+        assertThat(StationNameUtil.sharedName("의정부")).isNotEqualTo(StationNameUtil.sharedName("경전철의정부"));
+        assertThat(StationNameUtil.sharedName("용산")).isNotEqualTo(StationNameUtil.sharedName("신용산"));
+        // 같은 역으로 묶으려면 두 행이 500m 안이어야 한다.
+        Double chongshinIsuDistance = jdbcTemplate.queryForObject(
+                "SELECT ST_Distance(a.geom::geography, b.geom::geography) FROM stations a, stations b "
+                        + "WHERE a.name = '총신대입구' AND b.name = '이수'", Double.class);
+        assertThat(chongshinIsuDistance).isLessThan(500.0);
     }
 
     private Double distanceMeters(String name, String line, double latitude, double longitude) {

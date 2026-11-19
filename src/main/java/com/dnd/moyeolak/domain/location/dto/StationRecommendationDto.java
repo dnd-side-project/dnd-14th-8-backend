@@ -14,14 +14,18 @@ public record StationRecommendationDto(
         @Schema(description = "역 ID", example = "321")
         Long stationId,
 
-        @Schema(description = "지하철역 이름", example = "디지털미디어시티역")
+        @Schema(description = "지하철역 이름. 노선마다 이름이 다른 환승역은 합친 이름(\"총신대입구(이수)\")으로 내려준다", example = "디지털미디어시티역")
         String stationName,
 
         @Schema(description = "역 주소. 시도 이름을 줄이고 구까지만 내려준다. 주소가 없는 역은 null", example = "서울 은평구")
         String stationAddress,
 
-        @Schema(description = "노선명", example = "경의중앙선")
-        String line,
+        @Schema(
+                description = "그 역의 노선 전체. 같은 역(이름이 같고 500m 안)의 노선을 1호선부터 9호선까지 번호순, "
+                        + "그다음 가나다순, 영문으로 시작하는 노선은 마지막 순서로 담는다",
+                example = "[\"6호선\", \"경의중앙선\", \"공항철도\"]"
+        )
+        List<String> lines,
 
         @Schema(description = "역 위도", example = "37.5779")
         double latitude,

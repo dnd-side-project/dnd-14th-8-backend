@@ -109,10 +109,10 @@ class LocationControllerTest {
                 List.of(
                         StationRecommendationDto.builder()
                                 .rank(1).stationId(1L).stationName("을지로3가").stationAddress("서울 중구")
-                                .line("2호선").routes(List.of()).build(),
+                                .lines(List.of("2호선", "3호선")).routes(List.of()).build(),
                         StationRecommendationDto.builder()
                                 .rank(2).stationId(2L).stationName("킨텍스")
-                                .line("GTX-A").routes(List.of()).build()
+                                .lines(List.of("GTX-A")).routes(List.of()).build()
                 ),
                 null,
                 2,
@@ -127,6 +127,33 @@ class LocationControllerTest {
                 .andExpect(jsonPath("$.data.recommendations[0].stationName").value("을지로3가"))
                 .andExpect(jsonPath("$.data.recommendations[0].stationAddress").value("서울 중구"))
                 .andExpect(jsonPath("$.data.recommendations[1].stationAddress").value(nullValue()));
+    }
+
+    @Test
+    @DisplayName("중간지점 추천 API는 추천역마다 노선 전체를 lines 목록으로 내려주고, 노선 하나만 담던 line은 내려주지 않는다")
+    void getMidpointRecommendations_includesStationLines() throws Exception {
+        MidpointRecommendationResponse response = new MidpointRecommendationResponse(
+                new CenterPointDto(37.5, 127.0),
+                List.of(
+                        StationRecommendationDto.builder()
+                                .rank(1).stationId(1L).stationName("서울역")
+                                .lines(List.of("1호선", "4호선", "경의중앙선", "공항철도", "GTX-A"))
+                                .routes(List.of()).build()
+                ),
+                null,
+                2,
+                5,
+                MidpointResultType.NORMAL
+        );
+        when(midpointRecommendationService.calculateMidpointRecommendations(eq(MEETING_ID), eq(null), any()))
+                .thenReturn(response);
+
+        mockMvc.perform(get("/api/locations/midpoint-recommendations").param("meetingId", MEETING_ID))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.recommendations[0].line").doesNotExist())
+                .andExpect(jsonPath("$.data.recommendations[0].lines.length()").value(5))
+                .andExpect(jsonPath("$.data.recommendations[0].lines[0]").value("1호선"))
+                .andExpect(jsonPath("$.data.recommendations[0].lines[4]").value("GTX-A"));
     }
 
     @Test
