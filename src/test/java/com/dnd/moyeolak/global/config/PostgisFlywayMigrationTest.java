@@ -62,10 +62,21 @@ class PostgisFlywayMigrationTest {
         Integer stationCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM stations", Integer.class);
         String postgisVersion = jdbcTemplate.queryForObject("SELECT PostGIS_Version()", String.class);
 
-        assertThat(appliedMigrationCount).isEqualTo(9);
+        assertThat(appliedMigrationCount).isEqualTo(10);
         assertThat(stationCount).isPositive();
         assertThat(postgisVersion).isNotBlank();
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("9");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("10");
+    }
+
+    @Test
+    void shouldDropNearbyPlaceTables() {
+        // 주변 장소 검색을 지우며 V10이 저장 테이블 두 개를 지웠다(#192).
+        List<String> nearbyPlaceTables = jdbcTemplate.queryForList(
+                "SELECT table_name FROM information_schema.tables "
+                        + "WHERE table_schema = current_schema() AND table_name IN ('nearby_place', 'nearby_place_hours')",
+                String.class);
+
+        assertThat(nearbyPlaceTables).isEmpty();
     }
 
     @Test
