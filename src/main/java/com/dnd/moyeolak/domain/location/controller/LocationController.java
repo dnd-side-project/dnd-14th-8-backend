@@ -4,18 +4,15 @@ import com.dnd.moyeolak.domain.location.docs.CreateLocationVoteApiDocs;
 import com.dnd.moyeolak.domain.location.docs.GetMidpointRecommendationsApiDocs;
 import com.dnd.moyeolak.domain.location.docs.GetPersonalRouteApiDocs;
 import com.dnd.moyeolak.domain.location.docs.ListLocationVoteApiDocs;
-import com.dnd.moyeolak.domain.location.docs.NearbyPlaceSearchApiDocs;
 import com.dnd.moyeolak.domain.location.docs.UpdateLocationVoteApiDocs;
 import com.dnd.moyeolak.domain.location.dto.CreateLocationVoteRequest;
 import com.dnd.moyeolak.domain.location.dto.LocationVoteResponse;
 import com.dnd.moyeolak.domain.location.dto.MidpointRecommendationResponse;
 import com.dnd.moyeolak.domain.location.dto.PersonalRouteResponse;
 import com.dnd.moyeolak.domain.location.enums.RouteMode;
-import com.dnd.moyeolak.domain.location.dto.NearbyPlaceSearchResponse;
 import com.dnd.moyeolak.domain.location.service.LocationVoteService;
 import com.dnd.moyeolak.domain.location.service.MidpointRecommendationService;
 import com.dnd.moyeolak.domain.location.service.PersonalRouteQueryService;
-import com.dnd.moyeolak.domain.location.service.NearbyPlaceSearchService;
 import com.dnd.moyeolak.domain.meeting.dto.UpdateLocationVoteRequest;
 import com.dnd.moyeolak.global.ratelimit.ClientIpResolver;
 import com.dnd.moyeolak.global.response.ApiResponse;
@@ -42,7 +39,6 @@ public class LocationController {
     private final LocationVoteService locationVoteService;
     private final MidpointRecommendationService midpointRecommendationService;
     private final PersonalRouteQueryService personalRouteQueryService;
-    private final NearbyPlaceSearchService nearbyPlaceSearchService;
     private final ClientIpResolver clientIpResolver;
 
     @GetMapping("/midpoint-recommendations")
@@ -78,16 +74,6 @@ public class LocationController {
         PersonalRouteResponse response = personalRouteQueryService.getPersonalRoute(
                 meetingId, stationId, participantId, departureTime, routeMode
         );
-        return ResponseEntity.ok(ApiResponse.success(response));
-    }
-
-    @GetMapping("/nearby-place-search")
-    @NearbyPlaceSearchApiDocs
-    public ResponseEntity<ApiResponse<NearbyPlaceSearchResponse>> nearbyPlaceSearch(
-            @RequestParam String latitude,
-            @RequestParam String longitude
-    ) {
-        NearbyPlaceSearchResponse response = nearbyPlaceSearchService.nearbyPlaceSearch(latitude, longitude);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 

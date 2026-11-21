@@ -8,7 +8,6 @@ import com.dnd.moyeolak.domain.location.dto.StationRecommendationDto;
 import com.dnd.moyeolak.domain.location.enums.MidpointResultType;
 import com.dnd.moyeolak.domain.location.service.LocationVoteService;
 import com.dnd.moyeolak.domain.location.service.MidpointRecommendationService;
-import com.dnd.moyeolak.domain.location.service.NearbyPlaceSearchService;
 import com.dnd.moyeolak.domain.location.service.PersonalRouteQueryService;
 import com.dnd.moyeolak.domain.meeting.dto.UpdateLocationVoteRequest;
 import com.dnd.moyeolak.global.exception.GlobalExceptionAdvice;
@@ -55,9 +54,6 @@ class LocationControllerTest {
     @Mock
     private PersonalRouteQueryService personalRouteQueryService;
 
-    @Mock
-    private NearbyPlaceSearchService nearbyPlaceSearchService;
-
     private MockMvc mockMvc;
 
     @BeforeEach
@@ -66,7 +62,6 @@ class LocationControllerTest {
                 locationVoteService,
                 midpointRecommendationService,
                 personalRouteQueryService,
-                nearbyPlaceSearchService,
                 new ClientIpResolver()
         );
         mockMvc = MockMvcBuilders.standaloneSetup(controller)

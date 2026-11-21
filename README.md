@@ -97,7 +97,6 @@ flowchart LR
 
 - **Caffeine Cache** 적용으로 동일 요청 반복 외부 API 호출 방지
 - `midpointRecommendations` 캐시: 모임ID + 출발시각 기준 캐시
-- `NearbyPlace` 캐시: 역 주변 장소 정보 캐시
 
 <br/>
 
@@ -121,7 +120,6 @@ flowchart TB
         Google["Google Routes\n(중간지점 매트릭스)"]
         Odsay["ODsay\n(개인 경로 대중교통)"]
         Kakao["Kakao Local\n/ Directions"]
-        GooglePlaces["Google Places\n(주변 장소)"]
     end
 
     subgraph DB["Persistence Layer"]
@@ -156,8 +154,6 @@ erDiagram
     LOCATION_POLL ||--o{ CONFIRMED_LOCATION : "1:N Cascade"
     PARTICIPANT ||--o{ SCHEDULE_VOTE : "1:N"
     PARTICIPANT ||--o{ LOCATION_VOTE : "1:N"
-    STATION ||--o{ NEARBY_PLACE : "1:N"
-    NEARBY_PLACE ||--o{ NEARBY_PLACE_HOURS : "1:N"
 
     MEETING {
         string meeting_id PK "NanoId"
@@ -201,20 +197,6 @@ erDiagram
         string line_num
         geometry location "Point SRID 4326"
     }
-    NEARBY_PLACE {
-        long nearby_place_id PK
-        string name
-        string category
-        double rating
-        double latitude
-        double longitude
-    }
-    NEARBY_PLACE_HOURS {
-        long hours_id PK
-        string day_of_week
-        string open_time
-        string close_time
-    }
 ```
 
 <br/>
@@ -238,7 +220,6 @@ erDiagram
 | | DELETE | `/api/locations/vote/{locationVoteId}` | 출발지 삭제 |
 | | GET | `/api/locations/midpoint-recommendations` | 중간 지점 추천 |
 | | GET | `/api/locations/midpoint-routes` | 개인 경로 조회 |
-| | GET | `/api/locations/nearby-place-search` | 역 주변 장소 탐색 |
 
 > Swagger UI: `http://localhost:8080/swagger-ui.html`
 
@@ -274,8 +255,7 @@ erDiagram
 |-----|------|
 | Google Routes API (Transit Matrix) | 출발지 → 후보 역 이동시간 행렬 계산 (중간지점 추천) |
 | ODsay 대중교통 API | 개인 경로 상세 (요금·환승·도보) |
-| Google Places (Nearby Search) | 역 주변 장소 탐색 |
-| Kakao Local | 키워드 장소 검색, 주소 변환 |
+| Kakao Local | 지하철역 업종 검색 (외부 API 헬스체크) |
 | Kakao Directions | 자동차 경로 (거리·소요시간) |
 
 <br/>
